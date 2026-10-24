@@ -1,0 +1,4 @@
+# Catalogue public keys formMCP trusts: one base64 Ed25519 public key per line, compiled in.
+# The same keys as FormPortal's core/catalog_keys.txt. formcompiler makes the pair: python3 scripts/catalog.py keygen
+# prints FORMCOMPILER_CATALOG_KEY (the private seed, a formcompiler secret only) and the public key, which goes on a line below.
+# FORMAI_CATALOG_PUBKEY (comma separated) adds keys at run time.

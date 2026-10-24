@@ -2,8 +2,38 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.2.0
-Last updated: 2026-10-24 · the gateway: installed apps' own tools on demand; 2026-10-24 · the family list and the MCP server
+Current build version: v0.3.0
+Last updated: 2026-10-24 · the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.3.0 · catalogue, suggestions, exposure, clients {#v0-3-0}
+
+### catalog.rs · FormPortal's trust model, unchanged
+- refers-to: core/src/catalog.rs :: load, read_source, verify, keys, merge · core/catalog_keys.txt
+- kind: decision
+- logged: v0.3.0 · 2026-10-24
+
+formMCP trusts a catalogue exactly as FormPortal does (`core/src/signature.rs` and `portal.rs` there): an Ed25519 signature over the body, checked against keys compiled in from `core/catalog_keys.txt` plus `FORMAI_CATALOG_PUBKEY`, the same file contract and variable name, so one key pair from formcompiler's `catalog.py keygen` serves both. Neither file holds a key yet, so today every catalogue is refused with "this build trusts no catalogue key yet" and the bundled list is used; that is the intended state until the owner generates the pair. Order: the catalogue at `FORMMCP_CATALOG` (default formcompiler's `catalog` release; https, loopback http or a file) with `<url>.sig`; when that cannot be fetched, FormPortal's kept copy (`<FormPortal>/catalog/apps.json` and `.sig`), checked the same way; `FORMMCP_OFFLINE=1` reads only the kept copy; `FORMMCP_ALLOW_UNSIGNED=1` admits an unsigned one, as FormPortal's `--allow-unsigned` does. Fetches time out after 8 s. A product in the catalogue replaces the bundled entry's name, kind, summary, state, MCP and skills flags and adds its newest version; a product the bundled list lacks is added; bundled apps the catalogue lacks (not released yet) stay. Every outcome is named in `source`, so the agent and the person see which list they got and why. The catalogue is read once per session, on the first tool call, not at `initialize`, so a slow network never delays the client's start. Checked: signed (accepted, versions shown), no trusted key, tampered body, unsigned, unsigned with the override, FormPortal's kept copy offline; the default URL here fails TLS because this sandbox's proxy has its own certificate authority, and falls back as designed.
+
+### suggest.rs · words, not a model
+- refers-to: core/src/suggest.rs :: suggest, score, next_step, KIND_WORDS, STOP
+- kind: decision
+- logged: v0.3.0 · 2026-10-24
+
+The task's words (lowercased, stop words dropped) are scored against each app: its id or name 5, its kind 2, any word of its name, kind, summary or the kind's word list 1 (a word matches when equal, or when both have at least four letters and share the first five). FormPortal is suggested only when the task is about installing or updating. Ties go to released apps. The word lists are formMCP's own heuristics, not a copy of any app's data. Each suggestion carries the next step: `app_tools` when reachable; no MCP server yet; installed but no launcher; not released; install with FormPortal; or install FormPortal first (its repository page). The agent still decides; when nothing matches it is told to use `family_apps`. Checked on 17 tasks (background removal, raw photos, interview video, podcast, logo, pitch deck, PDF signing, notes wiki, budget, 3D, landing page and others); a filler-word false match (FormCel and FormDAM on "out" and "own") and a kind-word overweight (FormLit above FormVis for background removal) were fixed by the stop list, the kind weight 3 to 2 and two image words.
+
+### mcp.rs · always expose
+- refers-to: core/src/mcp.rs :: Gateway::exposed_tools, call (EXPOSED_SEPARATOR) · core/src/settings.rs
+- kind: decision
+- logged: v0.3.0 · 2026-10-24
+
+For an app listed in `settings.json` `expose` (or `FORMMCP_EXPOSE`), `tools/list` starts it and adds its tools as `<id>__<tool>`, described with `[<Name>]` in front, and a call to such a name goes through `call_app`. Off by default, per the plan's token rule; it is for people who live in one app. `capabilities.tools.listChanged` is true only when something is exposed; when an exposed app says its tools changed during a call, formMCP sends `notifications/tools/list_changed` after its answer. An exposed app that cannot start is skipped with a line on stderr, so formMCP still starts. Settings live in `FORMMCP_HOME`, else Application Support (`ai.nodemode.formmcp`) on macOS, `%APPDATA%\formMCP` on Windows, `~/.config/formmcp` elsewhere.
+
+### clients.rs · FormPortal's client writer, for formMCP
+- refers-to: core/src/clients.rs :: state, connect, write, remove, Launcher
+- kind: decision
+- logged: v0.3.0 · 2026-10-24
+
+Ported from FormPortal's `core/src/agents.rs` (same owner and licence) with formMCP's name: Claude Code through `claude mcp add --scope user formmcp`, Codex as `[mcp_servers.formmcp]` in `$CODEX_HOME/config.toml` (section replaced or appended; a `[mcp_servers.formmcp.env]` subtable under it counts as part of the section and is replaced with it, not left behind; FormPortal's version stops at the subtable), Cursor as `mcpServers.formmcp` in `~/.cursor/mcp.json`; each file copied to `.bak-<time>` before a write; an entry that does not mention formmcp is reported `taken` and never touched. The program written is `FORMMCP_LAUNCHER` (the `./formmcp` script sets its own path) or the running executable, with `mcp`; formMCP's own settings that are set (`FORMMCP_DEV_ROOTS`, `FORMPORTAL_ROOT`, `FORMPORTAL_BIN`, `FORMMCP_CATALOG`, `FORMAI_CATALOG_PUBKEY`) go into the entry's env, because clients do not start servers with the person's shell. Codex gets `startup_timeout_sec = 600` and `tool_timeout_sec = 900` to match the child timeouts. Checked in a scratch home with existing entries: install, a second install (one section, a backup), remove (the other entries intact), a foreign `formmcp` entry left alone, an unknown client refused; Claude Code was kept off PATH so this machine's real configuration was never touched.
 
 ## v0.2.0 · the gateway {#v0-2-0}
 

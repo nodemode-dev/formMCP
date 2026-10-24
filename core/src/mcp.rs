@@ -3,20 +3,67 @@ use std::io::{self, BufRead, Write};
 
 use serde_json::{json, Value};
 
+use crate::catalog;
 use crate::child::{call_timeout, AppServer};
 use crate::family::{App, Family};
 use crate::reach::Places;
+use crate::settings::Settings;
+use crate::suggest::suggest;
 use crate::CORE_VERSION;
+
+const EXPOSED_SEPARATOR: &str = "__";
 
 pub struct Gateway {
     pub family: Family,
     pub places: Places,
+    pub settings: Settings,
     running: HashMap<String, (String, AppServer)>,
+    catalog_read: bool,
+    list_changed: bool,
 }
 
 impl Gateway {
     pub fn new(family: Family, places: Places) -> Gateway {
-        Gateway { family, places, running: HashMap::new() }
+        Gateway { family, places, settings: Settings::load(), running: HashMap::new(), catalog_read: false, list_changed: false }
+    }
+
+    pub fn ensure_catalog(&mut self) {
+        if !self.catalog_read {
+            self.catalog_read = true;
+            self.family = catalog::load(self.family.clone());
+        }
+    }
+
+    pub fn take_list_changed(&mut self) -> bool {
+        std::mem::replace(&mut self.list_changed, false)
+    }
+
+    fn exposed_tools(&mut self) -> Vec<Value> {
+        self.ensure_catalog();
+        let mut out = Vec::new();
+        for id in self.settings.expose.clone() {
+            let Some(app) = self.family.get(&id).cloned() else { continue };
+            let started = self.server(&app).map(|(_, s)| {
+                if s.tools_changed {
+                    let _ = s.load_tools();
+                }
+                s.tools.clone()
+            });
+            match started {
+                Ok(tools) => {
+                    for tool in tools {
+                        let Some(name) = tool.get("name").and_then(Value::as_str) else { continue };
+                        let mut renamed = tool.clone();
+                        renamed["name"] = Value::String(format!("{}{EXPOSED_SEPARATOR}{name}", app.id));
+                        let said = tool.get("description").and_then(Value::as_str).unwrap_or_default();
+                        renamed["description"] = Value::String(format!("[{}] {said}", app.name));
+                        out.push(renamed);
+                    }
+                }
+                Err(e) => eprintln!("formmcp: {} is set to always show its tools, but it could not be started: {e}", app.name),
+            }
+        }
+        out
     }
 
     fn app(&self, args: &Value) -> Result<App, String> {
@@ -57,7 +104,7 @@ impl Gateway {
 const PROTOCOL: &str = "2025-06-18";
 const SUPPORTED: [&str; 4] = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 
-const INSTRUCTIONS: &str = "formMCP is the one connection to the Form family of desktop apps (image, video, audio, layout, vector, notes and more, by nodemode.ai). Call family_apps to see which app fits the person's task, whether it has an MCP server and whether this computer can reach it. For a reachable app, app_tools starts it and lists its own tools, and call_app runs one of them; load one app at a time, only when the task needs it. formMCP never installs anything: when an app is missing, tell the person which one fits and that FormPortal installs and updates the Form apps.";
+const INSTRUCTIONS: &str = "formMCP is the one connection to the Form family of desktop apps (image, video, audio, layout, vector, notes and more, by nodemode.ai). Call suggest_app with the person's task to get the app that fits and the next step, or family_apps for the whole list (whether each app has an MCP server and whether this computer can reach it). For a reachable app, app_tools starts it and lists its own tools, and call_app runs one of them; load one app at a time, only when the task needs it. formMCP never installs anything: when an app is missing, tell the person which one fits and that FormPortal installs and updates the Form apps.";
 
 fn tools() -> Value {
     json!([
@@ -65,6 +112,12 @@ fn tools() -> Value {
           "description": "Every Form app: id, name, what kind of work it does, one line on what it is for, whether it has an MCP server agents can use, whether it ships skills, its release state (live, public or prelaunch), whether FormPortal installed it on this computer, and reach: how formMCP can start its server here (dev for a local checkout, formportal for an install, null when it cannot). Use it to pick the app that fits a task. Short on purpose: no app's tools are listed here.",
           "inputSchema": { "type": "object", "properties": {
               "mcp_only": { "type": "boolean", "description": "Only the apps that have an MCP server." } } },
+          "annotations": { "readOnlyHint": true, "openWorldHint": false } },
+        { "name": "suggest_app", "title": "Which Form app fits a task",
+          "description": "Given the person's task in their own words, returns up to five Form apps that fit, best first, each with whether it has an MCP server, whether it is installed and reachable here, and the next step: call app_tools, install it with FormPortal, install FormPortal first, or why an agent cannot drive it yet. It never installs anything.",
+          "inputSchema": { "type": "object", "properties": {
+              "task": { "type": "string", "description": "What the person wants done, for example 'cut the silences out of this interview video'." },
+              "limit": { "type": "integer", "minimum": 1, "maximum": 5, "description": "How many apps at most (3 when left out)." } }, "required": ["task"] },
           "annotations": { "readOnlyHint": true, "openWorldHint": false } },
         { "name": "app_tools", "title": "One app's tools",
           "description": "Starts one Form app's own MCP server (or reuses it once started) and returns its tools with their input schemas, its name and version, and its instructions. Call it for the one app the task needs, after family_apps shows it is reachable. Fails with the reason when the app has no MCP server or cannot be reached.",
@@ -82,10 +135,23 @@ fn tools() -> Value {
     ])
 }
 
+fn suggest_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
+    let task = args.get("task").and_then(Value::as_str).unwrap_or_default().trim().to_string();
+    if task.is_empty() {
+        return Err("task is required: what the person wants done, in their words".into());
+    }
+    let limit = args.get("limit").and_then(Value::as_u64).unwrap_or(3) as usize;
+    gateway.places.refresh();
+    let running: HashMap<String, String> = gateway.running.iter().map(|(k, (v, _))| (k.clone(), v.clone())).collect();
+    let picks = suggest(&gateway.family, &gateway.places, &|id: &str| running.get(id).cloned(), &task, limit);
+    let note = if picks.is_empty() { "No app matched the words of the task; call family_apps and choose by kind and summary." } else { "Best first. formMCP never installs: FormPortal installs and updates the Form apps." };
+    Ok(json!({ "task": task, "apps": picks, "note": note }))
+}
+
 fn family_apps(gateway: &mut Gateway, args: &Value) -> Value {
     let mcp_only = args.get("mcp_only").and_then(Value::as_bool).unwrap_or(false);
     gateway.places.refresh();
-    let Gateway { family, places, running } = gateway;
+    let Gateway { family, places, running, .. } = gateway;
     let apps: Vec<Value> = family
         .apps
         .iter()
@@ -128,8 +194,13 @@ fn call_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
         return Err("tool is required: a name from app_tools".into());
     }
     let arguments = args.get("arguments").cloned().unwrap_or_else(|| json!({}));
+    let exposed = gateway.settings.expose.iter().any(|e| e == &app.id);
     let (_, server) = gateway.server(&app)?;
-    server.request("tools/call", json!({ "name": tool, "arguments": arguments }), call_timeout())
+    let result = server.request("tools/call", json!({ "name": tool, "arguments": arguments }), call_timeout());
+    if exposed && server.tools_changed {
+        gateway.list_changed = true;
+    }
+    result
 }
 
 enum Outcome {
@@ -138,11 +209,18 @@ enum Outcome {
 }
 
 fn call(gateway: &mut Gateway, name: &str, args: &Value) -> Result<Outcome, String> {
+    gateway.ensure_catalog();
     match name {
         "family_apps" => Ok(Outcome::Mine(family_apps(gateway, args))),
+        "suggest_app" => suggest_app(gateway, args).map(Outcome::Mine),
         "app_tools" => app_tools(gateway, args).map(Outcome::Mine),
         "call_app" => call_app(gateway, args).map(Outcome::Passed),
-        other => Err(format!("no tool named {other:?}; tools/list has the tools")),
+        other => match other.split_once(EXPOSED_SEPARATOR) {
+            Some((id, tool)) if gateway.settings.expose.iter().any(|e| e == id) => {
+                call_app(gateway, &json!({ "app": id, "tool": tool, "arguments": args })).map(Outcome::Passed)
+            }
+            _ => Err(format!("no tool named {other:?}; tools/list has the tools")),
+        },
     }
 }
 
@@ -156,13 +234,17 @@ pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
             let version = if SUPPORTED.contains(&asked) { asked } else { PROTOCOL };
             json!({
                 "protocolVersion": version,
-                "capabilities": { "tools": { "listChanged": false } },
+                "capabilities": { "tools": { "listChanged": !gateway.settings.expose.is_empty() } },
                 "serverInfo": { "name": "formmcp", "title": "formMCP", "version": CORE_VERSION },
                 "instructions": INSTRUCTIONS
             })
         }
         "ping" => json!({}),
-        "tools/list" => json!({ "tools": tools() }),
+        "tools/list" => {
+            let mut list = tools().as_array().cloned().unwrap_or_default();
+            list.extend(gateway.exposed_tools());
+            json!({ "tools": list })
+        }
         "tools/call" => {
             let name = params.get("name").and_then(Value::as_str).unwrap_or_default();
             let args = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
@@ -198,6 +280,10 @@ pub fn serve() -> io::Result<()> {
         };
         if let Some(reply) = reply {
             writeln!(out, "{reply}")?;
+            out.flush()?;
+        }
+        if gateway.take_list_changed() {
+            writeln!(out, "{}", json!({ "jsonrpc": "2.0", "method": "notifications/tools/list_changed" }))?;
             out.flush()?;
         }
     }

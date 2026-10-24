@@ -9,11 +9,13 @@ Licensed under the GNU General Public License v3.0 (SPDX `GPL-3.0-only`). See `L
 
 formMCP's own code and art (the icon in `assets/`, `frontend/public/` and `src-tauri/icons/`) are the owner's. The family list in `core/data/family.json` is generated from formcompiler's registry (`nodemode-ai/formcompiler`, GPL-3.0-only, the same owner). The window's design tokens and layer scale come from FormTray (`nodemode-ai/formtray`, GPL-3.0-only, the same owner).
 
-Its dependencies are MIT, Apache-2.0 or dual MIT and Apache-2.0, with some BSD-3-Clause, ISC, Zlib, Unicode-3.0 and CC0 crates, as their manifests declare (checked with `cargo metadata` against `Cargo.lock`, 386 packages in the shell's graph). The main ones:
+Its dependencies are MIT, Apache-2.0 or dual MIT and Apache-2.0, with some BSD-3-Clause, ISC, Zlib, Unicode-3.0, CDLA-Permissive-2.0 and CC0 crates, as their manifests declare (checked with `cargo metadata` against `Cargo.lock`, 420 packages in the shell's graph at v0.3.0). The main ones:
 
 | Package | Used for |
 | --- | --- |
 | serde, serde_json | the family list and MCP messages (`core`, `cli`) |
+| ureq 2 (rustls, ring, webpki-roots) | reading the family catalogue over https (`core`); ring is Apache-2.0 and ISC, webpki-roots (the root certificates as data) CDLA-Permissive-2.0 |
+| ed25519-dalek 2 (curve25519-dalek, subtle), base64 | checking the catalogue's signature (`core`); the dalek crates and subtle are BSD-3-Clause |
 | tauri 2, tauri-build | the desktop shell |
 | Vite, TypeScript, @tauri-apps/cli, @types/node (build only) | building the window and the app; not shipped |
 

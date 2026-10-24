@@ -13,6 +13,8 @@ pub struct App {
     pub repository: String,
     #[serde(default)]
     pub launcher: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub version: String,
     pub state: String,
     pub released: bool,
     pub mcp: bool,
@@ -32,6 +34,8 @@ pub struct Family {
     pub format_version: u32,
     pub source: Source,
     pub apps: Vec<App>,
+    #[serde(skip)]
+    pub note: Option<String>,
 }
 
 impl Family {
@@ -53,6 +57,9 @@ impl Family {
     }
 
     pub fn describe_source(&self) -> String {
+        if let Some(note) = &self.note {
+            return note.clone();
+        }
         let commit: String = self.source.commit.chars().take(7).collect();
         if self.source.version.is_empty() {
             format!("bundled list from {} at {commit}", self.source.repository)

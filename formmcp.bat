@@ -2,6 +2,7 @@
 setlocal
 cd /d "%~dp0"
 if not defined FORMMCP_DEV_ROOTS for %%I in ("%~dp0..") do set "FORMMCP_DEV_ROOTS=%%~fI"
+if not defined FORMMCP_LAUNCHER set "FORMMCP_LAUNCHER=%~dp0formmcp.bat"
 
 if /I "%~1"=="mcp" (
   cargo build -q --release --locked -p formmcp-cli 1>&2 || exit /b 1
