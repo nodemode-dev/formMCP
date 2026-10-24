@@ -140,8 +140,8 @@ pub fn state(client: Client) -> ClientState {
     match client {
         Client::Claude => match which("claude") {
             None => ClientState { client, label, state: Link::NoClient, config: None, note: Some("the claude command is not installed on this computer".into()) },
-            Some(claude) => match Command::new(claude).args(["mcp", "get", SERVER_NAME]).output() {
-                Ok(out) if out.status.success() => {
+            Some(claude) => match Command::new(claude).args(["mcp", "get", SERVER_NAME]).current_dir(home()).output() {
+                Ok(out) if out.status.success() && String::from_utf8_lossy(&out.stdout).contains("Scope: User") => {
                     let s = if ours(&String::from_utf8_lossy(&out.stdout)) { Link::Connected } else { Link::Taken };
                     ClientState { client, label, state: s, config: None, note: taken(s) }
                 }

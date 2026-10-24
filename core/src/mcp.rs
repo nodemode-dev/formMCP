@@ -5,6 +5,7 @@ use serde_json::{json, Value};
 
 use crate::catalog;
 use crate::child::{call_timeout, AppServer};
+use crate::log;
 use crate::family::{App, Family};
 use crate::reach::Places;
 use crate::settings::Settings;
@@ -94,7 +95,16 @@ impl Gateway {
                 return Err(format!("{} cannot be reached: {how}", app.name));
             };
             let (program, args, dir) = route.command();
-            let server = AppServer::start(&program, &args, dir.as_ref()).map_err(|e| format!("{} did not start through {}: {e}", app.name, route.label()))?;
+            let started = std::time::Instant::now();
+            let server = match AppServer::start(&program, &args, dir.as_ref()) {
+                Ok(s) => s,
+                Err(e) => {
+                    let short: String = e.lines().next().unwrap_or_default().chars().take(200).collect();
+                    log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": false, "error": short, "ms": started.elapsed().as_millis() as u64 }));
+                    return Err(format!("{} did not start through {}: {e}", app.name, route.label()));
+                }
+            };
+            log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": true, "tools": server.tools.len(), "ms": started.elapsed().as_millis() as u64 }));
             self.running.insert(app.id.clone(), (route.label().to_string(), server));
         }
         self.running.get_mut(&app.id).ok_or_else(|| "the app's server is gone".to_string())
@@ -232,6 +242,8 @@ pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
         "initialize" => {
             let asked = params.get("protocolVersion").and_then(Value::as_str).unwrap_or(PROTOCOL);
             let version = if SUPPORTED.contains(&asked) { asked } else { PROTOCOL };
+            let client = params.get("clientInfo").cloned().unwrap_or(Value::Null);
+            log::record("session", json!({ "client": client.get("name"), "client_version": client.get("version"), "expose": gateway.settings.expose }));
             json!({
                 "protocolVersion": version,
                 "capabilities": { "tools": { "listChanged": !gateway.settings.expose.is_empty() } },
@@ -248,11 +260,19 @@ pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
         "tools/call" => {
             let name = params.get("name").and_then(Value::as_str).unwrap_or_default();
             let args = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
-            match call(gateway, name, &args) {
+            let started = std::time::Instant::now();
+            let answer = match call(gateway, name, &args) {
                 Ok(Outcome::Passed(result)) => result,
                 Ok(Outcome::Mine(v)) => json!({ "content": [{ "type": "text", "text": serde_json::to_string(&v).unwrap_or_default() }], "structuredContent": v, "isError": false }),
                 Err(e) => json!({ "content": [{ "type": "text", "text": e }], "isError": true }),
-            }
+            };
+            let (app, tool) = match name.split_once(EXPOSED_SEPARATOR) {
+                Some((id, t)) => (Some(id.to_string()), Some(t.to_string())),
+                None => (args.get("app").and_then(Value::as_str).map(str::to_string), args.get("tool").and_then(Value::as_str).map(str::to_string)),
+            };
+            let ok = !answer.get("isError").and_then(Value::as_bool).unwrap_or(false);
+            log::record("call", json!({ "name": name, "app": app, "tool": tool, "ok": ok, "ms": started.elapsed().as_millis() as u64 }));
+            answer
         }
         "resources/list" => json!({ "resources": [] }),
         "prompts/list" => json!({ "prompts": [] }),

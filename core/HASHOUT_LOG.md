@@ -2,8 +2,24 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.3.0
-Last updated: 2026-10-24 · the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.4.0
+Last updated: 2026-10-24 · the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.4.0 · the activity log {#v0-4-0}
+
+### log.rs · what the window shows, without arguments
+- refers-to: core/src/log.rs :: record, tail · core/src/mcp.rs :: answer (session, call), Gateway::server (app-start)
+- kind: decision
+- logged: v0.4.0 · 2026-10-24
+
+The window and the MCP server are different processes (each client starts its own server), so the server appends one JSON line per event to `log.jsonl` in formMCP's settings folder and the window reads it. Events: `session` (the client's name and version, the exposed apps), `call` (formMCP's tool name, the app and the app's tool when there is one, ok, milliseconds) and `app-start` (app, route, ok, tool count or the first line of the reason, milliseconds), each with time and process id. Tool arguments and results are never written: they can hold the person's files, text and paths. Past 1 MB the file is renamed to `log.1.jsonl` and a new one begun. `tail(from)` returns the complete lines after a byte offset and the offset to ask from next, at most the last 64 KB, starting over when the file shrank (after a rename); a partial last line is left for the next read.
+
+### clients.rs · Claude Code: user scope only
+- refers-to: core/src/clients.rs :: state (Client::Claude)
+- kind: fix
+- logged: v0.4.0 · 2026-10-24
+
+`claude mcp get formmcp` also finds a project's `.mcp.json` (this repository has one), so a window started inside the checkout reported Claude Code "Connected" with nothing at user scope. The check now runs in the home folder and counts an entry only when its output says `Scope: User`; a project entry is left out of the state and never touched. Checked with the real `claude` command against a scratch home: not connected, install (connected, user scope), remove (not connected). FormPortal's `client_state` has the same blind spot (logged in the family plan's notes for its next release).
 
 ## v0.3.0 · catalogue, suggestions, exposure, clients {#v0-3-0}
 

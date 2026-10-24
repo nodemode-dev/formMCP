@@ -27,8 +27,12 @@ pub fn path() -> PathBuf {
 }
 
 impl Settings {
+    pub fn saved() -> Settings {
+        std::fs::read_to_string(path()).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default()
+    }
+
     pub fn load() -> Settings {
-        let mut settings: Settings = std::fs::read_to_string(path()).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
+        let mut settings = Settings::saved();
         if let Ok(list) = std::env::var("FORMMCP_EXPOSE") {
             settings.expose = list.split(',').map(|s| s.trim().to_lowercase()).filter(|s| !s.is_empty()).collect();
         }
