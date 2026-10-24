@@ -30,4 +30,6 @@ Later versions read the signed family catalogue (`apps.json`) when it can be rea
 
 ## The window
 
+From v0.4.0 the shell answers four commands: `snapshot` (the family over the catalogue, each app's install state, route and switch, the three clients' states), `set_expose`, `connect` (one client, with this program as the launcher) and `log_tail`. Because each client starts its own formMCP server, the window learns what agents do from `log.jsonl` in formMCP's settings folder, which every server appends to: sessions, tool calls (names, app, outcome, time) and app starts. Arguments and results are never written.
+
 The page is built once from the same list. The body stays hidden (`html.booting`) until `main.ts` has created every row and filled the counts, then the class is removed: the first frame is the final layout, on the theme's ground colour, with no flash. The filter chips toggle `hidden` on the existing rows and rewrite one count line; nothing is rebuilt. Every `z-index` comes from `layers.css` and every colour, space and radius from `tokens.css` (the Form family tokens, with formMCP's orange and violet accents).

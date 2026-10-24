@@ -10,7 +10,7 @@ formMCP's MCP server is `formmcp mcp` (stdio). In this repository it is already 
 
 All three run `./formmcp mcp`, which builds the command line on first use. An installed formMCP answers the same way: `<the formMCP program> mcp`.
 
-For every project, add it to your user account instead:
+For every project, add it to your user account instead: in the formMCP window, press Connect beside Claude Code, Codex or Cursor (the installed app registers itself), or from a checkout:
 
 ```bash
 ./formmcp cli agents install                 # Claude Code, Codex and Cursor
@@ -19,7 +19,7 @@ For every project, add it to your user account instead:
 ./formmcp cli agents remove
 ```
 
-Claude Code is set up with `claude mcp add --scope user formmcp`; Codex gets `[mcp_servers.formmcp]` in `~/.codex/config.toml` (or `$CODEX_HOME`); Cursor gets `mcpServers.formmcp` in `~/.cursor/mcp.json`. Each file is copied to `<name>.bak-<time>` before it changes, other servers are left as they are, and a server named `formmcp` that formMCP did not write is reported `taken` and left alone. The entry starts the `./formmcp` launcher of this checkout and carries the formMCP settings that are set in your shell (`FORMMCP_DEV_ROOTS`, `FORMPORTAL_ROOT`, `FORMPORTAL_BIN`, `FORMMCP_CATALOG`, `FORMAI_CATALOG_PUBKEY`).
+Claude Code is set up with `claude mcp add --scope user formmcp` (only a user-scope entry counts as connected; a project's `.mcp.json`, like this repository's, is left alone); Codex gets `[mcp_servers.formmcp]` in `~/.codex/config.toml` (or `$CODEX_HOME`); Cursor gets `mcpServers.formmcp` in `~/.cursor/mcp.json`. Each file is copied to `<name>.bak-<time>` before it changes, other servers are left as they are, and a server named `formmcp` that formMCP did not write is reported `taken` and left alone. The entry starts the `./formmcp` launcher of this checkout and carries the formMCP settings that are set in your shell (`FORMMCP_DEV_ROOTS`, `FORMPORTAL_ROOT`, `FORMPORTAL_BIN`, `FORMMCP_CATALOG`, `FORMAI_CATALOG_PUBKEY`).
 
 ## Tools
 
@@ -47,7 +47,11 @@ An app's server inherits formMCP's environment, so what an app needs (form.md's 
 
 ## Always showing one app's tools
 
-For an app you use all the time, `./formmcp cli expose formvis on` (saved in formMCP's `settings.json`; `FORMMCP_EXPOSE=formvis,formai` does the same for one session) makes formMCP start it when the client lists tools and show its tools directly, as `formvis__<tool>`, described with `[FormVis]` in front. The client then sees them without `app_tools`; formMCP tells it when the app's tools change. Off for every app by default, because each exposed app costs its whole tool list in every conversation. `expose formvis off` takes it out.
+For an app you use all the time, turn on "Always show tools" on its card in the window, or run `./formmcp cli expose formvis on` (saved in formMCP's `settings.json`; `FORMMCP_EXPOSE=formvis,formai` does the same for one session) makes formMCP start it when the client lists tools and show its tools directly, as `formvis__<tool>`, described with `[FormVis]` in front. The client then sees them without `app_tools`; formMCP tells it when the app's tools change. Off for every app by default, because each exposed app costs its whole tool list in every conversation. `expose formvis off` takes it out.
+
+## Activity
+
+Every formMCP server appends one line per event to `log.jsonl` in formMCP's settings folder: a session starting (the client's name), each tool call (formMCP's tool, the app and the app's tool, whether it worked, how long it took) and each app server started (route, tool count, or why not). Arguments and results are never recorded. The window's Activity panel shows it as it happens; the file rolls over at 1 MB.
 
 ## Where the list comes from
 
