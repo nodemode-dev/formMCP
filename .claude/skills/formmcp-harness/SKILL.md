@@ -11,7 +11,7 @@ formMCP is one MCP server for the whole Form family. It keeps the conversation s
 
 | Tool | Changes anything | What it does |
 | --- | --- | --- |
-| `family_apps` | no | every Form app: `id`, `name`, `kind`, a one-line `summary`, `mcp` (it has an MCP server), `skills`, `state` (`live`, `public`, `prelaunch`), `installed` (by FormPortal on this computer) and `reach` (`dev`, `formportal`, or null: how formMCP can start its server here); `mcp_only: true` keeps the apps with a server |
+| `family_apps` | no | every Form app: `id`, `name`, `kind`, a one-line `summary`, `mcp` (it has an MCP server), `state` (`live`, `public`, `prelaunch`), `installed` (by FormPortal on this computer) and `reach` (`dev`, `formportal`, or null: how formMCP can start its server here); `mcp_only: true` keeps the apps with a server |
 | `suggest_app` | no | the person's `task` in their words in, up to five apps out (best first), each with `installed`, `reach` and `next`: call `app_tools`, install it with FormPortal, install FormPortal first, or why an agent cannot drive it yet |
 | `app_tools` | no | starts one app's own server (or reuses it) and returns its tools with input schemas, its name and version, and its instructions; `refresh: true` asks again |
 | `call_app` | what the app's tool changes | runs one of that app's tools with `arguments` and returns the app's own result unchanged |

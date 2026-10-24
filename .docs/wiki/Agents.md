@@ -25,12 +25,12 @@ Claude Code is set up with `claude mcp add --scope user formmcp` (only a user-sc
 
 | Tool | Changes anything | Returns |
 | --- | --- | --- |
-| `family_apps` | no | every Form app (`id`, `name`, `kind`, `summary`, `mcp`, `skills`, `state`, `installed`, `reach`) and where the list came from; `mcp_only` keeps the apps with an MCP server |
+| `family_apps` | no | every Form app (`id`, `name`, `kind`, `summary`, `mcp`, `state`, `installed`, `reach`) and where the list came from; `mcp_only` keeps the apps with an MCP server |
 | `suggest_app` | no | for a task in the person's words, up to five apps, best first, each with `installed`, `reach` and the next step (load its tools, install it with FormPortal, install FormPortal first, or why an agent cannot drive it yet) |
 | `app_tools` | no | one app's own tools with their input schemas, its server name and version, and its instructions; starts its server the first time |
 | `call_app` | what the app's tool changes | the app's own result for one of its tools, unchanged |
 
-The list is short on purpose: one line per app and no app's tools. An app's tools enter the conversation only when `app_tools` is called for it, so formMCP stays small however many apps are installed. The server's instructions tell the agent that formMCP never installs and that FormPortal installs and updates the Form apps.
+The list is short on purpose: one line per app and no app's tools. An app's tools enter the conversation only when `app_tools` is called for it, so formMCP stays small however many apps are installed. The server's instructions tell the agent that formMCP never installs and that FormPortal installs and updates the Form apps, and that formMCP does not handle skills: the Form apps' released skills are in formskills.
 
 ## How an app's server is started
 
