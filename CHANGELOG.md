@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.1 · 2026-10-24
+
+- Skills are no longer part of formMCP: the window's Skills filter and badge, and the `skills` field in `family_apps` and `./formmcp cli apps`, are gone. The Form apps' released skills are in formskills, and formMCP tells agents so.
+
 ## v0.4.0 · 2026-10-24
 
 - The window connects formMCP to Claude Code, Codex and Cursor with one button each, and shows whether each is connected.
