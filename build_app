@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+ROOT="$(pwd)"
+
+usage() {
+  cat <<'EOF'
+./build_app            build formMCP's desktop app from this folder, start to finish (macOS and Linux)
+  --no-install         macOS: leave the built app where it is instead of copying it to Applications
+  --install            Linux: install the built package (.deb with apt, or .rpm with dnf; asks for your password)
+  --open               open the app when the build is done
+  --clean              rebuild the Rust side from nothing
+  --bundles <list>     Linux: the package kinds to make, comma separated (default deb,rpm,appimage)
+Every step's output goes to build_app.log beside this file. On Windows run build_app.bat.
+EOF
+}
+
+install_app=auto open_app=0 clean=0 bundles="${FORMMCP_BUNDLES:-deb,rpm,appimage}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --no-install) install_app=no ;;
+    --install) install_app=yes ;;
+    --open) open_app=1 ;;
+    --clean) clean=1 ;;
+    --bundles) shift; bundles="${1:?--bundles needs a list, for example deb,rpm}" ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+log="$ROOT/build_app.log"
+: > "$log"
+exec > >(tee -a "$log") 2>&1
+trap 'status=$?; [ $status -eq 0 ] || printf "\n[formmcp] the build stopped (exit %s). The full log is %s\n" "$status" "$log"' EXIT
+
+say() { printf '[formmcp] %s\n' "$*"; }
+die() { say "$*"; exit 1; }
+step() { printf '\n[formmcp] == %s\n' "$*"; }
+rust_env() { [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env" || true; }
+
+case "$(uname -s)" in
+  Darwin) os=macos ;;
+  Linux) os=linux ;;
+  *) die "build_app runs on macOS and Linux; on Windows run build_app.bat" ;;
+esac
+
+step "checking the tools"
+if [ "$os" = macos ]; then
+  xcode-select -p >/dev/null 2>&1 || die "the Xcode command line tools are missing: run xcode-select --install, then ./build_app again"
+fi
+command -v node >/dev/null 2>&1 || die "Node 20.19 or newer is required (on macOS: brew install node; on Linux: https://nodejs.org)"
+node -e 'const [a,b]=process.versions.node.split(".").map(Number); process.exit(a>22||(a===22&&b>=12)||(a===20&&b>=19)?0:1)' \
+  || die "Node $(node -v) is too old; Vite needs 20.19 or 22.12 or newer"
+rust_env
+if ! command -v cargo >/dev/null 2>&1; then
+  command -v curl >/dev/null 2>&1 || die "Rust is required and curl is missing to install it: https://rustup.rs"
+  say "installing Rust with rustup (https://rustup.rs) into ~/.cargo; your shell profile is not changed"
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path
+  rust_env
+fi
+command -v cargo >/dev/null 2>&1 || die "cargo is still not on PATH after installing Rust; open a new terminal and run ./build_app again"
+if [ "$os" = linux ]; then
+  missing=()
+  command -v pkg-config >/dev/null 2>&1 || missing+=(pkg-config)
+  for lib in webkit2gtk-4.1 gtk+-3.0 librsvg-2.0; do
+    command -v pkg-config >/dev/null 2>&1 && ! pkg-config --exists "$lib" && missing+=("$lib")
+  done
+  if [ ${#missing[@]} -gt 0 ]; then
+    say "the window needs these build packages, missing: ${missing[*]}"
+    say "  Debian, Ubuntu:  sudo apt-get install libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev pkg-config build-essential file"
+    say "  Fedora:          sudo dnf install webkit2gtk4.1-devel libappindicator-gtk3-devel librsvg2-devel openssl-devel pkgconf-pkg-config gcc file"
+    say "  Arch:            sudo pacman -S --needed webkit2gtk-4.1 libappindicator-gtk3 librsvg openssl pkgconf base-devel file"
+    die "install them, then run ./build_app again"
+  fi
+fi
+say "node $(node -v), $(rustc -V), $(cargo -V | awk '{print $1, $2}')"
+
+step "installing the interface packages and the Rust crates"
+./formmcp_oc_install
+
+if [ "$clean" = 1 ]; then
+  step "cleaning earlier builds"
+  cargo clean
+  rm -rf frontend/dist
+fi
+
+tauri_args=(build)
+case "$os" in
+  macos)
+    tauri_args+=(--bundles app)
+    [ -n "${APPLE_SIGNING_IDENTITY:-}" ] || tauri_args+=(--config '{"bundle":{"macOS":{"signingIdentity":"-"}}}')
+    ;;
+  linux) tauri_args+=(--bundles "$bundles") ;;
+esac
+
+step "building the desktop app (the interface first, then the Rust side; the first build compiles a few hundred crates)"
+frontend/node_modules/.bin/tauri "${tauri_args[@]}"
+
+bundle="$ROOT/target/release/bundle"
+version="$(node -p 'require("./src-tauri/tauri.conf.json").version')"
+
+if [ "$os" = macos ]; then
+  app="$bundle/macos/formMCP.app"
+  [ -d "$app" ] || die "the build finished but $app is missing"
+  codesign --verify --deep --strict "$app" 2>/dev/null || say "codesign could not verify the app; it is ad-hoc signed, so macOS may ask once before it opens"
+  step "packing the disk image"
+  mkdir -p "$bundle/dmg"
+  dmg="$bundle/dmg/formMCP_${version}_$(uname -m).dmg"
+  stage="$(mktemp -d)"
+  ditto "$app" "$stage/formMCP.app"
+  ln -s /Applications "$stage/Applications"
+  rm -f "$dmg"
+  hdiutil create -quiet -volname formMCP -srcfolder "$stage" -ov -format UDZO "$dmg"
+  rm -rf "$stage"
+  say "app: $app"
+  say "disk image: $dmg"
+  target_app=""
+  if [ "$install_app" != no ]; then
+    dest=/Applications
+    [ -w "$dest" ] || { dest="$HOME/Applications"; mkdir -p "$dest"; }
+    rm -rf "$dest/formMCP.app"
+    ditto "$app" "$dest/formMCP.app"
+    xattr -dr com.apple.quarantine "$dest/formMCP.app" 2>/dev/null || true
+    target_app="$dest/formMCP.app"
+    say "installed: $target_app"
+  fi
+  if [ "$open_app" = 1 ]; then open "${target_app:-$app}"; fi
+else
+  deb=""; rpm=""; appimage=""
+  case ",$bundles," in *,deb,*) deb="$(ls -t "$bundle"/deb/*"_${version}_"*.deb 2>/dev/null | head -1 || true)" ;; esac
+  case ",$bundles," in *,rpm,*) rpm="$(ls -t "$bundle"/rpm/*"-${version}-"*.rpm 2>/dev/null | head -1 || true)" ;; esac
+  case ",$bundles," in *,appimage,*) appimage="$(ls -t "$bundle"/appimage/*"_${version}_"*.AppImage 2>/dev/null | head -1 || true)" ;; esac
+  [ -n "$deb" ] && say "deb: $deb"
+  [ -n "$rpm" ] && say "rpm: $rpm"
+  [ -n "$appimage" ] && say "AppImage: $appimage"
+  if [ "$install_app" = yes ]; then
+    if [ -n "$deb" ] && command -v apt-get >/dev/null 2>&1; then
+      sudo apt-get install -y "$deb"
+    elif [ -n "$rpm" ] && command -v dnf >/dev/null 2>&1; then
+      sudo dnf install -y "$rpm"
+    else
+      say "no package manager here takes the built packages; run the AppImage, or install the .deb or .rpm by hand"
+    fi
+  elif [ -n "$deb$rpm" ]; then
+    say "install it with ./build_app --install, or: sudo apt install ./<the .deb>   (Fedora: sudo dnf install ./<the .rpm>)"
+  fi
+  if [ "$open_app" = 1 ]; then
+    if [ -n "$appimage" ]; then nohup "$appimage" >/dev/null 2>&1 &
+    else nohup "$ROOT/target/release/formmcp" >/dev/null 2>&1 &
+    fi
+  fi
+fi
+say "done in ${SECONDS}s"
