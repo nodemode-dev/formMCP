@@ -2,8 +2,17 @@
 
 Living log for formMCP's desktop shell. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.1.0
-Last updated: 2026-10-24 · the shell, and `formmcp mcp` without a window
+Current build version: v0.4.0
+Last updated: 2026-10-24 · the window's commands; the shell, and `formmcp mcp` without a window
+
+## v0.4.0 · the window's commands {#v0-4-0}
+
+### lib.rs · snapshot, set_expose, connect, log_tail
+- refers-to: src/lib.rs :: snapshot_now, snapshot, set_expose, connect, log_tail
+- kind: decision
+- logged: v0.4.0 · 2026-10-24
+
+`snapshot` gathers, off the main thread (`spawn_blocking`, since the catalogue may wait up to 8 s on the network and `claude mcp get` starts a process): the family from the catalogue over the built-in list, each app's install state, route, version and switch, the three clients' states, whether FormPortal is on this computer, and whether `FORMMCP_EXPOSE` overrides the saved switches. `set_expose` writes only `settings.json` (read without the environment override, so a session variable never gets saved). `connect` adds or removes formMCP in one client with this program and `mcp` as the launcher, so an installed copy registers itself. `log_tail` passes the activity log through. The window is 900 by 780 (minimum 560 by 560) to hold the clients strip, the list and the activity panel. Checked under Xvfb with a scratch home and a real session's log: the window shows the clients, every app's local line, the status line, the activity rows and the source.
 
 ## v0.1.0 · the shell {#v0-1-0}
 

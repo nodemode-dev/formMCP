@@ -21,6 +21,24 @@
         </div>
         <span class="version" id="version" translate="no"></span>
       </header>
+      <section class="clients" aria-label="Agent clients">
+        <div class="client" data-client="claude">
+          <span class="client-name" translate="no">Claude Code</span>
+          <span class="client-state" data-state></span>
+          <button class="btn" type="button" data-connect disabled>Connect</button>
+        </div>
+        <div class="client" data-client="codex">
+          <span class="client-name" translate="no">Codex</span>
+          <span class="client-state" data-state></span>
+          <button class="btn" type="button" data-connect disabled>Connect</button>
+        </div>
+        <div class="client" data-client="cursor">
+          <span class="client-name" translate="no">Cursor</span>
+          <span class="client-state" data-state></span>
+          <button class="btn" type="button" data-connect disabled>Connect</button>
+        </div>
+      </section>
+      <p class="status" id="status" aria-live="polite"></p>
       <div class="tools">
         <div class="chips" role="group" aria-label="Show">
           <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
@@ -30,6 +48,13 @@
         <p class="count" id="count" aria-live="polite"></p>
       </div>
       <ul class="apps" id="apps"></ul>
+      <section class="log" aria-label="Activity">
+        <div class="log-head">
+          <span class="log-title">Activity</span>
+          <span class="log-hint">Sessions, tool calls and app starts through formMCP. Arguments are never recorded.</span>
+        </div>
+        <ol class="log-list" id="log"></ol>
+      </section>
       <footer class="foot">
         <span translate="no">by nodemode.ai</span>
         <span class="source" id="source"></span>
