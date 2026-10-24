@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.2 · 2026-10-24
+
+- formMCP is a registered Form app: formcompiler builds and releases it, and FormPortal, FormTray and FormRanker know it as `formmcp`, formMCP, `ai.nodemode.formmcp`.
+- `./build_app` (macOS and Linux) and `build_app.bat` (Windows) build the desktop app and its installers.
+- The family list includes formskills, and no longer could include formMCP itself.
+
 ## v0.4.1 · 2026-10-24
 
 - Skills are no longer part of formMCP: the window's Skills filter and badge, and the `skills` field in `family_apps` and `./formmcp cli apps`, are gone. The Form apps' released skills are in formskills, and formMCP tells agents so.

@@ -17,6 +17,8 @@
 ./formmcp cli reach       # how each app's server would be started on this computer
 ```
 
+To build the desktop app and its installers on your own machine: `./build_app` (macOS and Linux; `--no-install`, `--install`, `--open`, `--clean`, `--bundles deb,rpm,appimage`; the log is `build_app.log`) or `build_app.bat` on Windows. formcompiler runs the same scripts for releases.
+
 Keep Form app checkouts beside this one (for example `~/code/formMCP` and `~/code/formvis`) and `./formmcp` finds them; `FORMMCP_DEV_ROOTS` names other folders. See [Agents](Agents) for every route and setting.
 
 On Windows: `formmcp_oc_install.bat`, then `formmcp.bat`, `formmcp.bat mcp`, `formmcp.bat cli apps`.

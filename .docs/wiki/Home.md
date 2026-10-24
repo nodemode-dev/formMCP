@@ -2,7 +2,7 @@
 
 formMCP is one MCP server for the whole Form family. Add it to Claude Code, Codex or Cursor once, and the agent can see every Form app, with one line on what each is for, and whether it has an MCP server, whether or not any app is installed.
 
-**Current version:** v0.4.1 · **Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript and Vite window · **Team:** one owner (nodemode-ai)
+**Current version:** v0.4.2 · **Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript and Vite window · **Team:** one owner (nodemode-ai)
 
 | Page | What it covers |
 | --- | --- |
@@ -21,4 +21,4 @@ formMCP is one MCP server for the whole Form family. Add it to Claude Code, Code
 
 ## What comes next
 
-Per the family plan (Phase 5): formMCP in formcompiler's registry, released like every Form app, and its id and name aligned across FormPortal, FormTray and FormRanker.
+formMCP is in formcompiler's registry (v0.4.2) under the same id and name as in FormPortal, FormTray and FormRanker. What remains is the owner's: the first push and `compile_v0.4.2` branch, and the family's catalogue key pair.
