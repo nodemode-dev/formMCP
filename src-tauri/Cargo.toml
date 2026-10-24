@@ -1,0 +1,18 @@
+[package]
+name = "formmcp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "formMCP: one connection from Claude Code, Codex and Cursor to the Form family"
+
+[lib]
+name = "formmcp_shell"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+formmcp-core = { path = "../core" }
+tauri = { version = "2", features = [] }

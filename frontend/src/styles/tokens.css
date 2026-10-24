@@ -1,0 +1,79 @@
+:root {
+  color-scheme: dark;
+
+  --ground: #14161b;
+  --pane: #1b1e25;
+  --float: #242833;
+  --control: rgb(255 255 255 / 0.08);
+  --control-hover: rgb(255 255 255 / 0.14);
+  --control-press: rgb(255 255 255 / 0.2);
+  --edge: rgb(255 255 255 / 0.1);
+  --edge-strong: rgb(255 255 255 / 0.22);
+  --sheen: rgb(255 255 255 / 0.16);
+  --ink: #eef0f4;
+  --ink-soft: #b4bac8;
+  --ink-faint: #7a8193;
+  --fault: #ff5d6c;
+  --live: #3ddc84;
+  --focus: #eef0f4;
+  --select: rgb(255 255 255 / 0.16);
+  --shadow: 0 18px 48px rgb(0 0 0 / 0.35);
+
+  --glass-fill: rgb(30 33 41 / 0.18);
+  --glass-solid: rgb(27 30 37 / 0.94);
+
+  --accent: #f97316;
+  --accent-2: #8b5cf6;
+  --accent-soft: rgb(249 115 22 / 0.16);
+  --accent-2-soft: rgb(139 92 246 / 0.18);
+
+  --radius-s: 8px;
+  --radius-m: 14px;
+  --radius-l: 22px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  --icon-s: 40px;
+  --icon-m: 64px;
+  --icon-l: 88px;
+
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", "Segoe UI", Ubuntu, Cantarell, system-ui, sans-serif;
+  --fs-s: 11px;
+  --fs-m: 13px;
+  --fs-l: 15px;
+  --fs-xl: 26px;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --quick: 120ms;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --ground: #f4f5f8;
+    --pane: #ffffff;
+    --float: #ffffff;
+    --control: rgb(0 0 0 / 0.06);
+    --control-hover: rgb(0 0 0 / 0.1);
+    --control-press: rgb(0 0 0 / 0.16);
+    --edge: rgb(0 0 0 / 0.08);
+    --edge-strong: rgb(0 0 0 / 0.16);
+    --sheen: rgb(255 255 255 / 0.6);
+    --ink: #15171c;
+    --ink-soft: #464b57;
+    --ink-faint: #7a8193;
+    --focus: #15171c;
+    --select: rgb(0 0 0 / 0.1);
+    --shadow: 0 18px 48px rgb(0 0 0 / 0.16);
+    --glass-fill: rgb(255 255 255 / 0.14);
+    --glass-solid: rgb(246 247 250 / 0.95);
+  }
+}

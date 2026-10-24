@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" class="booting">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <title>formMCP</title>
+    <link rel="icon" href="/formmcp.png" />
+    <link rel="stylesheet" href="/src/styles/tokens.css" />
+    <link rel="stylesheet" href="/src/styles/layers.css" />
+    <link rel="stylesheet" href="/src/styles/app.css" />
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="bar">
+        <img class="mark" src="/formmcp.png" width="32" height="32" alt="" />
+        <div class="title">
+          <h1 translate="no">formMCP</h1>
+          <p class="sub">One connection from Claude Code, Codex and Cursor to the Form family</p>
+        </div>
+        <span class="version" id="version" translate="no"></span>
+      </header>
+      <div class="tools">
+        <div class="chips" role="group" aria-label="Show">
+          <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+          <button class="chip" type="button" data-filter="mcp" aria-pressed="false">MCP server</button>
+          <button class="chip" type="button" data-filter="skills" aria-pressed="false">Skills</button>
+        </div>
+        <p class="count" id="count" aria-live="polite"></p>
+      </div>
+      <ul class="apps" id="apps"></ul>
+      <footer class="foot">
+        <span translate="no">by nodemode.ai</span>
+        <span class="source" id="source"></span>
+      </footer>
+    </div>
+  </body>
+</html>

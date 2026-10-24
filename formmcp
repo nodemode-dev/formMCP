@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -e
+cd "$(dirname "$0")"
+
+cli() {
+  bin=target/release/formmcp-cli
+  if [ ! -x "$bin" ] || [ -n "$(find cli core Cargo.toml -newer "$bin" \( -name '*.rs' -o -name '*.toml' -o -name '*.json' \) 2>/dev/null | head -1)" ]; then
+    command -v cargo >/dev/null || { echo "Rust is required: https://rustup.rs. Then run ./formmcp_oc_install" >&2; exit 1; }
+    cargo build -q --release --locked -p formmcp-cli >&2
+  fi
+  exec "$bin" "$@"
+}
+
+case "${1:-}" in
+  cli) shift; cli "$@" ;;
+  mcp) cli mcp ;;
+  family) shift; exec python3 setup/family.py "$@" ;;
+esac
+
+command -v cargo >/dev/null || { echo "Rust is required: https://rustup.rs. Then run ./formmcp_oc_install"; exit 1; }
+[ -d frontend/node_modules ] || { echo "Run ./formmcp_oc_install first."; exit 1; }
+
+set -m
+interface=
+stop() {
+  trap - EXIT INT TERM
+  [ -n "$interface" ] && kill -- "-$interface" 2>/dev/null || true
+}
+trap stop EXIT INT TERM
+
+( cd frontend && ./boot_frontend ) &
+interface=$!
+
+for _ in $(seq 1 100); do
+  (exec 3<>/dev/tcp/localhost/5620) 2>/dev/null && break
+  sleep 0.2
+done
+
+cargo run -p formmcp -- "$@"
