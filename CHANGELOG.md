@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.0 · 2026-10-24
+
+- The window connects formMCP to Claude Code, Codex and Cursor with one button each, and shows whether each is connected.
+- Each app's card shows whether it is installed, its version and how formMCP reaches it, and, for apps with an MCP server, an "Always show tools" switch.
+- An Activity panel shows sessions, tool calls and app starts as they happen, from a log every formMCP server writes; arguments and results are never recorded.
+- Claude Code counts as connected only when formMCP is in your user settings; a project's `.mcp.json` no longer reads as connected.
+
 ## v0.3.0 · 2026-10-24
 
 - `suggest_app`: the task in the person's words in, the Form apps that fit out, best first, each with the next step (load its tools, install it with FormPortal, install FormPortal first, or why an agent cannot drive it yet).
