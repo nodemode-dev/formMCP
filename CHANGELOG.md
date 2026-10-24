@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.3.0 · 2026-10-24
+
+- `suggest_app`: the task in the person's words in, the Form apps that fit out, best first, each with the next step (load its tools, install it with FormPortal, install FormPortal first, or why an agent cannot drive it yet).
+- The family list comes from the signed family catalogue, checked against the same keys FormPortal trusts, with FormPortal's kept copy when offline and the built-in list as the fallback; every answer says which list was used and why.
+- One app's own tools can be shown directly in formMCP's tool list (`./formmcp cli expose <id> on`).
+- `./formmcp cli agents install` adds formMCP to Claude Code, Codex and Cursor for your user account (`status`, `remove`), backing up each file and leaving other servers alone.
+
 ## v0.2.0 · 2026-10-24
 
 - formMCP reaches each Form app's own MCP server: `app_tools` starts it and lists its tools, `call_app` runs one and returns the app's result unchanged. Only the app the task needs is loaded.

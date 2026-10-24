@@ -902,7 +902,7 @@ dependencies = [
 
 [[package]]
 name = "formmcp"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "formmcp-core",
  "tauri",
@@ -911,7 +911,7 @@ dependencies = [
 
 [[package]]
 name = "formmcp-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "formmcp-core",
  "serde_json",
@@ -919,7 +919,7 @@ dependencies = [
 
 [[package]]
 name = "formmcp-core"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "base64 0.22.1",
  "ed25519-dalek",
