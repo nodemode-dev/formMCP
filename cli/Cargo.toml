@@ -1,0 +1,15 @@
+[package]
+name = "formmcp-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "formMCP on the command line: the family list and the MCP server over stdio."
+
+[[bin]]
+name = "formmcp-cli"
+path = "src/main.rs"
+
+[dependencies]
+formmcp-core = { path = "../core" }
+serde_json = "1"

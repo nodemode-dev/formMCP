@@ -1,0 +1,11 @@
+[package]
+name = "formmcp-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "formMCP's engine: the Form family list and the MCP server over stdio. No window."
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
