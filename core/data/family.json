@@ -3,8 +3,8 @@
   "format_version": 1,
   "source": {
     "repository": "nodemode-ai/formcompiler",
-    "version": "0.4.0",
-    "commit": "30943accdd5e7f63c9062fdd596b841cc18eaedd"
+    "version": "0.4.1",
+    "commit": "7c92f91e2a3fb7a0ddb4cdddfc81ead9771240db"
   },
   "apps": [
     {
@@ -162,6 +162,18 @@
       "state": "prelaunch",
       "released": true,
       "mcp": true
+    },
+    {
+      "id": "formskills",
+      "app": "formskills",
+      "name": "formskills",
+      "kind": "skill",
+      "summary": "The Form apps' released skills: read them, download them, keep your own edits.",
+      "repository": "https://github.com/nodemode-ai/formskills",
+      "launcher": "formskills",
+      "state": "prelaunch",
+      "released": true,
+      "mcp": false
     },
     {
       "id": "formslide",

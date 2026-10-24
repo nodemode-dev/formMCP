@@ -2,8 +2,17 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.4.1
-Last updated: 2026-10-24 · skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.4.2
+Last updated: 2026-10-24 · formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.4.2 · formMCP in the registry, never in its own list {#v0-4-2}
+
+### setup/family.py, catalog.rs · formMCP leaves itself out
+- refers-to: setup/family.py :: SELF, build · core/src/catalog.rs :: SELF_ID, merge
+- kind: decision
+- logged: v0.4.2 · 2026-10-24
+
+formcompiler 0.4.1 registers formMCP (`apps/formMCP.json`, `formmcp`, with an MCP server). Listed in its own family, formMCP would offer `app_tools formmcp`, which starts another formMCP inside this one, and `suggest_app` could suggest it to an agent already using it. The generator skips the entry whose `app` is `formMCP`, and the catalogue merge skips the product `formmcp`, so neither the built-in list nor a released catalogue puts it back. Regenerated from formcompiler 0.4.1 (7c92f91): 22 apps, formskills new among them; `family_apps` is 4,421 bytes; a task about reading and downloading the Form apps' skills suggests formskills first.
 
 ## v0.4.1 · skills out of formMCP {#v0-4-1}
 

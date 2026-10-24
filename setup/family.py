@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "core" / "data" / "family.json"
 FORMAT = "formmcp-family"
+SELF = "formMCP"
 
 
 def git(repo, *args):
@@ -24,6 +25,8 @@ def build(compiler):
     apps = []
     for path in sorted(apps_dir.glob("*.json")):
         entry = json.loads(path.read_text(encoding="utf-8"))
+        if entry["app"] == SELF:
+            continue
         catalog = entry["catalog"]
         agents = entry.get("agents") or {"mcp": False}
         apps.append({

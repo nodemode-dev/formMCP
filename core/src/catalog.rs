@@ -13,6 +13,7 @@ pub const DEFAULT_CATALOG: &str = "https://github.com/nodemode-ai/formcompiler/r
 pub const KEY_ENV: &str = "FORMAI_CATALOG_PUBKEY";
 const TRUSTED_KEYS: &str = include_str!("../catalog_keys.txt");
 const CATALOG_FORMAT: &str = "formai-catalog";
+const SELF_ID: &str = "formmcp";
 const LOOPBACK: [&str; 4] = ["http://127.0.0.1:", "http://127.0.0.1/", "http://localhost:", "http://localhost/"];
 
 #[derive(Deserialize)]
@@ -116,7 +117,7 @@ fn read_source() -> Result<(Vec<u8>, Option<String>, String), String> {
 }
 
 fn merge(mut family: Family, products: Vec<Product>) -> Family {
-    for product in products {
+    for product in products.into_iter().filter(|p| p.id != SELF_ID) {
         let version = product.channels.get("stable").or_else(|| product.channels.get("beta")).map(|r| r.version.clone()).unwrap_or_default();
         let released = !product.channels.is_empty();
         match family.apps.iter_mut().find(|a| a.id == product.id) {
