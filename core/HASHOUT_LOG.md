@@ -2,8 +2,17 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.4.0
-Last updated: 2026-10-24 · the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.4.1
+Last updated: 2026-10-24 · skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.4.1 · skills out of formMCP {#v0-4-1}
+
+### family.rs, catalog.rs, mcp.rs, setup/family.py · no `skills` field
+- refers-to: core/src/family.rs :: App · core/src/catalog.rs :: Agents, merge · core/src/mcp.rs :: INSTRUCTIONS, family_apps · setup/family.py :: build · cli/src/main.rs :: HELP
+- kind: decision
+- logged: v0.4.1 · 2026-10-24
+
+The owner: "the skills need to be formskills and not in formMCP". formMCP is tools only: the family list no longer carries whether an app ships skills, the catalogue's `agents.skills` is not read (serde ignores the field), and `family.json` was regenerated from formcompiler 0.4.0 (30943ac) without it. The server's instructions end by saying formMCP does not handle skills and that the Form apps' released skills are viewed and downloaded in formskills, so an agent asked for a skill is sent there instead of guessing. formMCP's own agent skill (`.claude/skills/formmcp-harness`) stays in the checkout: it is the source of formMCP's released skills asset, the same as every Form app's, and formskills is where it is shown.
 
 ## v0.4.0 · the activity log {#v0-4-0}
 

@@ -40,8 +40,6 @@ struct Product {
 struct Agents {
     #[serde(default)]
     mcp: bool,
-    #[serde(default)]
-    skills: bool,
 }
 
 #[derive(Deserialize)]
@@ -131,11 +129,10 @@ fn merge(mut family: Family, products: Vec<Product>) -> Family {
                 app.released = released || app.released;
                 if let Some(agents) = product.agents {
                     app.mcp = agents.mcp;
-                    app.skills = agents.skills;
                 }
             }
             None => {
-                let agents = product.agents.unwrap_or(Agents { mcp: false, skills: false });
+                let agents = product.agents.unwrap_or(Agents { mcp: false });
                 family.apps.push(App {
                     app: product.id.clone(),
                     launcher: product.id.clone(),
@@ -148,7 +145,6 @@ fn merge(mut family: Family, products: Vec<Product>) -> Family {
                     state: product.state,
                     released,
                     mcp: agents.mcp,
-                    skills: agents.skills,
                 });
             }
         }

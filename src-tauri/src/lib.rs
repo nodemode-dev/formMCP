@@ -13,7 +13,7 @@ fn snapshot_now() -> Result<Value, String> {
         .map(|a| {
             let reach = places.reach(a);
             json!({
-                "id": a.id, "name": a.name, "kind": a.kind, "summary": a.summary, "mcp": a.mcp, "skills": a.skills,
+                "id": a.id, "name": a.name, "kind": a.kind, "summary": a.summary, "mcp": a.mcp,
                 "state": a.state, "version": a.version, "installed": reach.installed,
                 "reach": reach.route.as_ref().map(|r| r.label()), "exposed": settings.expose.contains(&a.id)
             })

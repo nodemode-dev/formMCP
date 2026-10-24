@@ -192,12 +192,6 @@ html.booting body {
   color: var(--ink);
 }
 
-.badge-skills.is-on {
-  border: 1px solid transparent;
-  background: var(--accent-2-soft);
-  color: var(--ink);
-}
-
 .state {
   margin-left: auto;
   color: var(--ink-faint);

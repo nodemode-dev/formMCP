@@ -114,12 +114,12 @@ impl Gateway {
 const PROTOCOL: &str = "2025-06-18";
 const SUPPORTED: [&str; 4] = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 
-const INSTRUCTIONS: &str = "formMCP is the one connection to the Form family of desktop apps (image, video, audio, layout, vector, notes and more, by nodemode.ai). Call suggest_app with the person's task to get the app that fits and the next step, or family_apps for the whole list (whether each app has an MCP server and whether this computer can reach it). For a reachable app, app_tools starts it and lists its own tools, and call_app runs one of them; load one app at a time, only when the task needs it. formMCP never installs anything: when an app is missing, tell the person which one fits and that FormPortal installs and updates the Form apps.";
+const INSTRUCTIONS: &str = "formMCP is the one connection to the Form family of desktop apps (image, video, audio, layout, vector, notes and more, by nodemode.ai). Call suggest_app with the person's task to get the app that fits and the next step, or family_apps for the whole list (whether each app has an MCP server and whether this computer can reach it). For a reachable app, app_tools starts it and lists its own tools, and call_app runs one of them; load one app at a time, only when the task needs it. formMCP never installs anything: when an app is missing, tell the person which one fits and that FormPortal installs and updates the Form apps. formMCP does not handle skills: the Form apps' released skills are viewed and downloaded in formskills.";
 
 fn tools() -> Value {
     json!([
         { "name": "family_apps", "title": "The Form family",
-          "description": "Every Form app: id, name, what kind of work it does, one line on what it is for, whether it has an MCP server agents can use, whether it ships skills, its release state (live, public or prelaunch), whether FormPortal installed it on this computer, and reach: how formMCP can start its server here (dev for a local checkout, formportal for an install, null when it cannot). Use it to pick the app that fits a task. Short on purpose: no app's tools are listed here.",
+          "description": "Every Form app: id, name, what kind of work it does, one line on what it is for, whether it has an MCP server agents can use, its release state (live, public or prelaunch), whether FormPortal installed it on this computer, and reach: how formMCP can start its server here (dev for a local checkout, formportal for an install, null when it cannot). Use it to pick the app that fits a task. Short on purpose: no app's tools are listed here.",
           "inputSchema": { "type": "object", "properties": {
               "mcp_only": { "type": "boolean", "description": "Only the apps that have an MCP server." } } },
           "annotations": { "readOnlyHint": true, "openWorldHint": false } },
@@ -169,7 +169,7 @@ fn family_apps(gateway: &mut Gateway, args: &Value) -> Value {
         .map(|a| {
             let reach = places.reach(a);
             let via = running.get(&a.id).map(|(v, _)| v.clone()).or_else(|| reach.route.as_ref().map(|r| r.label().to_string()));
-            json!({ "id": a.id, "name": a.name, "kind": a.kind, "summary": a.summary, "mcp": a.mcp, "skills": a.skills, "state": a.state, "installed": reach.installed, "reach": via })
+            json!({ "id": a.id, "name": a.name, "kind": a.kind, "summary": a.summary, "mcp": a.mcp, "state": a.state, "installed": reach.installed, "reach": via })
         })
         .collect();
     json!({

@@ -2,8 +2,17 @@
 
 Living log for formMCP's window. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.4.0
-Last updated: 2026-10-24 · clients, local state, switches and activity; the family list window
+Current build version: v0.4.1
+Last updated: 2026-10-24 · no Skills filter or badge; clients, local state, switches and activity; the family list window
+
+## v0.4.1 · no Skills filter or badge {#v0-4-1}
+
+### index.html, main.ts, app.css · two chips, one badge
+- refers-to: index.html :: .chips · src/main.ts :: Filter, row, apply · src/styles/app.css :: .badge-skills (removed)
+- kind: decision
+- logged: v0.4.1 · 2026-10-24
+
+Skills belong to formskills (owner), so the window shows All and MCP server only, each card carries the MCP badge and its state, and the count line reads "N apps · M with an MCP server". The v0.1.0 entries below that mention the Skills chip and badge describe the earlier window. Measured again in Chromium at 4x CPU and a slow network, with the stubbed bridge and without it, dark and light: CLS 0, no page error.
 
 ## v0.4.0 · clients, local state, switches and activity {#v0-4-0}
 

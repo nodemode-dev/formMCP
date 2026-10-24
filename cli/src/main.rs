@@ -7,7 +7,7 @@ use serde_json::json;
 
 const HELP: &str = "formmcp-cli: formMCP without the window
 
-  apps [--mcp-only]     the Form family: id, name, kind, summary, MCP server, skills, state (JSON)
+  apps [--mcp-only]     the Form family: id, name, kind, summary, MCP server, state (JSON)
   app <id>              one app (JSON)
   reach                 per app: installed by FormPortal, and how formMCP would start its server here (JSON)
   suggest <task...>     the apps that fit a task, best first, with the next step (JSON)

@@ -18,7 +18,6 @@ pub struct App {
     pub state: String,
     pub released: bool,
     pub mcp: bool,
-    pub skills: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

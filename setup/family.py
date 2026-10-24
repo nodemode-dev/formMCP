@@ -25,7 +25,7 @@ def build(compiler):
     for path in sorted(apps_dir.glob("*.json")):
         entry = json.loads(path.read_text(encoding="utf-8"))
         catalog = entry["catalog"]
-        agents = entry.get("agents") or {"skills": "", "mcp": False}
+        agents = entry.get("agents") or {"mcp": False}
         apps.append({
             "id": catalog["id"],
             "app": entry["app"],
@@ -37,7 +37,6 @@ def build(compiler):
             "state": catalog["state"],
             "released": bool(entry.get("enabled")),
             "mcp": bool(agents.get("mcp")),
-            "skills": bool(agents.get("skills")),
         })
     apps.sort(key=lambda a: a["id"])
     return {

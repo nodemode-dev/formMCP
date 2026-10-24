@@ -17,8 +17,7 @@
       "launcher": "formportal",
       "state": "public",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "format",
@@ -30,8 +29,7 @@
       "launcher": "format",
       "state": "prelaunch",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formcel",
@@ -43,8 +41,7 @@
       "launcher": "formcel",
       "state": "prelaunch",
       "released": true,
-      "mcp": false,
-      "skills": false
+      "mcp": false
     },
     {
       "id": "formcut",
@@ -56,8 +53,7 @@
       "launcher": "formcut",
       "state": "live",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formdam",
@@ -69,8 +65,7 @@
       "launcher": "formDAM",
       "state": "live",
       "released": true,
-      "mcp": false,
-      "skills": false
+      "mcp": false
     },
     {
       "id": "formdesign",
@@ -82,8 +77,7 @@
       "launcher": "formdesign",
       "state": "live",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formencoder",
@@ -95,8 +89,7 @@
       "launcher": "formencoder",
       "state": "public",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formlit",
@@ -108,8 +101,7 @@
       "launcher": "formlit",
       "state": "live",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formmd",
@@ -121,8 +113,7 @@
       "launcher": "form-md",
       "state": "live",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formpath",
@@ -134,8 +125,7 @@
       "launcher": "formpath",
       "state": "live",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formpdf",
@@ -147,8 +137,7 @@
       "launcher": "formpdf",
       "state": "prelaunch",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formref",
@@ -160,8 +149,7 @@
       "launcher": "formref",
       "state": "prelaunch",
       "released": false,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formsculpt",
@@ -173,8 +161,7 @@
       "launcher": "formsculpt",
       "state": "prelaunch",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formslide",
@@ -186,8 +173,7 @@
       "launcher": "formdeck",
       "state": "live",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formsurface",
@@ -199,8 +185,7 @@
       "launcher": "formsurface",
       "state": "prelaunch",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formtray",
@@ -212,8 +197,7 @@
       "launcher": "formtray",
       "state": "prelaunch",
       "released": true,
-      "mcp": false,
-      "skills": false
+      "mcp": false
     },
     {
       "id": "formtxt",
@@ -225,8 +209,7 @@
       "launcher": "formtxt",
       "state": "prelaunch",
       "released": true,
-      "mcp": false,
-      "skills": false
+      "mcp": false
     },
     {
       "id": "formvfx",
@@ -238,8 +221,7 @@
       "launcher": "formvfx",
       "state": "live",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formvis",
@@ -251,8 +233,7 @@
       "launcher": "formvis",
       "state": "live",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formwav",
@@ -264,8 +245,7 @@
       "launcher": "formwav",
       "state": "live",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     },
     {
       "id": "formweb",
@@ -277,8 +257,7 @@
       "launcher": "formweb",
       "state": "prelaunch",
       "released": true,
-      "mcp": true,
-      "skills": true
+      "mcp": true
     }
   ]
 }

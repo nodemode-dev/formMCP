@@ -1,7 +1,7 @@
 import family from "../../core/data/family.json";
 
 type App = (typeof family.apps)[number];
-type Filter = "all" | "mcp" | "skills";
+type Filter = "all" | "mcp";
 
 declare const __APP_VERSION__: string;
 
@@ -23,13 +23,12 @@ function badge(label: string, kind: string, on: boolean): HTMLElement {
 function row(app: App): HTMLLIElement {
   const li = el("li", "app");
   li.dataset.mcp = String(app.mcp);
-  li.dataset.skills = String(app.skills);
   const head = el("div", "app-head");
   const name = el("span", "app-name", app.name);
   name.translate = false;
   head.append(name, el("span", "app-kind", app.kind));
   const badges = el("div", "app-badges");
-  badges.append(badge("MCP", "mcp", app.mcp), badge("Skills", "skills", app.skills), el("span", `state state-${app.state}`, STATES[app.state] ?? app.state));
+  badges.append(badge("MCP", "mcp", app.mcp), el("span", `state state-${app.state}`, STATES[app.state] ?? app.state));
   const local = el("div", "app-local");
   const where = el("span", "app-where");
   where.dataset.where = "";
@@ -60,17 +59,16 @@ const commit = family.source.commit.slice(0, 7);
 
 const chips = Array.from(document.querySelectorAll<HTMLButtonElement>(".chip"));
 const withMcp = family.apps.filter((a) => a.mcp).length;
-const withSkills = family.apps.filter((a) => a.skills).length;
 
 function apply(filter: Filter): void {
   let shown = 0;
   for (const { app, node } of rows) {
-    const visible = filter === "all" || (filter === "mcp" ? app.mcp : app.skills);
+    const visible = filter === "all" || app.mcp;
     if (node.hidden === visible) node.hidden = !visible;
     if (visible) shown += 1;
   }
   for (const chip of chips) chip.setAttribute("aria-pressed", String(chip.dataset.filter === filter));
-  count.textContent = filter === "all" ? `${family.apps.length} apps · ${withMcp} with an MCP server · ${withSkills} with skills` : `${shown} of ${family.apps.length} apps`;
+  count.textContent = filter === "all" ? `${family.apps.length} apps · ${withMcp} with an MCP server` : `${shown} of ${family.apps.length} apps`;
 }
 
 for (const chip of chips) chip.addEventListener("click", () => apply((chip.dataset.filter as Filter) ?? "all"));
