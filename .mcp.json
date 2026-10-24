@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "formmcp": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/formmcp",
+      "args": ["mcp"]
+    }
+  }
+}
