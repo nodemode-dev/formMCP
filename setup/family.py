@@ -33,6 +33,7 @@ def build(compiler):
             "kind": catalog["kind"],
             "summary": catalog["summary"],
             "repository": f"https://github.com/{entry['repository']}",
+            "launcher": entry["build"].get("cli") or entry["app"],
             "state": catalog["state"],
             "released": bool(entry.get("enabled")),
             "mcp": bool(agents.get("mcp")),

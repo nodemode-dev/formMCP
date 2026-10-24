@@ -11,6 +11,8 @@ pub struct App {
     pub kind: String,
     pub summary: String,
     pub repository: String,
+    #[serde(default)]
+    pub launcher: String,
     pub state: String,
     pub released: bool,
     pub mcp: bool,
