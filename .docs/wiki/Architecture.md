@@ -2,8 +2,8 @@
 
 ```
 formMCP/
-├── core/            formmcp-core: the family list (core/data/family.json, compiled in) and the MCP server
-├── cli/             formmcp-cli: apps, app, mcp, version
+├── core/            formmcp-core: the family list (core/data/family.json, compiled in), reach, child servers, the MCP server
+├── cli/             formmcp-cli: apps, app, reach, mcp, version
 ├── src-tauri/       the shell: the window, and `formmcp mcp` with no window
 ├── frontend/        the window: tokens, layers, one list
 ├── setup/family.py  core/data/family.json from formcompiler's registry
@@ -13,6 +13,10 @@ formMCP/
 ## One engine, two thin surfaces
 
 `formmcp-core` owns everything that matters: reading the family list and answering MCP over stdio. `formmcp-cli` and the shell call it and add nothing. The installed app's own binary serves MCP when its first argument is `mcp`, before any window code runs, so an installed copy is its own launcher.
+
+## The gateway (v0.2.0)
+
+`reach.rs` decides, without starting anything, how each app's server can be started: a checkout's own launcher under `FORMMCP_DEV_ROOTS`, or `app-mcp` through FormPortal for an app in FormPortal's `installed.json`. `child.rs` runs one app's server as a child process over stdio: initialize, tools/list (all pages), calls with deadlines, requests from the app refused so nothing waits, the last stderr lines kept for error messages, and the process ended when formMCP ends. `mcp.rs` holds a `Gateway` (the list, the places, the running servers by app id) behind three tools; formMCP's own tool list never grows with the apps.
 
 ## The family list
 

@@ -13,13 +13,14 @@
   <img src="https://img.shields.io/badge/license-GPL--3.0-555555" alt="license GPL 3.0" />
 </p>
 
-formMCP is the one MCP server you add for the Form family of desktop apps (image, video, audio, layout, vector, notes, slides and the rest, by nodemode.ai). The agent sees every Form app in one short list (what each is for, whether it has an MCP server, whether it ships skills), whether or not any of them is installed. formMCP suggests; FormPortal installs.
+formMCP is the one MCP server you add for the Form family of desktop apps (image, video, audio, layout, vector, notes, slides and the rest, by nodemode.ai). The agent sees every Form app in one short list (what each is for, whether it has an MCP server, whether it ships skills, whether this computer can reach it), whether or not any of them is installed, and loads one app's own tools only when the task needs that app. formMCP suggests; FormPortal installs.
 
-**Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript + Vite window with zero runtime dependencies · **Scale:** 21 Form apps from formcompiler's registry, 1 MCP tool, 3 agent clients
+**Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript + Vite window with zero runtime dependencies · **Scale:** 21 Form apps from formcompiler's registry, 3 MCP tools, 2 ways to reach an app, 3 agent clients
 
 ## Highlights
 
-- **Cheap on context.** `family_apps` returns one line per app and no app's tools, so the whole family is about a thousand tokens (3.8 KB for 21 apps), not twenty apps' worth of tools.
+- **Cheap on context.** `family_apps` returns one line per app and no app's tools, so the whole family is about a thousand tokens (4.4 KB for 21 apps with their install state), not twenty apps' worth of tools.
+- **Installed apps' own tools, on demand.** `app_tools` starts one app's own MCP server (through its checkout's launcher, or `formportal app-mcp` for a FormPortal install) and lists its tools; `call_app` runs one and returns the app's result unchanged. Nothing is copied, so the tools are always the running app's.
 - **Never hand-kept.** The family list is generated from formcompiler's registry (`./formmcp family --compiler PATH`) and records the formcompiler version and commit it came from.
 - **Suggests, never installs.** There is no tool that installs, updates or removes an app; the server tells the agent that FormPortal does.
 - **Headless first.** The engine and the MCP server need no window. The installed app answers `formmcp mcp` on stdio without opening one, so it is its own launcher.
@@ -34,7 +35,10 @@ Requirements: Rust (stable), Node 20.19+, and on Linux WebKitGTK 4.1 for the win
 ./formmcp                   # the window on localhost:5620
 ./formmcp mcp               # the MCP server on stdio
 ./formmcp cli apps          # the family list as JSON
+./formmcp cli reach         # how each app's server would be started on this computer
 ```
+
+Form app checkouts in the folder beside this one are found on their own (`FORMMCP_DEV_ROOTS` names other folders, or is set empty to turn that off); FormPortal installs are found through FormPortal. The wiki's Agents page has the details and the environment variables.
 
 On Windows run `formmcp_oc_install.bat`, then `formmcp.bat`.
 
@@ -44,8 +48,8 @@ This repository is already wired for agents: `.mcp.json` (Claude Code), `.codex/
 
 | Path | Role |
 | --- | --- |
-| `core/` | The engine: the family list (`core/data/family.json`, generated) and the MCP server |
-| `cli/` | `formmcp-cli apps`, `app`, `mcp`, `version` |
+| `core/` | The engine: the family list (`core/data/family.json`, generated), finding each app's server (`reach.rs`), running it (`child.rs`) and the MCP server (`mcp.rs`) |
+| `cli/` | `formmcp-cli apps`, `app`, `reach`, `mcp`, `version` |
 | `src-tauri/` | The shell: the window, and `formmcp mcp` with no window |
 | `frontend/` | The window: tokens, layers, one list |
 | `setup/family.py` | Generates `core/data/family.json` from formcompiler's registry |
@@ -61,7 +65,11 @@ This repository is already wired for agents: `.mcp.json` (Claude Code), `.codex/
 
 ## Status
 
-v0.1.0: the scaffold. `family_apps` over stdio from the bundled list, the command line, the window, and the agent wiring. Next (family plan, Phase 3): installed apps' own tools passed through on demand (v0.2.0), `suggest_app` (v0.3.0), and connected clients and per-app switches in the window (v0.4.0).
+v0.2.0: the gateway. `app_tools` and `call_app` reach an app's own server through its checkout or a FormPortal install; `family_apps` says which apps are installed and reachable. Checked by hand through FormPortal's checkout (33 tools, calls passed through), form.md's checkout and a FormPortal install. FormPortal starts an install only when its `form-app.json` names a launcher, which the apps' bundles do not carry yet (family plan, Q9).
+
+v0.1.0: the scaffold. `family_apps` over stdio from the bundled list, the command line, the window, and the agent wiring.
+
+Next (family plan, Phase 3): the signed catalogue as the list's first source and `suggest_app` (v0.3.0); connected clients and per-app switches in the window (v0.4.0).
 
 ## License
 

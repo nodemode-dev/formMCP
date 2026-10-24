@@ -14,7 +14,10 @@
 ./formmcp mcp             # the MCP server on stdio (built on first use)
 ./formmcp cli apps        # the family list as JSON; --mcp-only for the apps with a server
 ./formmcp cli app formvis # one app
+./formmcp cli reach       # how each app's server would be started on this computer
 ```
+
+Keep Form app checkouts beside this one (for example `~/code/formMCP` and `~/code/formvis`) and `./formmcp` finds them; `FORMMCP_DEV_ROOTS` names other folders. See [Agents](Agents) for every route and setting.
 
 On Windows: `formmcp_oc_install.bat`, then `formmcp.bat`, `formmcp.bat mcp`, `formmcp.bat cli apps`.
 
