@@ -12,17 +12,21 @@ formMCP is one MCP server for the whole Form family. It keeps the conversation s
 | Tool | Changes anything | What it does |
 | --- | --- | --- |
 | `family_apps` | no | every Form app: `id`, `name`, `kind`, a one-line `summary`, `mcp` (it has an MCP server), `skills`, `state` (`live`, `public`, `prelaunch`), `installed` (by FormPortal on this computer) and `reach` (`dev`, `formportal`, or null: how formMCP can start its server here); `mcp_only: true` keeps the apps with a server |
+| `suggest_app` | no | the person's `task` in their words in, up to five apps out (best first), each with `installed`, `reach` and `next`: call `app_tools`, install it with FormPortal, install FormPortal first, or why an agent cannot drive it yet |
 | `app_tools` | no | starts one app's own server (or reuses it) and returns its tools with input schemas, its name and version, and its instructions; `refresh: true` asks again |
 | `call_app` | what the app's tool changes | runs one of that app's tools with `arguments` and returns the app's own result unchanged |
 
 ## Workflow
 
-1. Call `family_apps` once per conversation. Pick the app whose `kind` and `summary` fit the task; if two fit, name both and say how they differ.
+1. Call `suggest_app` with the task in the person's words, and follow the first suggestion's `next` unless a later one clearly fits better. Use `family_apps` (once per conversation) when the person wants the whole family or `suggest_app` finds nothing. If two apps fit, name both and say how they differ.
 2. If the app has `reach`, call `app_tools` for that one app, read its instructions and the tool you need, then `call_app`. Load another app only when the task moves to it.
 3. Before a `call_app` that changes the person's files or computer (the app's tool is not read-only, or says so), say what will change and get their go-ahead. The app's own tool descriptions and annotations decide this, not formMCP's.
 4. If the app has no `reach`: when `installed` is false, say which app fits and that FormPortal (`id` `formai`) installs and updates the Form apps; formMCP never installs. When `installed` is true but `reach` is null, FormPortal could not be found to start it, or the app's install names no launcher yet; say so plainly.
 5. When `app_tools` or `call_app` fails, the message carries the app's own last output. Pass on what it asks for (for example form.md asks for `FORMMD_MCP_TOKEN`, a personal API token from its Account settings, set in the client's config for formmcp) instead of retrying.
 
+6. Tools named `<id>__<tool>` (for example `formai__status`) are an app's own tools that the person chose to always show; they behave as `call_app` with that app.
+7. `source` in `family_apps` says whether the list is the signed family catalogue or the bundled list, and why; mention it only when it matters (a newer app the person names is missing, for example).
+
 ## Without MCP
 
-`./formmcp cli apps` (and `--mcp-only`) prints the list as JSON; `./formmcp cli app <id>` one app; `./formmcp cli reach` how each app would be started here.
+`./formmcp cli apps` (and `--mcp-only`) prints the list as JSON; `./formmcp cli app <id>` one app; `./formmcp cli reach` how each app would be started here; `./formmcp cli suggest <task>` the suggestions; `./formmcp cli catalog` where the list comes from; `./formmcp cli expose <id> on|off` always show an app's tools; `./formmcp cli agents install` adds formMCP to Claude Code, Codex and Cursor for the user account.

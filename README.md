@@ -15,13 +15,14 @@
 
 formMCP is the one MCP server you add for the Form family of desktop apps (image, video, audio, layout, vector, notes, slides and the rest, by nodemode.ai). The agent sees every Form app in one short list (what each is for, whether it has an MCP server, whether it ships skills, whether this computer can reach it), whether or not any of them is installed, and loads one app's own tools only when the task needs that app. formMCP suggests; FormPortal installs.
 
-**Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript + Vite window with zero runtime dependencies · **Scale:** 21 Form apps from formcompiler's registry, 3 MCP tools, 2 ways to reach an app, 3 agent clients
+**Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript + Vite window with zero runtime dependencies · **Scale:** 21 Form apps from formcompiler's registry and the signed catalogue, 4 MCP tools, 2 ways to reach an app, 3 agent clients
 
 ## Highlights
 
 - **Cheap on context.** `family_apps` returns one line per app and no app's tools, so the whole family is about a thousand tokens (4.4 KB for 21 apps with their install state), not twenty apps' worth of tools.
 - **Installed apps' own tools, on demand.** `app_tools` starts one app's own MCP server (through its checkout's launcher, or `formportal app-mcp` for a FormPortal install) and lists its tools; `call_app` runs one and returns the app's result unchanged. Nothing is copied, so the tools are always the running app's.
-- **Never hand-kept.** The family list is generated from formcompiler's registry (`./formmcp family --compiler PATH`) and records the formcompiler version and commit it came from.
+- **The right app for the task.** `suggest_app` takes the task in the person's words and returns the apps that fit with the next step: load its tools, install it with FormPortal, or install FormPortal first.
+- **Never hand-kept.** The family list is the signed family catalogue (checked against the same keys FormPortal trusts) over a list generated from formcompiler's registry (`./formmcp family --compiler PATH`), and every answer says which one was used and why.
 - **Suggests, never installs.** There is no tool that installs, updates or removes an app; the server tells the agent that FormPortal does.
 - **Headless first.** The engine and the MCP server need no window. The installed app answers `formmcp mcp` on stdio without opening one, so it is its own launcher.
 - **A window that does not flicker.** One list, filterable by MCP server and skills, painted complete in its first frame.
@@ -36,6 +37,7 @@ Requirements: Rust (stable), Node 20.19+, and on Linux WebKitGTK 4.1 for the win
 ./formmcp mcp               # the MCP server on stdio
 ./formmcp cli apps          # the family list as JSON
 ./formmcp cli reach         # how each app's server would be started on this computer
+./formmcp cli agents install   # add formMCP to Claude Code, Codex and Cursor for your user account
 ```
 
 Form app checkouts in the folder beside this one are found on their own (`FORMMCP_DEV_ROOTS` names other folders, or is set empty to turn that off); FormPortal installs are found through FormPortal. The wiki's Agents page has the details and the environment variables.
@@ -49,7 +51,7 @@ This repository is already wired for agents: `.mcp.json` (Claude Code), `.codex/
 | Path | Role |
 | --- | --- |
 | `core/` | The engine: the family list (`core/data/family.json`, generated), finding each app's server (`reach.rs`), running it (`child.rs`) and the MCP server (`mcp.rs`) |
-| `cli/` | `formmcp-cli apps`, `app`, `reach`, `mcp`, `version` |
+| `cli/` | `formmcp-cli apps`, `app`, `reach`, `suggest`, `catalog`, `expose`, `agents`, `mcp`, `version` |
 | `src-tauri/` | The shell: the window, and `formmcp mcp` with no window |
 | `frontend/` | The window: tokens, layers, one list |
 | `setup/family.py` | Generates `core/data/family.json` from formcompiler's registry |
@@ -65,11 +67,13 @@ This repository is already wired for agents: `.mcp.json` (Claude Code), `.codex/
 
 ## Status
 
+v0.3.0: `suggest_app`; the signed family catalogue as the list's first source (refused with its reason and the built-in list used until the family's catalogue key exists); an app's own tools always shown when chosen (`expose`); `agents install` for Claude Code, Codex and Cursor. Checked by hand: every catalogue trust case with a key pair from formcompiler, 17 tasks through `suggest_app`, FormPortal's tools exposed and called by their prefixed names, and the client writer in a scratch home.
+
 v0.2.0: the gateway. `app_tools` and `call_app` reach an app's own server through its checkout or a FormPortal install; `family_apps` says which apps are installed and reachable. Checked by hand through FormPortal's checkout (33 tools, calls passed through), form.md's checkout and a FormPortal install. FormPortal starts an install only when its `form-app.json` names a launcher, which the apps' bundles do not carry yet (family plan, Q9).
 
 v0.1.0: the scaffold. `family_apps` over stdio from the bundled list, the command line, the window, and the agent wiring.
 
-Next (family plan, Phase 3): the signed catalogue as the list's first source and `suggest_app` (v0.3.0); connected clients and per-app switches in the window (v0.4.0).
+Next (family plan, Phase 3): connected clients and per-app switches in the window (v0.4.0).
 
 ## License
 
