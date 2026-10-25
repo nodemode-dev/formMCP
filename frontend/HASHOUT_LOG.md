@@ -109,3 +109,10 @@ A row is the name (not translated), the kind, the summary, and a badge line: MCP
 - logged: v0.1.0 · 2026-10-24
 
 Copied from FormTray (the family's newest shell, same owner and licence) so formMCP looks like the rest of the family, dark by default and light when the system is light. FormTray's per-app hue tokens are replaced by formMCP's accents, orange `--accent` and violet `--accent-2`, from the owner's icon. The layer scale is unchanged; v0.1.0 stacks nothing, so no `z-index` is used yet.
+
+### package.json · vite 8.3.5 clears the dev server's launch-editor advisories
+- refers-to: frontend/package.json :: devDependencies.vite · frontend/package-lock.json
+- kind: fix
+- logged: v0.7.2 · 2026-10-25
+
+Family rule from `FAMILY_DEV_PLAN.md` v0.4.x Phase 2b (formai_dev sidecar): every frontend installs with zero `npm audit` findings. Vite 8.3.2 carries a `launch-editor` with two command-injection advisories in the dev server (ledger FB-004); 8.3.5 clears them. Dev dependency only, nothing in the shipped bundle changed. Verified after `npm install`: `npm audit` reports 0 vulnerabilities, `npm run typecheck` passes, `vite build` succeeds (outDir outside the repo), and the dev server answers 200 on `http://localhost:5620/` with no Network address printed.
