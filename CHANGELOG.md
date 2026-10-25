@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.2 · 2026-10-25
+
+- The window's build tooling moves to Vite 8.3.5, which clears two command-injection advisories in the development server's editor launcher. It is a development dependency only; nothing in the installed app changes.
+
 ## v0.7.1 · 2026-10-25
 
 - The file check uses FormPortal's own record: FormPortal 0.46.0 records every installed file's SHA-256, and formMCP compares the install with it before starting the app, so a change made before formMCP first started it is caught too. With an older FormPortal, formMCP compares with what it recorded at the first start, as in 0.7.0.
