@@ -38,12 +38,28 @@
           <button class="btn" type="button" data-connect disabled>Connect</button>
         </div>
       </section>
+      <section class="http" aria-label="HTTP">
+        <span class="http-name">HTTP</span>
+        <span class="http-state" id="http-state">Off</span>
+        <button class="btn btn-small" id="http-copy" type="button" disabled title="Copies the address and the header with the access token, ready for an agent's MCP settings">Copy setup</button>
+        <button class="btn btn-small" id="http-rotate" type="button" disabled title="Makes a new access token; agents set up with the old one must be given the new one">New token</button>
+        <button class="btn btn-small" id="http-toggle" type="button" disabled>Start</button>
+      </section>
       <p class="status" id="status" aria-live="polite"></p>
       <div class="tools">
         <div class="chips" role="group" aria-label="Show">
           <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
           <button class="chip" type="button" data-filter="mcp" aria-pressed="false">MCP server</button>
         </div>
+        <label class="agent-pick">
+          <span>Apps for</span>
+          <select id="agent">
+            <option value="claude">Claude Code</option>
+            <option value="codex">Codex</option>
+            <option value="cursor">Cursor</option>
+            <option value="other">Other agents</option>
+          </select>
+        </label>
         <p class="count" id="count" aria-live="polite"></p>
       </div>
       <ul class="apps" id="apps"></ul>

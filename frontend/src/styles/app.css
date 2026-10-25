@@ -125,16 +125,19 @@ html.booting body {
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-auto-rows: max-content;
   align-content: start;
+  align-items: start;
   gap: var(--sp-3);
   scrollbar-width: thin;
 }
 
 .app {
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto 1fr auto auto auto;
+  align-content: start;
   gap: var(--sp-2);
-  min-height: 164px;
+  min-height: 196px;
   padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--edge);
   border-radius: var(--radius-m);
@@ -276,6 +279,141 @@ html.booting body {
   font-size: var(--fs-s);
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.http {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 40px;
+  margin-bottom: var(--sp-2);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-m);
+  background: var(--pane);
+}
+
+.http-name {
+  flex: none;
+  font-weight: 600;
+}
+
+.http-state {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.http-state.is-on {
+  color: var(--live);
+}
+
+.btn-small {
+  flex: none;
+  min-width: 0;
+  height: 26px;
+  font-size: var(--fs-s);
+  white-space: nowrap;
+}
+
+.http #http-toggle {
+  min-width: 64px;
+}
+
+.agent-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+}
+
+.agent-pick select {
+  width: 9.5em;
+  height: 28px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-s);
+  background: var(--control);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-m);
+}
+
+.agent-pick select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.app-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  min-height: 24px;
+}
+
+.app-switches [data-for] .switch-label {
+  min-width: 9.5em;
+}
+
+.app-tools-btn {
+  min-width: 64px;
+}
+
+.app-tools-btn.has-off {
+  border-color: var(--accent);
+}
+
+.tool-panel {
+  height: 168px;
+  overflow-y: auto;
+  padding: var(--sp-2);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-s);
+  background: var(--ground);
+  scrollbar-width: thin;
+}
+
+.tool-note {
+  margin: 0 0 var(--sp-2);
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+}
+
+.tool-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tool-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 24px;
+}
+
+.tool-ro {
+  flex: none;
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+}
+
+.copy-area {
+  position: fixed;
+  top: -1000px;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }
 
 .app-local {

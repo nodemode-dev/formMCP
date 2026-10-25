@@ -46,6 +46,13 @@ impl Gateway {
         self.settings = Settings::load();
     }
 
+    pub fn start_app(&mut self, id: &str) -> Result<usize, String> {
+        self.ensure_catalog();
+        let app = self.family.get(id).cloned().ok_or_else(|| format!("there is no Form app {id:?}"))?;
+        let (_, server) = self.server(&app)?;
+        Ok(server.tools.len())
+    }
+
     pub fn is_off(&self, id: &str) -> bool {
         self.settings.is_off(&self.client, id)
     }
