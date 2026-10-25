@@ -2,8 +2,17 @@
 
 Living log for formMCP's window. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.7.0
-Last updated: 2026-10-25 · the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+Current build version: v0.7.1
+Last updated: 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+
+## v0.7.1 · the log names FormPortal's file check {#v0-7-1}
+
+### main.ts · describe
+- refers-to: src/main.ts :: describe (app-start)
+- kind: decision
+- logged: v0.7.1 · 2026-10-25
+
+An app start checked against FormPortal's record reads "files as FormPortal installed them". Text only, in a row that clips to one line, so nothing moves; typecheck and build passed, the window was not run again for it.
 
 ## v0.7.0 · the Safety panel {#v0-7-0}
 

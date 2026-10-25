@@ -2,8 +2,17 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.7.0
-Last updated: 2026-10-25 · keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.7.1
+Last updated: 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.7.1 · the file check against FormPortal's record {#v0-7-1}
+
+### verify.rs · FormPortal's files record first
+- refers-to: core/src/verify.rs :: PortalVersion.files, PortalFiles, portal_files, check
+- kind: decision
+- logged: v0.7.1 · 2026-10-25
+
+FormPortal 0.46.0 writes `<version>.files.json` (format `formportal-files`) at install and names it as `files` in `installed.json`. When it is there, `check` compares the install with it, before and instead of formMCP's own record, and returns outcome `formportal`; that closes the gap 0.7.0 left (a change before formMCP's first start). A record for another app or version, or one that cannot be read, refuses rather than falling back, since a wrong record is itself a sign of tampering. `--trust` and Record again do not override it: the remedy is FormPortal's reinstall or repair. Without `files` (FormPortal before 0.46.0) the 0.7.0 first-start record is used. Checked on a FormPortal 0.46.0 install built from formcompiler 0.4.2's `form-app.json`: clean (formportal, 4 files), a changed and an added file before any start refused, a record naming 9.9.9 refused, `files` removed from `installed.json` gave `baseline`.
 
 ## v0.7.0 · keychain secrets, redaction, the file check, hooks and tracing {#v0-7-0}
 

@@ -102,7 +102,7 @@ Open Safety in the window, or use the command line:
 ./formmcp cli secret remove formmd FORMMD_MCP_TOKEN
 ./formmcp cli redact off                                       # results as apps send them (the log is still cleaned)
 ./formmcp cli verify formvis                                   # check its installed files now
-./formmcp cli verify --trust formvis                           # accept the files as they are, after a change you made
+./formmcp cli verify --trust formvis                           # accept the files as they are (only without FormPortal 0.46.0's record)
 ./formmcp cli hook before "python3 /path/policy.py"            # off: hook before off
 ./formmcp cli hook after "python3 /path/audit.py"
 ./formmcp cli telemetry http://127.0.0.1:4318                  # off: telemetry off

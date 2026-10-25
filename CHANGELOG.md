@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.1 · 2026-10-25
+
+- The file check uses FormPortal's own record: FormPortal 0.46.0 records every installed file's SHA-256, and formMCP compares the install with it before starting the app, so a change made before formMCP first started it is caught too. With an older FormPortal, formMCP compares with what it recorded at the first start, as in 0.7.0.
+
 ## v0.7.0 · 2026-10-25
 
 - Secrets in the system keychain: keep a secret for an app (form.md's `FORMMD_MCP_TOKEN`, say) and formMCP gives it to that app's server as an environment variable when it starts it. Only the name is written to settings.json.
