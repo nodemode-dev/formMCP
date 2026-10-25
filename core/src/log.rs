@@ -32,6 +32,7 @@ pub fn record(event: &str, fields: Value) {
             base.insert(k.clone(), v.clone());
         }
     }
+    crate::redact::value(&mut line);
     if let Ok(mut out) = OpenOptions::new().create(true).append(true).open(&file) {
         let _ = writeln!(out, "{line}");
     }

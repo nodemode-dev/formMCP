@@ -2,7 +2,7 @@ use std::process::ExitCode;
 
 use formmcp_core::clients::{self, Client, Launcher, CLIENTS};
 use formmcp_core::settings::{self, Settings};
-use formmcp_core::{catalog, http, mcp, suggest, toolcache, Family, Places, CORE_VERSION};
+use formmcp_core::{catalog, hooks, http, mcp, redact, secrets, suggest, telemetry, toolcache, verify, Family, Places, CORE_VERSION};
 use serde_json::json;
 
 const HELP: &str = "formmcp-cli: formMCP without the window
@@ -23,6 +23,19 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   profile list|show <name>|save <name> [--from AGENT]|use <agent> <name>|unuse <agent>|export <name> [--to FILE]|import <file>|delete <name>
                         named profiles: apps and tools off and start policies, shared as one JSON file; a profile in
                         use for an agent turns more off for it, never less
+  secret set <id> <NAME> | remove <id> <NAME> | list
+                        a secret for one app (form.md's FORMMD_MCP_TOKEN, say), kept in the system keychain and given to
+                        the app's server as that environment variable when formMCP starts it; set reads the value from stdin
+  verify [<id> | --trust <id> | on | off]
+                        an installed app's files, checked before formMCP starts it against what formMCP recorded the first
+                        time it started that FormPortal install; --trust records the files as they are now
+  redact on|off|check   hide known secrets and token-shaped text in results and the log (on); check reads stdin
+  hook before|after <command>|off
+                        a command run before each app tool call (JSON on stdin; prints {\"decision\":\"deny\",\"reason\":...}
+                        or exits 2 to refuse; a failure refuses) and after it (JSON with the outcome; its answer is ignored)
+  telemetry <address>|off
+                        send a trace and metrics for each call and app start to an OpenTelemetry collector over HTTP,
+                        for example http://127.0.0.1:4318 (names and outcomes only; OTEL_EXPORTER_OTLP_HEADERS is sent)
   settings              what settings.json holds now, with the HTTP address (JSON)
   mcp [--client AGENT]  serve formMCP's MCP tools on stdin and stdout; --client names the agent (else its own name decides)
   serve [--port N]      serve formMCP over HTTP on 127.0.0.1 only, at http://127.0.0.1:5625/mcp, until stopped
@@ -220,6 +233,75 @@ fn main() -> ExitCode {
             match saved.set_start(&app.id, policy).and_then(|()| saved.save()) {
                 Ok(path) => {
                     print(&json!({ "start": saved.start, "settings": path, "note": "demand is the default and is not stored" }));
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("formmcp: {e}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        "secret" | "verify" | "redact" | "hook" | "telemetry" => {
+            let mut saved = Settings::saved();
+            let known = |id: Option<&String>| id.and_then(|i| family.get(i)).map(|a| a.id.clone()).ok_or_else(|| "name an app id; apps lists them".to_string());
+            let a1 = args.get(1).map(String::as_str);
+            let rest = args.get(2..).map(|r| r.join(" ")).unwrap_or_default();
+            let result: Result<serde_json::Value, String> = match (command, a1) {
+                ("secret", Some("set")) => known(args.get(2)).and_then(|app| {
+                    let name = args.get(3).cloned().ok_or("secret set <id> <NAME>, with the value on standard input")?;
+                    let mut value = String::new();
+                    std::io::Read::read_to_string(&mut std::io::stdin(), &mut value).map_err(|e| e.to_string())?;
+                    secrets::set(&app, &name, &value).map(|()| json!({ "set": name, "app": app, "kept_in": "the system keychain", "settings": settings::path() }))
+                }),
+                ("secret", Some("remove")) => known(args.get(2)).and_then(|app| {
+                    let name = args.get(3).cloned().ok_or("secret remove <id> <NAME>")?;
+                    secrets::remove(&app, &name).map(|()| json!({ "removed": name, "app": app }))
+                }),
+                ("secret", Some("list") | None) => Ok(json!({ "secrets": secrets::list(&saved), "note": "values stay in the system keychain; only the names are in settings.json" })),
+                ("verify", Some("on" | "off")) => {
+                    saved.verify_off = a1 == Some("off");
+                    saved.save().map(|p| json!({ "verify": !saved.verify_off, "settings": p }))
+                }
+                ("verify", Some("--trust")) => known(args.get(2)).and_then(|app| verify::trust(&Places::from_env().portal_root, &app).map(|c| json!(c))),
+                ("verify", Some(_)) => known(args.get(1)).and_then(|app| verify::check(&Places::from_env().portal_root, &app).map(|c| json!(c))),
+                ("verify", None) => Ok(json!({ "on": !saved.verify_off, "file": verify::path(), "checked": verify::baselines() })),
+                ("redact", Some("on" | "off")) => {
+                    saved.redact_off = a1 == Some("off");
+                    saved.save().map(|p| json!({ "redact": !saved.redact_off, "settings": p }))
+                }
+                ("redact", Some("check")) => {
+                    let mut text = String::new();
+                    std::io::Read::read_to_string(&mut std::io::stdin(), &mut text).map_err(|e| e.to_string()).map(|_| {
+                        secrets::remember_all(&saved);
+                        let (out, found) = redact::text(&text);
+                        json!({ "found": found, "text": out })
+                    })
+                }
+                ("hook", Some(which @ ("before" | "after"))) if !rest.trim().is_empty() => {
+                    let line = if rest.trim() == "off" { String::new() } else { rest.trim().to_string() };
+                    hooks::split(&line).and_then(|words| {
+                        if which == "before" { saved.hooks.before = line.clone() } else { saved.hooks.after = line.clone() }
+                        saved.save().map(|p| json!({ "hooks": saved.hooks, "words": words, "settings": p }))
+                    })
+                }
+                ("hook", None) => Ok(json!({ "hooks": saved.hooks, "timeout_s": hooks::timeout().as_secs() })),
+                ("telemetry", Some("off")) => {
+                    saved.telemetry = None;
+                    saved.save().map(|p| json!({ "telemetry": null, "settings": p }))
+                }
+                ("telemetry", Some(address)) => match telemetry::endpoint_problem(address) {
+                    Some(problem) => Err(problem),
+                    None => {
+                        saved.telemetry = Some(address.trim().trim_end_matches('/').to_string());
+                        saved.save().map(|p| json!({ "telemetry": saved.telemetry, "sends_to": [format!("{}/v1/traces", address.trim_end_matches('/')), format!("{}/v1/metrics", address.trim_end_matches('/'))], "settings": p }))
+                    }
+                },
+                ("telemetry", None) => Ok(json!({ "telemetry": saved.telemetry })),
+                _ => Err("secret set|remove|list, verify [on|off|<id>|--trust <id>], redact on|off|check, hook before|after <command>|off, telemetry <address>|off".to_string()),
+            };
+            match result {
+                Ok(v) => {
+                    print(&v);
                     ExitCode::SUCCESS
                 }
                 Err(e) => {

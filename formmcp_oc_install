@@ -5,6 +5,11 @@ cd "$(dirname "$0")"
 missing=0
 command -v node >/dev/null || { echo "Node 20.19 or newer is required: https://nodejs.org"; missing=1; }
 command -v cargo >/dev/null || { echo "Rust is required: https://rustup.rs"; missing=1; }
+if [ "$(uname -s)" = "Linux" ] && ! { command -v pkg-config >/dev/null && pkg-config --exists dbus-1; }; then
+  echo "formMCP keeps secrets in the system keychain through D-Bus, so it needs libdbus and pkg-config to build. On Debian or Ubuntu:"
+  echo "  sudo apt-get install libdbus-1-dev pkg-config"
+  missing=1
+fi
 if [ "$(uname -s)" = "Linux" ] && command -v pkg-config >/dev/null && ! pkg-config --exists webkit2gtk-4.1; then
   echo "The window needs WebKitGTK 4.1 and its build packages. On Debian or Ubuntu:"
   echo "  sudo apt-get install libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev pkg-config build-essential"

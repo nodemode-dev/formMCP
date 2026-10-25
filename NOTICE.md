@@ -17,6 +17,9 @@ Its dependencies are MIT, Apache-2.0 or dual MIT and Apache-2.0, with some BSD-3
 | ureq 2 (rustls, ring, webpki-roots) | reading the family catalogue over https (`core`); ring is Apache-2.0 and ISC, webpki-roots (the root certificates as data) CDLA-Permissive-2.0 |
 | ed25519-dalek 2 (curve25519-dalek, subtle), base64 | checking the catalogue's signature (`core`); the dalek crates and subtle are BSD-3-Clause |
 | getrandom 0.2 | the HTTP access token and session ids, from the operating system's random source (`core`); MIT OR Apache-2.0, already in the graph through the dalek crates |
+| keyring 3 (security-framework on macOS, windows-sys on Windows, dbus and dbus-secret-service with aes, cbc, hkdf, num and zeroize on Linux) | secrets such as form.md's token, kept in the system keychain (`core`, v0.7.0); all MIT OR Apache-2.0. On Linux it links the system's libdbus (AFL-2.1 OR GPL-2.0-or-later) at run time; libdbus is not shipped or built into formMCP |
+| regex 1 (regex-automata, regex-syntax, aho-corasick, memchr) | finding token-shaped text to hide in results and the log (`core`, v0.7.0); MIT OR Apache-2.0, aho-corasick and memchr Unlicense OR MIT |
+| sha2 0.10 | the digests of an installed app's files (`core`, v0.7.0); MIT OR Apache-2.0, already in the graph through the dalek crates |
 | tauri 2, tauri-build | the desktop shell |
 | Vite, TypeScript, @tauri-apps/cli, @types/node (build only) | building the window and the app; not shipped |
 

@@ -8,12 +8,11 @@ use serde_json::{json, Value};
 
 use crate::catalog;
 use crate::child::{call_timeout, AppServer};
-use crate::log;
 use crate::family::{App, Family};
-use crate::reach::Places;
+use crate::reach::{Places, Route};
 use crate::settings::{client_key, client_label, Settings};
 use crate::suggest::suggest;
-use crate::toolcache;
+use crate::{hooks, log, redact, secrets, telemetry, toolcache, verify};
 use crate::CORE_VERSION;
 
 const EXPOSED_SEPARATOR: &str = "__";
@@ -34,7 +33,9 @@ pub struct Gateway {
 
 impl Gateway {
     pub fn new(family: Family, places: Places) -> Gateway {
-        Gateway { family, places, settings: Settings::load(), client: "other".into(), transport: "stdio", forced_client: false, running: HashMap::new(), pending: HashMap::new(), last_used: HashMap::new(), catalog_read: false, list_changed: false }
+        let settings = Settings::load();
+        secrets::remember_all(&settings);
+        Gateway { family, places, settings, client: "other".into(), transport: "stdio", forced_client: false, running: HashMap::new(), pending: HashMap::new(), last_used: HashMap::new(), catalog_read: false, list_changed: false }
     }
 
     pub fn force_client(&mut self, name: &str) {
@@ -48,7 +49,11 @@ impl Gateway {
     }
 
     pub fn reload_settings(&mut self) {
-        self.settings = Settings::load();
+        let fresh = Settings::load();
+        if fresh.secrets != self.settings.secrets {
+            secrets::remember_all(&fresh);
+        }
+        self.settings = fresh;
     }
 
     pub fn start_app(&mut self, id: &str) -> Result<usize, String> {
@@ -133,7 +138,7 @@ impl Gateway {
                 Some(result) => result,
                 None => {
                     self.places.refresh();
-                    start_app_server(app, &self.places, self.settings.start_of(&self.client, &app.id))
+                    start_app_server(app, &self.places, self.settings.start_of(&self.client, &app.id), &self.settings)
                 }
             };
             self.running.insert(app.id.clone(), started?);
@@ -158,9 +163,10 @@ impl Gateway {
             }
             let (send, receive) = mpsc::channel();
             let places = self.places.clone();
+            let settings = self.settings.clone();
             let id = app.id.clone();
             thread::spawn(move || {
-                let _ = send.send(start_app_server(&app, &places, "session"));
+                let _ = send.send(start_app_server(&app, &places, "session", &settings));
             });
             self.pending.insert(id, receive);
         }
@@ -194,7 +200,7 @@ pub fn idle_limit() -> Duration {
     Duration::from_secs(minutes * 60)
 }
 
-fn start_app_server(app: &App, places: &Places, policy: &str) -> Result<(String, AppServer), String> {
+fn start_app_server(app: &App, places: &Places, policy: &str, settings: &Settings) -> Result<(String, AppServer), String> {
     if !app.mcp {
         return Err(format!("{} has no MCP server yet, so there are no tools to reach", app.name));
     }
@@ -209,15 +215,24 @@ fn start_app_server(app: &App, places: &Places, policy: &str) -> Result<(String,
     };
     let (program, args, dir) = route.command();
     let started = Instant::now();
-    let server = match AppServer::start(&program, &args, dir.as_ref()) {
-        Ok(s) => s,
-        Err(e) => {
-            let short: String = e.lines().next().unwrap_or_default().chars().take(200).collect();
-            log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": false, "error": short, "ms": started.elapsed().as_millis() as u64, "policy": policy }));
-            return Err(format!("{} did not start through {}: {e}", app.name, route.label()));
-        }
+    let wall = std::time::SystemTime::now();
+    let span = |ok: bool, error: Option<&str>| {
+        telemetry::export(settings.telemetry.as_deref(), telemetry::Span { name: format!("app start {}", app.id), start: wall, ms: started.elapsed().as_millis() as u64, ok, error, attributes: vec![("formmcp.app", app.id.clone()), ("formmcp.via", route.label().to_string()), ("formmcp.policy", policy.to_string())] });
     };
-    log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": true, "tools": server.tools.len(), "ms": started.elapsed().as_millis() as u64, "policy": policy }));
+    let failed = |stage: &str, e: String| {
+        let short: String = e.lines().next().unwrap_or_default().chars().take(300).collect();
+        log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": false, "error": short, "stage": stage, "ms": started.elapsed().as_millis() as u64, "policy": policy }));
+        span(false, Some(stage));
+        e
+    };
+    let checked = match (&route, settings.verify_off) {
+        (Route::Formportal { .. }, false) => Some(verify::check(&places.portal_root, &app.id).map_err(|e| failed("verify", format!("{} was not started: {e}", app.name)))?),
+        _ => None,
+    };
+    let env = secrets::env_for(settings, &app.id).map_err(|e| failed("secrets", format!("{} was not started: {e}", app.name)))?;
+    let server = AppServer::start(&program, &args, dir.as_ref(), &env).map_err(|e| failed("start", format!("{} did not start through {}: {e}", app.name, route.label())))?;
+    log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": true, "tools": server.tools.len(), "ms": started.elapsed().as_millis() as u64, "policy": policy, "verified": checked.as_ref().map(|c| c.outcome), "files": checked.as_ref().map(|c| c.files), "verify_ms": checked.as_ref().map(|c| c.ms), "secrets": env.len() }));
+    span(true, None);
     toolcache::remember(&app.id, &server.server, &server.tools);
     Ok((route.label().to_string(), server))
 }
@@ -410,10 +425,31 @@ fn call_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     }
     let arguments = args.get("arguments").cloned().unwrap_or_else(|| json!({}));
     let exposed = gateway.settings.expose.iter().any(|e| e == &app.id);
+    let hook_set = gateway.settings.hooks.clone();
+    let event = |kind: &str| {
+        let mut shown = arguments.clone();
+        redact::value(&mut shown);
+        hooks::shorten(&mut shown);
+        json!({ "event": kind, "app": app.id, "tool": tool, "arguments": shown, "client": gateway.client, "transport": gateway.transport, "formmcp": CORE_VERSION })
+    };
+    let before = event("before");
+    let mut after = event("after");
+    hooks::before(&hook_set.before, &before)?;
+    let started = Instant::now();
     let (_, server) = gateway.server(&app)?;
     let result = server.request("tools/call", json!({ "name": tool, "arguments": arguments }), call_timeout());
     if exposed && server.tools_changed {
         gateway.list_changed = true;
+    }
+    if !hook_set.after.trim().is_empty() {
+        let mut shown = result.clone().unwrap_or_else(|e| json!({ "error": e }));
+        redact::value(&mut shown);
+        hooks::shorten(&mut shown);
+        let ok = result.as_ref().is_ok_and(|r| !r.get("isError").and_then(Value::as_bool).unwrap_or(false));
+        after["ok"] = json!(ok);
+        after["ms"] = json!(started.elapsed().as_millis() as u64);
+        after["result"] = shown;
+        hooks::after(&hook_set.after, after);
     }
     result
 }
@@ -476,17 +512,24 @@ pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
             let name = params.get("name").and_then(Value::as_str).unwrap_or_default();
             let args = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
             let started = std::time::Instant::now();
-            let answer = match call(gateway, name, &args) {
+            let wall = std::time::SystemTime::now();
+            let mut answer = match call(gateway, name, &args) {
                 Ok(Outcome::Passed(result)) => result,
                 Ok(Outcome::Mine(v)) => json!({ "content": [{ "type": "text", "text": serde_json::to_string(&v).unwrap_or_default() }], "structuredContent": v, "isError": false }),
                 Err(e) => json!({ "content": [{ "type": "text", "text": e }], "isError": true }),
             };
+            let redacted = if gateway.settings.redact_off { 0 } else { redact::value(&mut answer) };
             let (app, tool) = match name.split_once(EXPOSED_SEPARATOR) {
                 Some((id, t)) => (Some(id.to_string()), Some(t.to_string())),
                 None => (args.get("app").and_then(Value::as_str).map(str::to_string), args.get("tool").and_then(Value::as_str).map(str::to_string)),
             };
             let ok = !answer.get("isError").and_then(Value::as_bool).unwrap_or(false);
-            log::record("call", json!({ "name": name, "app": app, "tool": tool, "ok": ok, "ms": started.elapsed().as_millis() as u64, "as": gateway.client, "transport": gateway.transport }));
+            let ms = started.elapsed().as_millis() as u64;
+            log::record("call", json!({ "name": name, "app": app, "tool": tool, "ok": ok, "ms": ms, "as": gateway.client, "transport": gateway.transport, "redacted": (redacted > 0).then_some(redacted) }));
+            let mut attributes = vec![("formmcp.tool", name.to_string()), ("formmcp.client", gateway.client.clone()), ("formmcp.transport", gateway.transport.to_string())];
+            attributes.extend(app.map(|a| ("formmcp.app", a)));
+            attributes.extend(tool.map(|t| ("formmcp.app_tool", t)));
+            telemetry::export(gateway.settings.telemetry.as_deref(), telemetry::Span { name: format!("tools/call {name}"), start: wall, ms, ok, error: (!ok).then_some("tool error"), attributes });
             answer
         }
         "resources/list" => json!({ "resources": [] }),
@@ -525,5 +568,6 @@ pub fn serve(client: Option<&str>) -> io::Result<()> {
             out.flush()?;
         }
     }
+    telemetry::flush(Duration::from_secs(5));
     Ok(())
 }

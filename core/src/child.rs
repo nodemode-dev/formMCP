@@ -36,9 +36,10 @@ pub struct AppServer {
 }
 
 impl AppServer {
-    pub fn start(program: &PathBuf, args: &[String], dir: Option<&PathBuf>) -> Result<AppServer, String> {
+    pub fn start(program: &PathBuf, args: &[String], dir: Option<&PathBuf>, env: &[(String, String)]) -> Result<AppServer, String> {
         let mut command = Command::new(program);
         command.args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+        command.envs(env.iter().map(|(k, v)| (k.as_str(), v.as_str())));
         if let Some(dir) = dir {
             command.current_dir(dir);
         }

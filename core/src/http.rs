@@ -204,7 +204,10 @@ fn handle(req: Request, state: &Mutex<State>, port: u16) -> Reply {
         return refuse("origin is not this computer", 403, "Forbidden");
     }
     let token = match settings::token() {
-        Ok(t) => t,
+        Ok(t) => {
+            crate::redact::remember(&t);
+            t
+        }
         Err(e) => return Reply::text(500, "Internal Server Error", &e),
     };
     let given = req.headers.get("authorization").and_then(|a| a.strip_prefix("Bearer ").or_else(|| a.strip_prefix("bearer "))).unwrap_or("").trim();

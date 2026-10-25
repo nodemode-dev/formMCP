@@ -22,6 +22,34 @@ pub struct Settings {
     pub profiles: BTreeMap<String, Profile>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub use_profile: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub secrets: BTreeMap<String, Vec<String>>,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub redact_off: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub verify_off: bool,
+    #[serde(default, skip_serializing_if = "Hooks::is_empty")]
+    pub hooks: Hooks,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub telemetry: Option<String>,
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Hooks {
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub before: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub after: String,
+}
+
+impl Hooks {
+    pub fn is_empty(&self) -> bool {
+        self.before.trim().is_empty() && self.after.trim().is_empty()
+    }
 }
 
 pub const START_POLICIES: [&str; 3] = ["demand", "session", "keep"];
