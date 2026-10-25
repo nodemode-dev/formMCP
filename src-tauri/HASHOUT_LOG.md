@@ -2,8 +2,19 @@
 
 Living log for formMCP's desktop shell. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.4.0
-Last updated: 2026-10-24 · the window's commands; the shell, and `formmcp mcp` without a window
+Current build version: v0.5.0
+Last updated: 2026-10-25 · HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+
+## v0.5.0 · HTTP inside the window, agents and tool switches {#v0-5-0}
+
+### lib.rs · Http state, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate
+- refers-to: src-tauri/src/lib.rs :: Http, http_state_of, snapshot, set_for, tool_rows, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, run
+- kind: decision
+- logged: v0.5.0 · 2026-10-25
+
+The shell manages one `Http` slot holding the running `http::Server`; `http_switch` starts it on the configured port or stops it, and it ends with the window, so HTTP never outlives the app (checked: the port closed when the real window was stopped). `tool_load` builds a throwaway `Gateway` off the main thread, starts the app once to record its tool names, and drops it, which ends the app's server. `http_token` returns the token only for the clipboard. `formmcp mcp` takes `--client` here as in the CLI.
+
+Process note: these changes were first written as a whole new `lib.rs`; that file was restored from git and the same changes made again as region edits before anything was committed.
 
 ## v0.4.0 · the window's commands {#v0-4-0}
 

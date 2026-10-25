@@ -1,6 +1,6 @@
 # Agents
 
-formMCP's MCP server is `formmcp mcp` (stdio). In this repository it is already wired:
+formMCP's MCP server is `formmcp mcp` (stdio), and from v0.5.0 also Streamable HTTP at `http://127.0.0.1:5625/mcp` while the window or `formmcp serve` runs (see HTTP below). In this repository it is already wired:
 
 | Client | In this repository |
 | --- | --- |
@@ -29,6 +29,30 @@ Claude Code is set up with `claude mcp add --scope user formmcp` (only a user-sc
 | `suggest_app` | no | for a task in the person's words, up to five apps, best first, each with `installed`, `reach` and the next step (load its tools, install it with FormPortal, install FormPortal first, or why an agent cannot drive it yet) |
 | `app_tools` | no | one app's own tools with their input schemas, its server name and version, and its instructions; starts its server the first time |
 | `call_app` | what the app's tool changes | the app's own result for one of its tools, unchanged |
+| `app_resources` | no | the resources one app offers (each with a `uri`) and its resource templates; empty with a note when the app declares no resources |
+| `read_app_resource` | no | one resource's contents by `uri`, as embedded resource content |
+| `app_prompts` | no | the prompt templates one app offers, with their arguments |
+| `get_app_prompt` | no | one prompt filled with its `arguments`: the app's description and messages |
+
+`app_tools` also says which of the app's tools are turned off (`hidden`) and whether it offers resources and prompts (`offers`).
+
+## Apps per agent, and single tools
+
+The window's Apps for picker chooses an agent (Claude Code, Codex, Cursor, or other agents); each card's On for switch offers that app to it or not. `./formmcp cli for codex formvis off` does the same. An app turned off for an agent is left out of `family_apps`, `suggest_app` and the always-shown tools, and `app_tools`, `call_app` and the resource and prompt tools refuse it with the reason. The agent is known by `--client <name>` on `formmcp mcp`, by `?client=<name>` on the HTTP address, or else by the name the agent sends when it starts (Claude Code sends `claude-code`, which counts as claude); anything else counts as other agents.
+
+The card's Tools panel turns single tools off for every agent (`./formmcp cli tool formvis erase_all off`): left out of `app_tools` and the always-shown tools, refused by `call_app`. The panel lists the tools formMCP saw when it last started the app; Load tools starts it once to see them. Settings are read again on every request, so running servers follow a change at once (an agent that cached its tool list sees always-shown tools change the next time it lists them).
+
+## HTTP
+
+Press Start in the window's HTTP bar, or run `./formmcp cli serve` (`--port N`, else `FORMMCP_HTTP_PORT`, `http_port` in settings.json, or 5625). The server listens on 127.0.0.1 only and implements Streamable HTTP (protocol 2025-06-18; older versions accepted):
+
+- every request carries `Authorization: Bearer <token>`; the token is 64 hex characters in `http-token` in formMCP's folder (readable by you only), shown by `./formmcp cli http token` and Copy setup, and replaced by `./formmcp cli http rotate` or New token (the old one stops working at once)
+- the `Host` must be this computer at this port and an `Origin`, when sent, a page on this computer (DNS rebinding cannot reach it)
+- `initialize` returns an `Mcp-Session-Id`; later requests need it (400 without, 404 for an ended one); DELETE ends a session
+- notifications get 202; GET gets 405, because formMCP sends no server stream (so no list-changed notices over HTTP)
+- calls are answered one at a time, as on stdio; app servers started over HTTP are shared by all HTTP sessions and stop with the window or `serve`
+
+For Claude Code: `claude mcp add --scope user --transport http formmcp http://127.0.0.1:5625/mcp --header "Authorization: Bearer <token>"` (Copy setup gives this line with the token). Refused requests are written to the activity log with the reason.
 
 The list is short on purpose: one line per app and no app's tools. An app's tools enter the conversation only when `app_tools` is called for it, so formMCP stays small however many apps are installed. The server's instructions tell the agent that formMCP never installs and that FormPortal installs and updates the Form apps, and that formMCP does not handle skills: the Form apps' released skills are in formskills.
 
@@ -51,7 +75,7 @@ For an app you use all the time, turn on "Always show tools" on its card in the 
 
 ## Activity
 
-Every formMCP server appends one line per event to `log.jsonl` in formMCP's settings folder: a session starting (the client's name), each tool call (formMCP's tool, the app and the app's tool, whether it worked, how long it took) and each app server started (route, tool count, or why not). Arguments and results are never recorded. The window's Activity panel shows it as it happens; the file rolls over at 1 MB.
+Every formMCP server appends one line per event to `log.jsonl` in formMCP's settings folder: a session starting (the client's name, the agent it counts as, stdio or HTTP), HTTP starting, stopping and refusing a request, each tool call (formMCP's tool, the app and the app's tool, whether it worked, how long it took) and each app server started (route, tool count, or why not). Arguments and results are never recorded. The window's Activity panel shows it as it happens; the file rolls over at 1 MB.
 
 ## Where the list comes from
 

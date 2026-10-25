@@ -16,6 +16,7 @@ Its dependencies are MIT, Apache-2.0 or dual MIT and Apache-2.0, with some BSD-3
 | serde, serde_json | the family list and MCP messages (`core`, `cli`) |
 | ureq 2 (rustls, ring, webpki-roots) | reading the family catalogue over https (`core`); ring is Apache-2.0 and ISC, webpki-roots (the root certificates as data) CDLA-Permissive-2.0 |
 | ed25519-dalek 2 (curve25519-dalek, subtle), base64 | checking the catalogue's signature (`core`); the dalek crates and subtle are BSD-3-Clause |
+| getrandom 0.2 | the HTTP access token and session ids, from the operating system's random source (`core`); MIT OR Apache-2.0, already in the graph through the dalek crates |
 | tauri 2, tauri-build | the desktop shell |
 | Vite, TypeScript, @tauri-apps/cli, @types/node (build only) | building the window and the app; not shipped |
 

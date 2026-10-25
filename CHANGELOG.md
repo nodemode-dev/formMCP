@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.0 · 2026-10-25
+
+- formMCP also answers over HTTP, on this computer only: Start in the window (or `formmcp serve`) and point an agent at `http://127.0.0.1:5625/mcp` with the access token. Copy setup gives the address, the header and a ready Claude Code command; New token replaces the token at once.
+- Choose which apps each agent gets: pick Claude Code, Codex, Cursor or other agents, and switch apps on or off for it.
+- Turn single tools off, for every agent, from an app's Tools panel.
+- Apps' own resources and prompts come through four new tools: `app_resources`, `read_app_resource`, `app_prompts` and `get_app_prompt`.
+- Changes in the window apply to running agents from their next request.
+- The activity log shows HTTP starts, stops and refused requests, and which agent each session counts as.
+
 ## v0.4.2 · 2026-10-24
 
 - formMCP is a registered Form app: formcompiler builds and releases it, and FormPortal, FormTray and FormRanker know it as `formmcp`, formMCP, `ai.nodemode.formmcp`.

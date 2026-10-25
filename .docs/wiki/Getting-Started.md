@@ -41,4 +41,4 @@ The file records formcompiler's version and commit it came from; the window's fo
 | 5620 | Vite dev server (localhost only) |
 | 5621 | Vite preview (localhost only) |
 
-The MCP server uses stdio, no port.
+The MCP server uses stdio, no port. Over HTTP (`./formmcp cli serve`, or Start in the window) it listens on 127.0.0.1:5625 only and needs the access token from `./formmcp cli http token`; the Agents page has the rules.

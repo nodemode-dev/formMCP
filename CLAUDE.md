@@ -8,6 +8,8 @@ Rules for agents working in this repository. Read the in-tree HASHOUT logs (`cor
 - formMCP suggests; FormPortal installs. Never add a tool that installs, updates or removes an app.
 - Every list formMCP carries is generated. `core/data/family.json` comes from formcompiler's registry through `setup/family.py` (`./formmcp family --compiler PATH`); `--check` fails while it drifts.
 - The engine owns all logic and works with no window: `formmcp-core` holds the family list and the MCP server, `cli` and `src-tauri` are thin. The installed app answers `formmcp mcp` on stdio without opening a window.
+- HTTP (`http.rs`) listens on 127.0.0.1 only and checks the access token, the Host and the Origin on every request; never bind another address, skip a check, log the token or the arguments, or add a server stream without the same checks.
+- formMCP serves the Form family only (owner): no third-party or remote MCP servers.
 
 ## Building
 

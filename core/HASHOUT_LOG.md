@@ -2,8 +2,42 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.4.2
-Last updated: 2026-10-24 · formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.5.0
+Last updated: 2026-10-25 · HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.5.0 · HTTP, apps per agent, tool switches, resources and prompts {#v0-5-0}
+
+### http.rs · Streamable HTTP, hand-rolled, loopback only
+- refers-to: core/src/http.rs :: start, Server, handle, read_request, write_reply, local_host, same, param, session_id, refuse, address · core/src/settings.rs :: token, rotate_token, token_path, write_private, HTTP_PORT, port · core/src/mcp.rs :: supported, set_session_client, transport
+- kind: decision
+- logged: v0.5.0 · 2026-10-25
+
+The rules come from the MCP specification's transports page (2025-06-18, read 2026-10-25): one endpoint for POST and GET, Origin validated, localhost binding, authentication; 202 for notifications and responses; JSON or a stream for requests; 405 for GET when there is no server stream; `Mcp-Session-Id` set on the initialize response, 400 without it and 404 for an ended one, DELETE to end; 400 for an unsupported `MCP-Protocol-Version`. formMCP answers every request with one JSON body and offers no stream, so the `listChanged` capability is false over HTTP (it stays as before on stdio). Batches (2025-03-26) are still accepted. No HTTP crate: requests are small JSON-RPC posts on loopback, so a std `TcpListener` with Content-Length and chunked bodies (8 MB cap, 64 KB of headers, 30 s read timeout), one request per connection and `Connection: close` is enough, and adds nothing to NOTICE. The accept loop is non-blocking with a stop flag, so the window can stop it; dropping the server stops it, and the shared `Gateway` (and every app server it started) ends with it.
+
+Checks, in order: the path is `/mcp`; the `Host` is 127.0.0.1, localhost or [::1] at this port; an `Origin`, when sent, is one of those at any port (the window's own dev page is a local origin; the token still applies); the bearer token, compared in constant time, read from the file on every request so New token works at once; the protocol version. Refusals of Host, Origin and token are logged (`http-refused`, reason and status, never the token). The token is 32 bytes from `getrandom` as hex, written beside and renamed with mode 0600 on Unix. Session ids are 16 random bytes; at most 64 sessions are kept, oldest dropped. Calls take the gateway's lock, so they run one at a time, as stdio does.
+
+Checked with curl: 401 without or with a wrong token, 403 for a foreign Origin and a foreign Host, 404 for another path, 405 for GET, 400 for a bad version, 400 and 404 for a missing and an unknown session, -32700 for bad JSON, 202 for `notifications/initialized`, a batch and a chunked body answered, the old token refused (401) and the new one accepted right after `http rotate`, DELETE then 404. `/proc/net/tcp` shows the listener on 127.0.0.1 only, and the machine's own address is refused. The real Claude Code (2.1.310), added with `claude mcp add --transport http ... --header "Authorization: Bearer ..."` in a scratch home, reported Connected and was logged as `claude-code`, counted as claude, over HTTP.
+
+### settings.rs, mcp.rs · apps off per agent, tools off per app
+- refers-to: core/src/settings.rs :: Settings.off, Settings.hidden_tools, Settings.http_port, CLIENT_KEYS, client_key, client_label, is_off, set_app_for, tool_hidden, set_tool · core/src/mcp.rs :: Gateway.client, force_client, reload_settings, is_off, app, exposed_tools, family_apps, suggest_app, app_tools, call_app, start_app
+- kind: decision
+- logged: v0.5.0 · 2026-10-25
+
+Settings keep what is off, not what is on, so a new Form app is offered to every agent until someone turns it off. The agent a session counts as comes from `--client` (stdio), `?client=` (HTTP), or the client's own `clientInfo.name` matched on claude, codex or cursor (Claude Code sends `claude-code`), else other; `agents install` was not changed to write `--client`, because the name already decides it and existing entries keep working. Settings are read again at every request (a small file), so a switch in the window reaches running servers at once; the cost is one read per request. `suggest_app` asks for five and drops off apps before cutting to the limit, so turning an app off does not shrink the answer. A tool off is off for every agent: per-agent tool lists would multiply the switches for little gain.
+
+### mcp.rs, child.rs · resources and prompts on demand
+- refers-to: core/src/mcp.rs :: app_resources, read_app_resource, app_prompts, get_app_prompt, tools, INSTRUCTIONS · core/src/child.rs :: capabilities, list_all, offers
+- kind: decision
+- logged: v0.5.0 · 2026-10-25
+
+Like tools, an app's resources and prompts never enter formMCP's own lists; four tools fetch them for one app when asked. A child is asked only for what its initialize result declares (`offers`), so an app without resources answers with an empty list and a note instead of an error; FormPortal declares neither and answers so. `read_app_resource` returns the contents as embedded resource blocks in a tool result, which every client can show; `get_app_prompt` returns the messages as data for the agent to follow (formMCP cannot inject them as a client prompt for another server). Checked over stdio with a scratch server standing in for formvis (two resources, a template, one prompt with an argument) and with FormPortal's real server.
+
+### toolcache.rs · tool names for the window
+- refers-to: core/src/toolcache.rs :: remember, known, ToolLine, Known
+- kind: decision
+- logged: v0.5.0 · 2026-10-25
+
+The window cannot list an app's tools without starting it, and every client starts its own formMCP, so each start (and each refresh in `app_tools`) writes the tool names, a shortened description and the read-only hint to `tools/<id>.json` in formMCP's folder. The window's Tools panel reads it; Load tools starts the app once in the shell to fill it.
 
 ## v0.4.2 · formMCP in the registry, never in its own list {#v0-4-2}
 

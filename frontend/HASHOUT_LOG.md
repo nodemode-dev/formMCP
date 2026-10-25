@@ -2,8 +2,24 @@
 
 Living log for formMCP's window. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.4.1
-Last updated: 2026-10-24 · no Skills filter or badge; clients, local state, switches and activity; the family list window
+Current build version: v0.5.0
+Last updated: 2026-10-25 · the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+
+## v0.5.0 · the HTTP bar, apps per agent and the Tools panel {#v0-5-0}
+
+### index.html, main.ts · fixed places for new controls
+- refers-to: index.html :: .http, #http-state, #http-copy, #http-rotate, #http-toggle, #agent · src/main.ts :: row, makeSwitch, showAgent, showHttp, showSnapshot, renderTools, describe, AGENTS
+- kind: decision
+- logged: v0.5.0 · 2026-10-25
+
+The HTTP bar is a fixed 40 px row under the agent cards and the agent picker sits in the filter row, both in the first frame. Every card gets an On for switch (all apps, since an app without a server is still listed and suggested); its label has a minimum width so naming another agent does not move the switch beside it. Cards with an MCP server move Always show tools beside it and gain a Tools button. Copy setup puts the address, the header and a Claude Code command on the clipboard (a hidden textarea when the clipboard API is refused) and never shows the token on screen; New token wants a second click within 4 s, as Discard does in formskills. The activity log names the new events; before this they read as a failed call.
+
+### app.css · the open Tools panel grows its own card
+- refers-to: src/styles/app.css :: .apps, .app, .tool-panel
+- kind: fix
+- logged: v0.5.0 · 2026-10-25
+
+The panel has a fixed height (168 px) and appears on the click, so its content arriving moves nothing. At 640 by 520 the first run found the open panel drawn over the next card: the list has a definite height (it scrolls), so CSS grid leaves no free space and keeps auto rows at their base size, which the card's `min-height` (196 px) sets, instead of growing them to the content. `grid-auto-rows: max-content` sizes each row to its card; `align-items: start` keeps the cards beside an open one at their own height. Checked at 640 by 520 and 1040 by 780, dark and light: CLS 0.
 
 ## v0.4.1 · no Skills filter or badge {#v0-4-1}
 

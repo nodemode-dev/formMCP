@@ -15,12 +15,15 @@
 
 formMCP is the one MCP server you add for the Form family of desktop apps (image, video, audio, layout, vector, notes, slides and the rest, by nodemode.ai). The agent sees every Form app in one short list (what each is for, whether it has an MCP server, whether this computer can reach it), whether or not any of them is installed, and loads one app's own tools only when the task needs that app. formMCP suggests; FormPortal installs.
 
-**Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript + Vite window with zero runtime dependencies · **Scale:** 22 Form apps from formcompiler's registry and the signed catalogue, 4 MCP tools, 2 ways to reach an app, 3 agent clients
+**Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript + Vite window with zero runtime dependencies · **Scale:** 22 Form apps from formcompiler's registry and the signed catalogue, 8 MCP tools, stdio and HTTP, 2 ways to reach an app, 3 agent clients
 
 ## Highlights
 
 - **Cheap on context.** `family_apps` returns one line per app and no app's tools, so the whole family is about a thousand tokens (4.4 KB for 22 apps with their install state), not twenty apps' worth of tools.
 - **Installed apps' own tools, on demand.** `app_tools` starts one app's own MCP server (through its checkout's launcher, or `formportal app-mcp` for a FormPortal install) and lists its tools; `call_app` runs one and returns the app's result unchanged. Nothing is copied, so the tools are always the running app's.
+- **Resources and prompts too.** When an app offers documents or prompt templates, `app_resources`, `read_app_resource`, `app_prompts` and `get_app_prompt` pass them through on demand, like its tools.
+- **You choose what each agent gets.** Turn an app off for Claude Code, Codex, Cursor or other agents, and turn single tools off (say, an app's delete) for every agent. Off apps leave the lists and are refused with the reason; changes apply from the next request.
+- **stdio or HTTP.** Agents start `formmcp mcp`, or reach `http://127.0.0.1:5625/mcp` while the window (or `formmcp serve`) is open: this computer only, an access token on every request, Host and Origin checked, the token renewed with one button.
 - **The right app for the task.** `suggest_app` takes the task in the person's words and returns the apps that fit with the next step: load its tools, install it with FormPortal, or install FormPortal first.
 - **Never hand-kept.** The family list is the signed family catalogue (checked against the same keys FormPortal trusts) over a list generated from formcompiler's registry (`./formmcp family --compiler PATH`), and every answer says which one was used and why.
 - **Tools only; skills live in formskills.** formMCP lists apps and runs their MCP tools. The Form apps' released skills are viewed, downloaded and edited in formskills, not here.
@@ -39,6 +42,10 @@ Requirements: Rust (stable), Node 20.19+, and on Linux WebKitGTK 4.1 for the win
 ./formmcp cli apps          # the family list as JSON
 ./formmcp cli reach         # how each app's server would be started on this computer
 ./formmcp cli agents install   # add formMCP to Claude Code, Codex and Cursor for your user account
+./formmcp cli serve         # the MCP server over HTTP at http://127.0.0.1:5625/mcp (or Start in the window)
+./formmcp cli http token    # the access token an HTTP agent sends as Authorization: Bearer <token>
+./formmcp cli for codex formvis off       # FormVis not offered to Codex
+./formmcp cli tool formvis erase_all off  # one tool off for every agent
 ```
 
 Form app checkouts in the folder beside this one are found on their own (`FORMMCP_DEV_ROOTS` names other folders, or is set empty to turn that off); FormPortal installs are found through FormPortal. The wiki's Agents page has the details and the environment variables.
@@ -52,7 +59,7 @@ This repository is already wired for agents: `.mcp.json` (Claude Code), `.codex/
 | Path | Role |
 | --- | --- |
 | `core/` | The engine: the family list (`core/data/family.json`, generated), finding each app's server (`reach.rs`), running it (`child.rs`) and the MCP server (`mcp.rs`) |
-| `cli/` | `formmcp-cli apps`, `app`, `reach`, `suggest`, `catalog`, `expose`, `agents`, `mcp`, `version` |
+| `cli/` | `formmcp-cli apps`, `app`, `reach`, `suggest`, `catalog`, `expose`, `for`, `tool`, `tools`, `settings`, `agents`, `mcp`, `serve`, `http`, `version` |
 | `src-tauri/` | The shell: the window, and `formmcp mcp` with no window |
 | `frontend/` | The window: tokens, layers, one list |
 | `setup/family.py` | Generates `core/data/family.json` from formcompiler's registry |
@@ -63,10 +70,13 @@ This repository is already wired for agents: `.mcp.json` (Claude Code), `.codex/
 | --- | --- |
 | 5620 | Vite dev server (localhost only) |
 | 5621 | Vite preview (localhost only) |
+| 5625 | formMCP over HTTP, while the window or `formmcp serve` runs (127.0.0.1 only; `FORMMCP_HTTP_PORT` or `http_port` in settings.json changes it) |
 
 **Releases.** formMCP builds nothing in this repository. After the version bump lands on main, push a branch `compile_vX.Y.Z` cut from that commit; CI runs on it, and formcompiler (`nodemode-ai/formcompiler`) builds the bundles with `./build_app` (`build_app.bat` on Windows) and drafts the release `formMCP-vX.Y.Z` (`apps/formMCP.json` in its registry). `./build_app` also builds the app on your own machine.
 
 ## Status
+
+v0.5.0: connect (family plan Phase 6). Streamable HTTP on 127.0.0.1 with an access token; apps turned on or off per agent; single tools turned off; an app's resources and prompts passed through; the window's HTTP bar, agent picker and per-app Tools panel. Checked: every HTTP rule with curl (401, 403 for a foreign Host or Origin, 400 and 404 for sessions and versions, 405, 202, chunked bodies, batches, token rotation, loopback only); the real Claude Code connected over HTTP (`claude mcp list`: Connected) and was recognised by its own name; agent sets and tool switches over stdio and HTTP; resources and prompts through a scratch server and FormPortal's real one; the window at 4x CPU and network throttling bridged to the real engine (CLS 0, dark, light and 640 by 520) and the real window under Xvfb (HTTP started, a Cursor session over it, FormPortal's 33 tools loaded).
 
 v0.4.2: formMCP is in formcompiler's registry (`formmcp`, `ai.nodemode.formmcp`) with `build_app` and `build_app.bat` for its bundles, the same names in FormPortal, FormTray and FormRanker, and formskills in the family list. formMCP leaves itself out of its own list (generated and from the catalogue), so no agent can start formMCP inside formMCP.
 
@@ -80,7 +90,7 @@ v0.2.0: the gateway. `app_tools` and `call_app` reach an app's own server throug
 
 v0.1.0: the scaffold. `family_apps` over stdio from the bundled list, the command line, the window, and the agent wiring.
 
-Next: the owner's first push and `compile_v0.4.2` branch, and the family's catalogue key pair, so released apps and skills are read from the signed catalogue.
+Next: v0.6.0, named profiles you can share and a start-up policy per app; then v0.7.0, secrets in the system keychain, secrets kept out of calls and the log, a file check before an installed app starts, hooks and tracing. The owner's first push, `compile_v*` branch and the family's catalogue key pair are still to come.
 
 ## License
 
