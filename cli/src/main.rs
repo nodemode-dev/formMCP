@@ -18,6 +18,11 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   for <agent> <id> on|off   offer an app to one agent or not: claude, codex, cursor or other (saved in settings.json)
   tool <id> <tool> on|off   offer one of an app's tools or not, to every agent
   tools <id>            the app's tools formMCP last saw, and which are off (JSON)
+  start <id> demand|session|keep   when the app's server starts: when first needed and stopped after
+                        FORMMCP_IDLE_MINUTES (10) idle; when an agent's session starts; or when first needed and kept
+  profile list|show <name>|save <name> [--from AGENT]|use <agent> <name>|unuse <agent>|export <name> [--to FILE]|import <file>|delete <name>
+                        named profiles: apps and tools off and start policies, shared as one JSON file; a profile in
+                        use for an agent turns more off for it, never less
   settings              what settings.json holds now, with the HTTP address (JSON)
   mcp [--client AGENT]  serve formMCP's MCP tools on stdin and stdout; --client names the agent (else its own name decides)
   serve [--port N]      serve formMCP over HTTP on 127.0.0.1 only, at http://127.0.0.1:5625/mcp, until stopped
@@ -198,6 +203,66 @@ fn main() -> ExitCode {
             match saved.save() {
                 Ok(path) => {
                     print(&json!({ "off": saved.off, "hidden_tools": saved.hidden_tools, "settings": path, "note": "running formMCP servers use this from their next request" }));
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("formmcp: {e}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        "start" => {
+            let (Some(app), Some(policy)) = (args.get(1).and_then(|id| family.get(id)), args.get(2)) else {
+                eprintln!("formmcp: start <id> demand|session|keep");
+                return ExitCode::FAILURE;
+            };
+            let mut saved = Settings::saved();
+            match saved.set_start(&app.id, policy).and_then(|()| saved.save()) {
+                Ok(path) => {
+                    print(&json!({ "start": saved.start, "settings": path, "note": "demand is the default and is not stored" }));
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("formmcp: {e}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        "profile" => {
+            let action = args.get(1).map(String::as_str).unwrap_or("list");
+            let mut saved = Settings::saved();
+            let agent_ok = |a: &str| settings::CLIENT_KEYS.contains(&a);
+            let result: Result<serde_json::Value, String> = match (action, args.get(2).map(String::as_str), args.get(3).map(String::as_str)) {
+                ("list", _, _) => Ok(json!({ "profiles": saved.profiles.keys().collect::<Vec<_>>(), "in_use": saved.use_profile })),
+                ("show", Some(name), _) => saved.profiles.get(name).map(|p| json!({ "name": name, "profile": p })).ok_or_else(|| format!("there is no profile {name:?}")),
+                ("save", Some(name), _) => {
+                    let from = flag("--from").unwrap_or_else(|| "other".to_string());
+                    if !settings::profile_name_ok(name) {
+                        Err(format!("{name:?}: 1 to 40 letters, digits, spaces, hyphens or underscores"))
+                    } else if !agent_ok(&from) {
+                        Err(format!("there is no agent {from:?}; use claude, codex, cursor or other"))
+                    } else {
+                        let profile = saved.profile_from(&from);
+                        saved.profiles.insert(name.to_string(), profile.clone());
+                        saved.save().map(|path| json!({ "saved": name, "from": from, "profile": profile, "settings": path }))
+                    }
+                }
+                ("use", Some(agent), Some(name)) if agent_ok(agent) => saved.set_profile_for(agent, Some(name)).and_then(|()| saved.save()).map(|_| json!({ "in_use": saved.use_profile })),
+                ("unuse", Some(agent), _) if agent_ok(agent) => saved.set_profile_for(agent, None).and_then(|()| saved.save()).map(|_| json!({ "in_use": saved.use_profile })),
+                ("export", Some(name), _) => match saved.profiles.get(name) {
+                    Some(p) => settings::export_profile(name, p, flag("--to").as_deref().map(std::path::Path::new)).map(|path| json!({ "exported": name, "file": path })),
+                    None => Err(format!("there is no profile {name:?}")),
+                },
+                ("import", Some(file), _) => std::fs::read_to_string(file).map_err(|e| format!("{file}: {e}")).and_then(|text| settings::read_profile(&text, &|id| family.get(id).is_some())).and_then(|(name, profile, dropped)| {
+                    let replaced = saved.profiles.insert(name.clone(), profile).is_some();
+                    saved.save().map(|_| json!({ "imported": name, "replaced": replaced, "dropped": dropped }))
+                }),
+                ("delete", Some(name), _) => saved.delete_profile(name).and_then(|()| saved.save()).map(|_| json!({ "deleted": name, "in_use": saved.use_profile })),
+                _ => Err("profile list | show <name> | save <name> [--from AGENT] | use <agent> <name> | unuse <agent> | export <name> [--to FILE] | import <file> | delete <name>".to_string()),
+            };
+            match result {
+                Ok(v) => {
+                    print(&v);
                     ExitCode::SUCCESS
                 }
                 Err(e) => {

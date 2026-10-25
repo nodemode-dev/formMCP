@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 use std::io::{self, BufRead, Write};
+use std::sync::mpsc::{self, Receiver};
+use std::thread;
+use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
 
@@ -23,13 +26,15 @@ pub struct Gateway {
     pub transport: &'static str,
     forced_client: bool,
     running: HashMap<String, (String, AppServer)>,
+    pending: HashMap<String, Receiver<Result<(String, AppServer), String>>>,
+    last_used: HashMap<String, Instant>,
     catalog_read: bool,
     list_changed: bool,
 }
 
 impl Gateway {
     pub fn new(family: Family, places: Places) -> Gateway {
-        Gateway { family, places, settings: Settings::load(), client: "other".into(), transport: "stdio", forced_client: false, running: HashMap::new(), catalog_read: false, list_changed: false }
+        Gateway { family, places, settings: Settings::load(), client: "other".into(), transport: "stdio", forced_client: false, running: HashMap::new(), pending: HashMap::new(), last_used: HashMap::new(), catalog_read: false, list_changed: false }
     }
 
     pub fn force_client(&mut self, name: &str) {
@@ -86,7 +91,7 @@ impl Gateway {
                 Ok(tools) => {
                     for tool in tools {
                         let Some(name) = tool.get("name").and_then(Value::as_str) else { continue };
-                        if self.settings.tool_hidden(&app.id, name) {
+                        if self.settings.hides_tool(&self.client, &app.id, name) {
                             continue;
                         }
                         let mut renamed = tool.clone();
@@ -109,6 +114,9 @@ impl Gateway {
         }
         let app = self.family.get(name).cloned().ok_or_else(|| format!("there is no Form app {name:?}; family_apps lists them"))?;
         if self.is_off(&app.id) {
+            if let Some((profile, _)) = self.settings.profile_of(&self.client).filter(|_| self.settings.profile_hides_app(&self.client, &app.id)) {
+                return Err(format!("{} is turned off for {} by the profile {profile:?} in formMCP; the person can change that in formMCP's window", app.name, client_label(&self.client)));
+            }
             return Err(format!("{} is turned off for {} in formMCP; the person can turn it on in formMCP's window", app.name, client_label(&self.client)));
         }
         Ok(app)
@@ -120,35 +128,98 @@ impl Gateway {
             self.running.remove(&app.id);
         }
         if !self.running.contains_key(&app.id) {
-            if !app.mcp {
-                return Err(format!("{} has no MCP server yet, so there are no tools to reach", app.name));
-            }
-            self.places.refresh();
-            let reach = self.places.reach(app);
-            let Some(route) = reach.route else {
-                let how = if reach.installed {
-                    "it is installed, but no FormPortal program was found to start it (set FORMPORTAL_BIN)"
-                } else {
-                    "it is not installed: FormPortal installs it, or set FORMMCP_DEV_ROOTS to a folder holding its checkout"
-                };
-                return Err(format!("{} cannot be reached: {how}", app.name));
-            };
-            let (program, args, dir) = route.command();
-            let started = std::time::Instant::now();
-            let server = match AppServer::start(&program, &args, dir.as_ref()) {
-                Ok(s) => s,
-                Err(e) => {
-                    let short: String = e.lines().next().unwrap_or_default().chars().take(200).collect();
-                    log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": false, "error": short, "ms": started.elapsed().as_millis() as u64 }));
-                    return Err(format!("{} did not start through {}: {e}", app.name, route.label()));
+            let early = self.pending.remove(&app.id).and_then(|rx| rx.recv().ok());
+            let started = match early {
+                Some(result) => result,
+                None => {
+                    self.places.refresh();
+                    start_app_server(app, &self.places, self.settings.start_of(&self.client, &app.id))
                 }
             };
-            log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": true, "tools": server.tools.len(), "ms": started.elapsed().as_millis() as u64 }));
-            toolcache::remember(&app.id, &server.server, &server.tools);
-            self.running.insert(app.id.clone(), (route.label().to_string(), server));
+            self.running.insert(app.id.clone(), started?);
         }
+        self.last_used.insert(app.id.clone(), Instant::now());
         self.running.get_mut(&app.id).ok_or_else(|| "the app's server is gone".to_string())
     }
+
+    pub fn start_early(&mut self) {
+        let wanted = |m: &std::collections::BTreeMap<String, String>| m.values().any(|p| p == "session");
+        if !wanted(&self.settings.start) && !self.settings.profile_of(&self.client).is_some_and(|(_, p)| wanted(&p.start)) {
+            return;
+        }
+        self.ensure_catalog();
+        self.places.refresh();
+        for app in self.family.apps.clone() {
+            if !app.mcp || self.is_off(&app.id) || self.running.contains_key(&app.id) || self.pending.contains_key(&app.id) {
+                continue;
+            }
+            if self.settings.start_of(&self.client, &app.id) != "session" || self.places.reach(&app).route.is_none() {
+                continue;
+            }
+            let (send, receive) = mpsc::channel();
+            let places = self.places.clone();
+            let id = app.id.clone();
+            thread::spawn(move || {
+                let _ = send.send(start_app_server(&app, &places, "session"));
+            });
+            self.pending.insert(id, receive);
+        }
+    }
+
+    pub fn sweep_idle(&mut self) {
+        let idle = idle_limit();
+        let stale: Vec<String> = self
+            .running
+            .keys()
+            .filter(|id| self.settings.start_of(&self.client, id) == "demand" && self.last_used.get(*id).is_some_and(|t| t.elapsed() >= idle))
+            .cloned()
+            .collect();
+        for id in stale {
+            self.running.remove(&id);
+            self.last_used.remove(&id);
+            log::record("app-stop", json!({ "app": id, "reason": "idle", "minutes": idle.as_secs() / 60 }));
+            self.list_changed |= self.settings.expose.iter().any(|e| e == &id);
+        }
+    }
+
+    pub fn running_apps(&self) -> Vec<String> {
+        let mut ids: Vec<String> = self.running.keys().cloned().collect();
+        ids.sort();
+        ids
+    }
+}
+
+pub fn idle_limit() -> Duration {
+    let minutes = std::env::var("FORMMCP_IDLE_MINUTES").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(10);
+    Duration::from_secs(minutes * 60)
+}
+
+fn start_app_server(app: &App, places: &Places, policy: &str) -> Result<(String, AppServer), String> {
+    if !app.mcp {
+        return Err(format!("{} has no MCP server yet, so there are no tools to reach", app.name));
+    }
+    let reach = places.reach(app);
+    let Some(route) = reach.route else {
+        let how = if reach.installed {
+            "it is installed, but no FormPortal program was found to start it (set FORMPORTAL_BIN)"
+        } else {
+            "it is not installed: FormPortal installs it, or set FORMMCP_DEV_ROOTS to a folder holding its checkout"
+        };
+        return Err(format!("{} cannot be reached: {how}", app.name));
+    };
+    let (program, args, dir) = route.command();
+    let started = Instant::now();
+    let server = match AppServer::start(&program, &args, dir.as_ref()) {
+        Ok(s) => s,
+        Err(e) => {
+            let short: String = e.lines().next().unwrap_or_default().chars().take(200).collect();
+            log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": false, "error": short, "ms": started.elapsed().as_millis() as u64, "policy": policy }));
+            return Err(format!("{} did not start through {}: {e}", app.name, route.label()));
+        }
+    };
+    log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": true, "tools": server.tools.len(), "ms": started.elapsed().as_millis() as u64, "policy": policy }));
+    toolcache::remember(&app.id, &server.server, &server.tools);
+    Ok((route.label().to_string(), server))
 }
 
 const PROTOCOL: &str = "2025-06-18";
@@ -255,15 +326,15 @@ fn family_apps(gateway: &mut Gateway, args: &Value) -> Value {
 fn app_tools(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     let app = gateway.app(args)?;
     let refresh = args.get("refresh").and_then(Value::as_bool).unwrap_or(false);
-    let hidden_of = gateway.settings.hidden_tools.get(&app.id).cloned().unwrap_or_default();
+    let (settings, client) = (gateway.settings.clone(), gateway.client.clone());
     let (via, server) = gateway.server(&app)?;
     if refresh || server.tools_changed {
         server.load_tools()?;
         toolcache::remember(&app.id, &server.server, &server.tools);
     }
     let named = |t: &Value| t.get("name").and_then(Value::as_str).unwrap_or_default().to_string();
-    let shown: Vec<Value> = server.tools.iter().filter(|t| !hidden_of.contains(&named(t))).cloned().collect();
-    let hidden: Vec<String> = server.tools.iter().map(named).filter(|n| hidden_of.contains(n)).collect();
+    let shown: Vec<Value> = server.tools.iter().filter(|t| !settings.hides_tool(&client, &app.id, &named(t))).cloned().collect();
+    let hidden: Vec<String> = server.tools.iter().map(named).filter(|n| settings.hides_tool(&client, &app.id, n)).collect();
     Ok(json!({
         "app": app.id,
         "via": via,
@@ -334,7 +405,7 @@ fn call_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     if tool.is_empty() {
         return Err("tool is required: a name from app_tools".into());
     }
-    if gateway.settings.tool_hidden(&app.id, &tool) {
+    if gateway.settings.hides_tool(&gateway.client, &app.id, &tool) {
         return Err(format!("{tool} in {} is turned off in formMCP; the person can turn it on in formMCP's window", app.name));
     }
     let arguments = args.get("arguments").cloned().unwrap_or_else(|| json!({}));
@@ -376,6 +447,7 @@ pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
     let id = msg.get("id").cloned()?;
     let method = msg.get("method").and_then(Value::as_str).unwrap_or_default();
     gateway.reload_settings();
+    gateway.sweep_idle();
     let params = msg.get("params").cloned().unwrap_or(Value::Null);
     let result = match method {
         "initialize" => {
@@ -385,7 +457,8 @@ pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
             if !gateway.forced_client {
                 gateway.client = client_key(client.get("name").and_then(Value::as_str).unwrap_or_default()).to_string();
             }
-            log::record("session", json!({ "client": client.get("name"), "client_version": client.get("version"), "as": gateway.client, "transport": gateway.transport, "expose": gateway.settings.expose }));
+            log::record("session", json!({ "client": client.get("name"), "client_version": client.get("version"), "as": gateway.client, "transport": gateway.transport, "expose": gateway.settings.expose, "profile": gateway.settings.use_profile.get(&gateway.client) }));
+            gateway.start_early();
             json!({
                 "protocolVersion": version,
                 "capabilities": { "tools": { "listChanged": !gateway.settings.expose.is_empty() && gateway.transport == "stdio" } },
