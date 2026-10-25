@@ -23,18 +23,92 @@ fn snapshot_now() -> Result<Value, String> {
         .iter()
         .map(|a| {
             let reach = places.reach(a);
-            let off_for: Vec<&str> = CLIENT_KEYS.iter().copied().filter(|c| settings.is_off(c, &a.id)).collect();
+            let off_for: Vec<&str> = CLIENT_KEYS.iter().copied().filter(|c| settings.off.get(*c).is_some_and(|l| l.contains(&a.id))).collect();
+            let profile_off_for: Vec<&str> = CLIENT_KEYS.iter().copied().filter(|c| settings.profile_hides_app(c, &a.id)).collect();
+            let start = settings.start.get(&a.id).cloned().unwrap_or_else(|| "demand".to_string());
             json!({
                 "id": a.id, "name": a.name, "kind": a.kind, "summary": a.summary, "mcp": a.mcp,
                 "state": a.state, "version": a.version, "installed": reach.installed,
                 "reach": reach.route.as_ref().map(|r| r.label()), "exposed": settings.expose.contains(&a.id),
-                "off_for": off_for, "hidden_tools": settings.hidden_tools.get(&a.id).map(Vec::len).unwrap_or(0)
+                "off_for": off_for, "profile_off_for": profile_off_for, "start": start, "hidden_tools": settings.hidden_tools.get(&a.id).map(Vec::len).unwrap_or(0)
             })
         })
         .collect();
     let clients: Vec<Value> = CLIENTS.iter().map(|c| json!(clients::state(*c))).collect();
     let formportal = places.portal_program.is_some() || places.portal_root.join("installed.json").is_file();
-    Ok(json!({ "source": family.describe_source(), "apps": apps, "clients": clients, "formportal": formportal, "env_expose": std::env::var("FORMMCP_EXPOSE").is_ok() }))
+    Ok(json!({ "source": family.describe_source(), "apps": apps, "clients": clients, "formportal": formportal, "env_expose": std::env::var("FORMMCP_EXPOSE").is_ok(), "profiles": profiles_of(&settings) }))
+}
+
+fn profiles_of(settings: &Settings) -> Value {
+    let names: Vec<Value> = settings
+        .profiles
+        .iter()
+        .map(|(name, p)| {
+            let used_by: Vec<&String> = settings.use_profile.iter().filter(|(_, n)| *n == name).map(|(c, _)| c).collect();
+            json!({ "name": name, "apps_off": p.apps_off.len(), "tools_off": p.hidden_tools.values().map(Vec::len).sum::<usize>(), "starts": p.start.len(), "used_by": used_by })
+        })
+        .collect();
+    json!({ "list": names, "in_use": settings.use_profile })
+}
+
+#[tauri::command]
+fn set_start(id: String, policy: String) -> Result<String, String> {
+    let mut saved = Settings::saved();
+    saved.set_start(&id, &policy)?;
+    saved.save()?;
+    Ok(saved.start.get(&id).cloned().unwrap_or_else(|| "demand".to_string()))
+}
+
+#[tauri::command]
+fn profile_use(client: String, name: Option<String>) -> Result<Value, String> {
+    if !CLIENT_KEYS.contains(&client.as_str()) {
+        return Err(format!("there is no agent {client:?}"));
+    }
+    let mut saved = Settings::saved();
+    saved.set_profile_for(&client, name.as_deref())?;
+    saved.save()?;
+    Ok(profiles_of(&saved))
+}
+
+#[tauri::command]
+fn profile_save(name: String, from: String) -> Result<Value, String> {
+    let name = name.trim().to_string();
+    if !settings::profile_name_ok(&name) {
+        return Err("a profile name has 1 to 40 letters, digits, spaces, hyphens or underscores".into());
+    }
+    if !CLIENT_KEYS.contains(&from.as_str()) {
+        return Err(format!("there is no agent {from:?}"));
+    }
+    let mut saved = Settings::saved();
+    let profile = saved.profile_from(&from);
+    saved.profiles.insert(name, profile);
+    saved.save()?;
+    Ok(profiles_of(&saved))
+}
+
+#[tauri::command]
+fn profile_delete(name: String) -> Result<Value, String> {
+    let mut saved = Settings::saved();
+    saved.delete_profile(&name)?;
+    saved.save()?;
+    Ok(profiles_of(&saved))
+}
+
+#[tauri::command]
+fn profile_export(name: String) -> Result<String, String> {
+    let saved = Settings::saved();
+    let profile = saved.profiles.get(&name).ok_or_else(|| format!("there is no profile {name:?}"))?;
+    settings::export_profile(&name, profile, None).map(|p| p.display().to_string())
+}
+
+#[tauri::command]
+fn profile_import(text: String) -> Result<Value, String> {
+    let family = Family::bundled()?;
+    let (name, profile, dropped) = settings::read_profile(&text, &|id| family.get(id).is_some())?;
+    let mut saved = Settings::saved();
+    let replaced = saved.profiles.insert(name.clone(), profile).is_some();
+    saved.save()?;
+    Ok(json!({ "name": name, "replaced": replaced, "dropped": dropped, "profiles": profiles_of(&saved) }))
 }
 
 #[tauri::command]
@@ -160,7 +234,7 @@ pub fn run() {
     }
     tauri::Builder::default()
         .manage(Http::default())
-        .invoke_handler(tauri::generate_handler![snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail])
+        .invoke_handler(tauri::generate_handler![snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import])
         .run(tauri::generate_context!())
         .expect("formMCP could not start its window");
 }

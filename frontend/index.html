@@ -60,8 +60,25 @@
             <option value="other">Other agents</option>
           </select>
         </label>
+        <label class="agent-pick profile-pick">
+          <span>Profile</span>
+          <select id="profile-pick" disabled>
+            <option value="">None</option>
+          </select>
+        </label>
+        <button class="btn btn-small" id="profiles-toggle" type="button" aria-expanded="false" disabled>Profiles</button>
         <p class="count" id="count" aria-live="polite"></p>
       </div>
+      <section class="profiles" id="profiles" aria-label="Profiles" hidden>
+        <form class="profile-form" id="profile-form" autocomplete="off">
+          <input id="profile-name" type="text" maxlength="40" placeholder="Profile name" aria-label="Profile name" spellcheck="false" />
+          <button class="btn btn-small" id="profile-save" type="submit" disabled>Save Claude Code's settings</button>
+          <button class="btn btn-small" id="profile-import" type="button">Import</button>
+          <input id="profile-file" type="file" accept=".json,application/json" hidden />
+        </form>
+        <p class="profile-note" id="profile-note">A profile keeps apps off, tools off and start policies under one name. Used for an agent, it only turns more off; export one to share it.</p>
+        <ul class="profile-list" id="profile-list"></ul>
+      </section>
       <ul class="apps" id="apps"></ul>
       <section class="log" aria-label="Activity">
         <div class="log-head">

@@ -7,6 +7,7 @@ declare const __APP_VERSION__: string;
 
 const STATES: Record<string, string> = { live: "Live", public: "Public", prelaunch: "Coming" };
 const AGENTS: Record<string, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", other: "other agents" };
+const START_LABELS: [string, string][] = [["demand", "Start on demand"], ["session", "Start with the session"], ["keep", "Keep running"]];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = "", text = ""): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -43,6 +44,17 @@ function row(app: App): HTMLLIElement {
   if (app.mcp) {
     const sw = makeSwitch("Always show tools", "Always show this app's own tools in formMCP's tool list");
     sw.dataset.expose = app.id;
+    const start = el("select", "start-pick");
+    start.dataset.start = app.id;
+    start.disabled = true;
+    start.title = "When this app's server starts. On demand stops it after 10 idle minutes";
+    start.setAttribute("aria-label", `When ${app.name}'s server starts`);
+    for (const [value, label] of START_LABELS) {
+      const o = el("option", "", label);
+      o.value = value;
+      start.append(o);
+    }
+    switches.append(start);
     const toolsButton = el("button", "btn btn-small app-tools-btn", "Tools");
     toolsButton.type = "button";
     toolsButton.dataset.tools = app.id;
@@ -96,13 +108,15 @@ for (const chip of chips) chip.addEventListener("click", () => apply((chip.datas
 apply("all");
 
 type Invoke = (cmd: string, args?: Record<string, unknown>) => Promise<unknown>;
-type LiveApp = { id: string; installed: boolean; reach: string | null; exposed: boolean; mcp: boolean; version: string; off_for: string[]; hidden_tools: number };
+type LiveApp = { id: string; installed: boolean; reach: string | null; exposed: boolean; mcp: boolean; version: string; off_for: string[]; profile_off_for: string[]; start: string; hidden_tools: number };
+type ProfileRow = { name: string; apps_off: number; tools_off: number; starts: number; used_by: string[] };
+type Profiles = { list: ProfileRow[]; in_use: Record<string, string> };
 type ClientState = { client: string; state: "connected" | "not-connected" | "taken" | "no-client"; note: string | null };
 type HttpState = { running: boolean; port: number; address: string };
-type Snapshot = { source: string; apps: LiveApp[]; clients: ClientState[]; formportal: boolean; env_expose: boolean; http: HttpState };
+type Snapshot = { source: string; apps: LiveApp[]; clients: ClientState[]; formportal: boolean; env_expose: boolean; http: HttpState; profiles: Profiles };
 type ToolRow = { name: string; description: string; read_only: boolean; on: boolean };
 type ToolList = { app: string; loaded: number | null; tools: ToolRow[] };
-type LogEvent = { t: number; event: string; client?: string; name?: string; app?: string | null; tool?: string | null; ok?: boolean; ms?: number; via?: string; error?: string; tools?: number; as?: string; transport?: string; port?: number; status?: number; reason?: string };
+type LogEvent = { t: number; event: string; client?: string; name?: string; app?: string | null; tool?: string | null; ok?: boolean; ms?: number; via?: string; error?: string; tools?: number; as?: string; transport?: string; port?: number; status?: number; reason?: string; minutes?: number; policy?: string; profile?: string | null };
 
 const invoke = (window as unknown as { __TAURI__?: { core?: { invoke?: Invoke } } }).__TAURI__?.core?.invoke;
 const status = document.getElementById("status") as HTMLParagraphElement;
@@ -145,15 +159,99 @@ const httpRotate = document.getElementById("http-rotate") as HTMLButtonElement;
 const offFor = new Map<string, Set<string>>();
 let httpNow: HttpState | null = null;
 
+const profilePick = document.getElementById("profile-pick") as HTMLSelectElement;
+const profilesToggle = document.getElementById("profiles-toggle") as HTMLButtonElement;
+const profilesBox = document.getElementById("profiles") as HTMLElement;
+const profileForm = document.getElementById("profile-form") as HTMLFormElement;
+const profileName = document.getElementById("profile-name") as HTMLInputElement;
+const profileSave = document.getElementById("profile-save") as HTMLButtonElement;
+const profileImport = document.getElementById("profile-import") as HTMLButtonElement;
+const profileFile = document.getElementById("profile-file") as HTMLInputElement;
+const profileNote = document.getElementById("profile-note") as HTMLElement;
+const profileList = document.getElementById("profile-list") as HTMLUListElement;
+const profileOff = new Map<string, Set<string>>();
+let profilesNow: Profiles = { list: [], in_use: {} };
+
+function profileNameOk(name: string): boolean {
+  return /^[A-Za-z0-9_-]([A-Za-z0-9 _-]{0,38}[A-Za-z0-9_-])?$/.test(name);
+}
+
+function showProfiles(p: Profiles): void {
+  profilesNow = p;
+  const names = p.list.map((r) => r.name);
+  if (profilePick.dataset.key !== names.join("|")) {
+    profilePick.dataset.key = names.join("|");
+    const none = el("option", "", "None");
+    none.value = "";
+    profilePick.replaceChildren(none, ...names.map((n) => {
+      const o = el("option", "", n);
+      o.value = n;
+      return o;
+    }));
+  }
+  profilePick.value = p.in_use[agentPick.value] ?? "";
+  profilePick.disabled = !invoke || !names.length;
+  profilesToggle.disabled = !invoke;
+  const items = p.list.map((r) => {
+    const li = el("li", "profile-row");
+    const name = el("span", "profile-name", r.name);
+    name.translate = false;
+    const what = [r.apps_off ? `${r.apps_off} app${r.apps_off === 1 ? "" : "s"} off` : "", r.tools_off ? `${r.tools_off} tool${r.tools_off === 1 ? "" : "s"} off` : "", r.starts ? `${r.starts} start polic${r.starts === 1 ? "y" : "ies"}` : ""].filter(Boolean).join(" · ") || "nothing off";
+    const used = r.used_by.length ? ` · used by ${r.used_by.map((c) => AGENTS[c] ?? c).join(", ")}` : "";
+    const exportButton = el("button", "btn btn-small", "Export");
+    exportButton.type = "button";
+    exportButton.addEventListener("click", () => void profileAction("profile_export", r.name, exportButton));
+    const deleteButton = el("button", "btn btn-small btn-danger", "Delete");
+    deleteButton.type = "button";
+    let armed = 0;
+    deleteButton.addEventListener("click", () => {
+      if (Date.now() > armed) {
+        armed = Date.now() + 4000;
+        setText(profileNote, `Click Delete again to delete ${r.name}${r.used_by.length ? "; agents using it go back to no profile" : ""}.`);
+        return;
+      }
+      void profileAction("profile_delete", r.name, deleteButton);
+    });
+    li.append(name, el("span", "profile-what", what + used), exportButton, deleteButton);
+    return li;
+  });
+  if (!items.length) items.push(el("li", "profile-empty", "No profiles yet. Name one above to save the chosen agent's settings, or import a profile file."));
+  profileList.replaceChildren(...items);
+}
+
+async function profileAction(cmd: "profile_export" | "profile_delete", name: string, button: HTMLButtonElement): Promise<void> {
+  if (!invoke) return;
+  button.disabled = true;
+  try {
+    if (cmd === "profile_export") {
+      const path = (await invoke(cmd, { name })) as string;
+      setText(profileNote, `Exported ${name} to ${path}`);
+      profileNote.title = path;
+    } else {
+      showProfiles((await invoke(cmd, { name })) as Profiles);
+      setText(profileNote, `Deleted ${name}.`);
+      void refresh();
+    }
+  } catch (e) {
+    setText(profileNote, `Could not ${cmd === "profile_export" ? "export" : "delete"} ${name}: ${String(e)}`);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function showAgent(): void {
   const agent = agentPick.value;
   for (const { app, node } of rows) {
     const sw = node.querySelector<HTMLButtonElement>("[data-for]");
     if (!sw) continue;
-    sw.setAttribute("aria-checked", String(!offFor.get(app.id)?.has(agent)));
+    const byProfile = !!profileOff.get(app.id)?.has(agent);
+    sw.setAttribute("aria-checked", String(!byProfile && !offFor.get(app.id)?.has(agent)));
     setText(sw.querySelector(".switch-label"), `On for ${AGENTS[agent] ?? agent}`);
-    sw.disabled = !invoke;
+    sw.disabled = !invoke || byProfile;
+    sw.title = byProfile ? `Turned off for ${AGENTS[agent]} by the profile ${profilesNow.in_use[agent] ?? ""}` : "Offer this app to the chosen agent: in family_apps, suggest_app and its tools";
   }
+  profilePick.value = profilesNow.in_use[agent] ?? "";
+  setText(profileSave, `Save ${AGENTS[agent] === "other agents" ? "other agents'" : `${AGENTS[agent]}'s`} settings`);
 }
 
 function showHttp(h: HttpState): void {
@@ -173,6 +271,12 @@ function showSnapshot(s: Snapshot): void {
     if (!live) continue;
     setText(node.querySelector("[data-where]"), whereText(live));
     offFor.set(app.id, new Set(live.off_for));
+    profileOff.set(app.id, new Set(live.profile_off_for));
+    const startPick = node.querySelector<HTMLSelectElement>("[data-start]");
+    if (startPick) {
+      startPick.value = live.start;
+      startPick.disabled = false;
+    }
     const sw = node.querySelector<HTMLButtonElement>("[data-expose]");
     if (sw) {
       sw.setAttribute("aria-checked", String(live.exposed));
@@ -185,6 +289,7 @@ function showSnapshot(s: Snapshot): void {
       tb.classList.toggle("has-off", live.hidden_tools > 0);
     }
   }
+  showProfiles(s.profiles);
   showAgent();
   showHttp(s.http);
   showClients(s.clients);
@@ -211,10 +316,11 @@ function clock(t: number): string {
 
 function describe(e: LogEvent): string {
   if (e.event === "session") return `Session started by ${e.client ?? "a client"}${e.as ? ` as ${AGENTS[e.as] ?? e.as}` : ""}${e.transport === "http" ? " over HTTP" : ""}`;
+  if (e.event === "app-stop") return `Stopped ${e.app} after ${e.minutes ?? ""} idle minutes`;
   if (e.event === "http-start") return `HTTP started on 127.0.0.1:${e.port ?? ""}`;
   if (e.event === "http-stop") return `HTTP stopped on 127.0.0.1:${e.port ?? ""}`;
   if (e.event === "http-refused") return `HTTP request refused (${e.status ?? ""}): ${e.reason ?? ""}`;
-  if (e.event === "app-start") return e.ok ? `Started ${e.app} through ${e.via} (${e.tools ?? 0} tools, ${e.ms} ms)` : `Could not start ${e.app} through ${e.via}: ${e.error ?? ""}`;
+  if (e.event === "app-start") return e.ok ? `Started ${e.app} through ${e.via}${e.policy === "session" ? " with the session" : e.policy === "keep" ? " to keep running" : ""} (${e.tools ?? 0} tools, ${e.ms} ms)` : `Could not start ${e.app} through ${e.via}: ${e.error ?? ""}`;
   const parts = [e.name ?? "call", e.app, e.tool].filter(Boolean).join(" · ");
   return `${parts} · ${e.ok ? "ok" : "failed"} · ${e.ms ?? 0} ms`;
 }
@@ -274,6 +380,74 @@ if (invoke) {
     });
   }
   agentPick.addEventListener("change", showAgent);
+  profilePick.addEventListener("change", async () => {
+    const agent = agentPick.value;
+    const name = profilePick.value || null;
+    profilePick.disabled = true;
+    try {
+      showProfiles((await call("profile_use", { client: agent, name })) as Profiles);
+      setText(status, name ? `${AGENTS[agent]} uses the profile ${name} from its next request.` : `${AGENTS[agent]} uses no profile from its next request.`);
+      await refresh();
+    } catch (e) {
+      setText(status, `Could not change the profile: ${String(e)}`);
+      showProfiles(profilesNow);
+    }
+  });
+  profilesToggle.addEventListener("click", () => {
+    const open = profilesBox.hidden;
+    profilesBox.hidden = !open;
+    profilesToggle.setAttribute("aria-expanded", String(open));
+  });
+  profileName.addEventListener("input", () => {
+    profileSave.disabled = !profileNameOk(profileName.value.trim());
+  });
+  profileForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = profileName.value.trim();
+    if (!profileNameOk(name)) return;
+    const replacing = profilesNow.list.some((r) => r.name === name);
+    profileSave.disabled = true;
+    try {
+      showProfiles((await call("profile_save", { name, from: agentPick.value })) as Profiles);
+      setText(profileNote, `${replacing ? "Replaced" : "Saved"} ${name} from ${AGENTS[agentPick.value]}'s settings: its apps off, every tool off and the start policies.`);
+      profileName.value = "";
+    } catch (err) {
+      setText(profileNote, `Could not save: ${String(err)}`);
+      profileSave.disabled = false;
+    }
+  });
+  profileImport.addEventListener("click", () => profileFile.click());
+  profileFile.addEventListener("change", async () => {
+    const file = profileFile.files?.[0];
+    profileFile.value = "";
+    if (!file) return;
+    if (file.size > 256 * 1024) {
+      setText(profileNote, `${file.name} is larger than a profile can be (256 KB).`);
+      return;
+    }
+    try {
+      const done = (await call("profile_import", { text: await file.text() })) as { name: string; replaced: boolean; dropped: string[]; profiles: Profiles };
+      showProfiles(done.profiles);
+      setText(profileNote, `${done.replaced ? "Replaced" : "Imported"} ${done.name}${done.dropped.length ? `; left out what this formMCP does not know: ${done.dropped.join(", ")}` : ""}.`);
+    } catch (err) {
+      setText(profileNote, `Could not import ${file.name}: ${String(err)}`);
+    }
+  });
+  for (const pick of document.querySelectorAll<HTMLSelectElement>("[data-start]")) {
+    pick.addEventListener("change", async () => {
+      const id = pick.dataset.start ?? "";
+      pick.disabled = true;
+      try {
+        pick.value = (await call("set_start", { id, policy: pick.value })) as string;
+        const name = family.apps.find((a) => a.id === id)?.name ?? id;
+        setText(status, pick.value === "demand" ? `${name} starts when an agent needs it and stops after 10 idle minutes.` : pick.value === "session" ? `${name} starts when an agent's session starts.` : `${name} starts when first needed and keeps running while formMCP runs.`);
+      } catch (e) {
+        setText(status, `Could not save: ${String(e)}`);
+      } finally {
+        pick.disabled = false;
+      }
+    });
+  }
   for (const sw of document.querySelectorAll<HTMLButtonElement>("[data-for]")) {
     sw.addEventListener("click", async () => {
       const id = sw.dataset.for ?? "";

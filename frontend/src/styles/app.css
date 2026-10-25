@@ -68,9 +68,10 @@ html.booting body {
 
 .tools {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-3);
+  gap: var(--sp-2) var(--sp-3);
   padding: var(--sp-3) 0;
   border-top: 1px solid var(--edge);
 }
@@ -351,9 +352,9 @@ html.booting body {
 }
 
 .app-switches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-4);
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-1);
   min-height: 24px;
 }
 
@@ -403,6 +404,125 @@ html.booting body {
 
 .tool-ro {
   flex: none;
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+}
+
+.agent-pick.profile-pick {
+  margin-left: 0;
+}
+
+.start-pick {
+  height: 24px;
+  max-width: 100%;
+  padding: 0 var(--sp-1);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-s);
+  background: var(--control);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--fs-s);
+}
+
+.start-pick:focus-visible,
+.profile-form input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.profiles {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: var(--sp-2);
+  height: 168px;
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-m);
+  background: var(--pane);
+}
+
+.profile-form {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.profile-form input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-s);
+  background: var(--ground);
+  color: var(--ink);
+  font: inherit;
+}
+
+.profile-note {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.profile-list {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.profile-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 28px;
+}
+
+.clients,
+.http,
+.status,
+.tools,
+.profiles {
+  flex-shrink: 0;
+}
+
+.log {
+  min-height: 72px;
+}
+
+#profile-save {
+  width: 16em;
+}
+
+.profile-row .btn {
+  grid-row: auto;
+  grid-column: auto;
+}
+
+.profile-name {
+  font-weight: 600;
+}
+
+.profile-what {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.profile-empty {
   color: var(--ink-faint);
   font-size: var(--fs-s);
 }
