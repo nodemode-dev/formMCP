@@ -2,8 +2,45 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.6.0
-Last updated: 2026-10-25 · profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.7.0
+Last updated: 2026-10-25 · keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.7.0 · keychain secrets, redaction, the file check, hooks and tracing {#v0-7-0}
+
+### secrets.rs · the keychain, names only on disk
+- refers-to: core/src/secrets.rs :: set, remove, env_for, remember_all, list, name_problem, store_error · core/src/child.rs :: AppServer::start (env) · core/src/settings.rs :: Settings.secrets
+- kind: decision
+- logged: v0.7.0 · 2026-10-25
+
+The keyring crate 3 with the native stores (macOS Keychain, Windows Credential Manager, Linux Secret Service over D-Bus, crypto-rust). Not `vendored`: that would build libdbus (AFL-2.1 OR GPL-2.0-or-later) into the binary; linking the system's libdbus keeps it out of what formMCP ships, at the cost of `libdbus-1-dev` to build on Linux (WebKitGTK's packages already bring it; the installer and CI say so). The value is read from the keychain at each app start and set only on that child's environment; a listed secret that is missing, or a keychain that cannot be reached, refuses the start with the reason rather than starting the app without it. Names that change how programs run are refused (PATH, HOME, LD_*, DYLD_*, FORMMCP_* and others). The CLI reads the value from stdin so it never appears in a process list or shell history. Checked with GNOME Keyring under `dbus-run-session`: set, list, remove, the value reaching the stub app, absent from settings.json and the log; without a D-Bus session, set and the app start refuse with the Secret Service reason.
+
+### redact.rs · what agents and the log see
+- refers-to: core/src/redact.rs :: remember, text, value, SHAPES, MARK · core/src/log.rs :: record · core/src/mcp.rs :: answer (tools/call), reload_settings · core/src/http.rs :: token remembered
+- kind: decision
+- logged: v0.7.0 · 2026-10-25
+
+Known values (each keychain secret of 8 characters or more, and the HTTP token) are replaced first, longest first, then token shapes: private key blocks, form.md `fmd_`, Anthropic `sk-ant-`, OpenAI `sk-`, GitHub `ghp_` and `github_pat_`, Slack `xox?-`, AWS `AKIA`, Google `AIza`, JWTs, and a keyword (bearer, token, api key, secret, password) followed by 20 or more token characters, which keeps the keyword. A bare 64-hex string is not a shape: it would hide every SHA-256 an app reports. `data` and `blob` fields (base64 media) are skipped, as are strings over 8 MB. The first build used regex without default features, which dropped the `(?i)` pattern silently (no unicode-case); regex now has its defaults. Results are cleaned unless `redact_off`; the log always.
+
+### verify.rs · the first start is the reference
+- refers-to: core/src/verify.rs :: check, trust, baselines, walk, differences, inside · core/src/mcp.rs :: start_app_server
+- kind: decision
+- logged: v0.7.0 · 2026-10-25
+
+The plan said "against FormPortal's recorded digest". FormPortal 0.45.1 records only the SHA-256 of the downloaded archive (`InstalledVersion.sha256`), not the unpacked files, so there is nothing per file to compare with. formMCP records every file's digest the first time it starts a version and compares on each later start; a new version, FormPortal digest or path is recorded afresh. That catches a change after the first start, not a change before it: a FormPortal per-file manifest would close that, and is a note for FormPortal. A record whose folder is not inside FormPortal's `apps/<id>` is refused. Every start hashes the whole install (the log carries `verify_ms`); checkouts are not checked. Checked: a changed and an added file refused with both named, `verify --trust`, verify off, a record pointing elsewhere refused, a new FormPortal digest recorded afresh.
+
+### hooks.rs · fail closed before, best effort after
+- refers-to: core/src/hooks.rs :: before, after, split, shorten, run, timeout · core/src/mcp.rs :: call_app · core/src/settings.rs :: Hooks
+- kind: decision
+- logged: v0.7.0 · 2026-10-25
+
+A hook is a command line split without a shell (quotes and backslashes only), so nothing is expanded. Before: JSON on stdin; nothing printed or `{"decision":"allow"}` with exit 0 allows; `deny` or exit 2 refuses with the reason; anything else refuses, so a broken policy never lets calls through. Stdout and stderr are read on two threads (64 KB each, the rest drained) so a chatty hook cannot stall on a full pipe. After: run on its own thread; only failures are logged. Hooks see arguments and results with secrets hidden and strings over 64 KB shortened. Checked with a Python policy (allow by silence, deny by answer, allow by answer), exit 2 with a stderr reason, a missing program, `sleep 5` with a 1 s limit, an unclosed quote refused when saving, and an after hook given the cleaned results.
+
+### telemetry.rs · OTLP JSON over HTTP, no SDK
+- refers-to: core/src/telemetry.rs :: export, flush, endpoint_problem, Span · core/src/mcp.rs :: answer, start_app_server, serve
+- kind: decision
+- logged: v0.7.0 · 2026-10-25
+
+No OpenTelemetry SDK: a span and two delta metrics per call or app start, posted as OTLP JSON (hex trace and span ids, as the JSON encoding requires) with ureq, which formMCP already has. Attributes are names and outcomes only. A failed send is logged once per process. The first check lost the metrics: the stdio server exited before the second post, so `serve` now waits up to 5 s for sends in flight. Checked with a local collector: three spans and three metric posts for an app start, a call and a refused call, the headers from `OTEL_EXPORTER_OTLP_HEADERS` sent, and every body parsed by the opentelemetry-proto definitions.
 
 ## v0.6.0 · profiles and start policies {#v0-6-0}
 

@@ -25,6 +25,7 @@ formMCP is the one MCP server you add for the Form family of desktop apps (image
 - **You choose what each agent gets.** Turn an app off for Claude Code, Codex, Cursor or other agents, and turn single tools off (say, an app's delete) for every agent. Off apps leave the lists and are refused with the reason; changes apply from the next request.
 - **Profiles you can share.** Save what an agent gets (apps off, tools off, start policies) as a named profile, use it for any agent, and export it as one file for a teammate to import. A profile only ever turns more off.
 - **Start when it suits you.** Per app: start on demand and stop after 10 idle minutes, start in the background when an agent's session starts, or keep running while formMCP runs.
+- **Safe by default.** Secrets an app needs live in the system keychain and reach only that app; secrets and token-shaped text are hidden in results and the log; an installed app whose files changed since formMCP first started it is refused. Optional hooks can allow or refuse each call, and optional tracing sends names and outcomes to an OpenTelemetry collector.
 - **stdio or HTTP.** Agents start `formmcp mcp`, or reach `http://127.0.0.1:5625/mcp` while the window (or `formmcp serve`) is open: this computer only, an access token on every request, Host and Origin checked, the token renewed with one button.
 - **The right app for the task.** `suggest_app` takes the task in the person's words and returns the apps that fit with the next step: load its tools, install it with FormPortal, or install FormPortal first.
 - **Never hand-kept.** The family list is the signed family catalogue (checked against the same keys FormPortal trusts) over a list generated from formcompiler's registry (`./formmcp family --compiler PATH`), and every answer says which one was used and why.
@@ -35,7 +36,7 @@ formMCP is the one MCP server you add for the Form family of desktop apps (image
 
 ## Quick start
 
-Requirements: Rust (stable), Node 20.19+, and on Linux WebKitGTK 4.1 for the window (the installer prints the packages; the MCP server does not need them).
+Requirements: Rust (stable), Node 20.19+; on Linux libdbus for the keychain (`libdbus-1-dev` and `pkg-config`) and WebKitGTK 4.1 for the window (the installer prints the packages; the MCP server needs only libdbus).
 
 ```bash
 ./formmcp_oc_install        # macOS / Linux
@@ -52,6 +53,10 @@ Requirements: Rust (stable), Node 20.19+, and on Linux WebKitGTK 4.1 for the win
 ./formmcp cli profile save "Quiet desk" --from codex   # Codex's settings as a profile
 ./formmcp cli profile use claude "Quiet desk"          # Claude Code uses it
 ./formmcp cli profile export "Quiet desk"              # a file in Downloads to share; profile import <file> reads one
+./formmcp cli secret set formmd FORMMD_MCP_TOKEN < token.txt   # kept in the system keychain, given to form.md's server
+./formmcp cli verify formvis                           # check FormVis's installed files now
+./formmcp cli hook before "python3 my_policy.py"       # allow or refuse each app tool call
+./formmcp cli telemetry http://127.0.0.1:4318          # traces and metrics to an OpenTelemetry collector
 ```
 
 Form app checkouts in the folder beside this one are found on their own (`FORMMCP_DEV_ROOTS` names other folders, or is set empty to turn that off); FormPortal installs are found through FormPortal. The wiki's Agents page has the details and the environment variables.
@@ -64,8 +69,8 @@ This repository is already wired for agents: `.mcp.json` (Claude Code), `.codex/
 
 | Path | Role |
 | --- | --- |
-| `core/` | The engine: the family list (`core/data/family.json`, generated), finding each app's server (`reach.rs`), running it (`child.rs`) and the MCP server (`mcp.rs`) |
-| `cli/` | `formmcp-cli apps`, `app`, `reach`, `suggest`, `catalog`, `expose`, `for`, `tool`, `tools`, `start`, `profile`, `settings`, `agents`, `mcp`, `serve`, `http`, `version` |
+| `core/` | The engine: the family list (`core/data/family.json`, generated), finding each app's server (`reach.rs`), running it (`child.rs`), the MCP server (`mcp.rs`), and the safety parts: `secrets.rs`, `redact.rs`, `verify.rs`, `hooks.rs`, `telemetry.rs` |
+| `cli/` | `formmcp-cli apps`, `app`, `reach`, `suggest`, `catalog`, `expose`, `for`, `tool`, `tools`, `start`, `profile`, `secret`, `verify`, `redact`, `hook`, `telemetry`, `settings`, `agents`, `mcp`, `serve`, `http`, `version` |
 | `src-tauri/` | The shell: the window, and `formmcp mcp` with no window |
 | `frontend/` | The window: tokens, layers, one list |
 | `setup/family.py` | Generates `core/data/family.json` from formcompiler's registry |
@@ -81,6 +86,8 @@ This repository is already wired for agents: `.mcp.json` (Claude Code), `.codex/
 **Releases.** formMCP builds nothing in this repository. After the version bump lands on main, push a branch `compile_vX.Y.Z` cut from that commit; CI runs on it, and formcompiler (`nodemode-ai/formcompiler`) builds the bundles with `./build_app` (`build_app.bat` on Windows) and drafts the release `formMCP-vX.Y.Z` (`apps/formMCP.json` in its registry). `./build_app` also builds the app on your own machine.
 
 ## Status
+
+v0.7.0: safety and tracing. Secrets in the system keychain given to one app's server; secrets and token-shaped text hidden in results and the log; an installed app's files checked before it starts; before and after hooks; OpenTelemetry traces and metrics over HTTP; the window's Safety panel. Checked over stdio with a scratch FormPortal install and a real GNOME Keyring on D-Bus: a secret reaching the app and hidden in its answer (shown when hiding is off), never in settings.json or the log; a keychain that cannot be reached refusing the start with the reason; a changed and an added file refusing the start, Record again, a record pointing outside FormPortal's apps folder refused, a new version recorded afresh; a before hook allowing, refusing by answer and by exit 2, failing closed when missing or too slow, an after hook given the cleaned result; traces and metrics received by a local collector and parsed with the OpenTelemetry protocol definitions; the window at 4x CPU and network throttling bridged to the real CLI (CLS 0, dark 1040 by 780, light 640 by 520) and the real window under Xvfb (a secret kept in the real keyring).
 
 v0.6.0: profiles and start-up. Named profiles (apps off, tools off, start policies) used per agent, exported and imported as a file; a start policy per app (on demand with an idle stop, with the session, keep running). Checked over stdio with a scratch app (each policy, idle stop with `FORMMCP_IDLE_MINUTES=0`, profiles turning apps and tools off for one agent only, export, import with unknown entries dropped, bad files refused, deletion), the window at 4x CPU and network throttling bridged to the real CLI (CLS 0, dark, light, 640 by 520), and the real window (FormPortal's real server started in the background as an HTTP session began).
 

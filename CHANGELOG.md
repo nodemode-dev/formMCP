@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.7.0 · 2026-10-25
+
+- Secrets in the system keychain: keep a secret for an app (form.md's `FORMMD_MCP_TOKEN`, say) and formMCP gives it to that app's server as an environment variable when it starts it. Only the name is written to settings.json.
+- Secrets hidden: known secrets and token-shaped text (API keys, access tokens, JWTs, private keys, password and token assignments) are replaced in what apps send back before an agent sees it (on by default), and always in the activity log.
+- A file check before an installed app starts: formMCP records an installed version's files the first time it starts it and refuses to start it if they change, with the files named. Record again accepts a change you made.
+- Hooks: a command of yours runs before each app tool call and can refuse it (a failure or timeout refuses too), and another after each call with the outcome.
+- Tracing: each call and app start can be sent to an OpenTelemetry collector over HTTP as a trace and metrics, with names and outcomes only.
+- The window's Safety panel holds all of this; the command line gains `secret`, `verify`, `redact`, `hook` and `telemetry`.
+- On Linux, building formMCP now needs libdbus (`libdbus-1-dev` and `pkg-config` on Debian or Ubuntu); a desktop with WebKitGTK already has it.
+
 ## v0.6.0 · 2026-10-25
 
 - Profiles: save what an agent gets (apps off, tools off, start policies) under a name, choose a profile per agent, and export or import it as one file to share. A profile only ever turns more off, never less.

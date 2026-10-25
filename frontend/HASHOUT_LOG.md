@@ -2,8 +2,17 @@
 
 Living log for formMCP's window. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.6.0
-Last updated: 2026-10-25 · profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+Current build version: v0.7.0
+Last updated: 2026-10-25 · the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+
+## v0.7.0 · the Safety panel {#v0-7-0}
+
+### index.html, main.ts, app.css · Safety
+- refers-to: index.html :: #safety-toggle, #safety, #safety-note, #secret-form, #secret-app, #secret-name, #secret-value, #secret-save, #redact-switch, #verify-switch, #hook-form, #hook-before, #hook-after, #hook-save, #trace-form, #trace-address, #trace-save, #safety-list · src/main.ts :: Safety, SecretRow, showSafety, safetyCall, loadSafety, closeSafety, twoClick, appName, describe · src/styles/app.css :: .safety, .safety-body, .safety-row, .safety-form, .safety-switches, .safety-list
+- kind: fix
+- logged: v0.7.0 · 2026-10-25
+
+Safety sits beside Profiles and opens a panel of fixed height (212 px, 148 px in windows under 640 px tall) whose body scrolls; opening one closes the other. The secret value is a password field, cleared after Keep, and never read back: the panel shows names and whether each is in the keychain. The first throttled run measured CLS 0.0014: the kept secrets list sat under the Secrets row and its new row pushed the rows below about 2.5 s after the click. Then 0.0005 with the lists moved to the end, because the secrets list sat above the recorded installs. Now one list at the end of the panel, recorded installs first and secrets last, so a new secret only appends: CLS 0 at dark 1040 by 780 and light 640 by 520. Record again and Remove take a second click within four seconds. The log describes hook refusals, refused starts (stage verify) and how many secrets a call hid.
 
 ## v0.6.0 · profiles and start selects {#v0-6-0}
 

@@ -10,6 +10,8 @@ Rules for agents working in this repository. Read the in-tree HASHOUT logs (`cor
 - The engine owns all logic and works with no window: `formmcp-core` holds the family list and the MCP server, `cli` and `src-tauri` are thin. The installed app answers `formmcp mcp` on stdio without opening a window.
 - HTTP (`http.rs`) listens on 127.0.0.1 only and checks the access token, the Host and the Origin on every request; never bind another address, skip a check, log the token or the arguments, or add a server stream without the same checks.
 - formMCP serves the Form family only (owner): no third-party or remote MCP servers.
+- Secrets live only in the system keychain (`secrets.rs`); settings.json holds their names. Never write a secret value to a file, the log, an error, a hook's input or a span. The log is always passed through `redact.rs`; results are unless the person turns hiding off.
+- `verify.rs` refuses to start a FormPortal install whose files differ from what formMCP recorded for that version; never start it anyway on a failed check, and record files again only when the person asks (Record again, `verify --trust`). A before hook that fails or times out refuses the call. Spans and metrics carry names and outcomes only.
 
 ## Building
 

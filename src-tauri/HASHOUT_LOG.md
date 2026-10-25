@@ -2,8 +2,17 @@
 
 Living log for formMCP's desktop shell. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.6.0
-Last updated: 2026-10-25 · profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+Current build version: v0.7.0
+Last updated: 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+
+## v0.7.0 · the safety commands {#v0-7-0}
+
+### lib.rs · safety, secret_set, secret_remove, safety_switch, hook_set, telemetry_set, verify_trust
+- refers-to: src-tauri/src/lib.rs :: safety_now, safety_after, safety, secret_set, secret_remove, safety_switch, hook_set, telemetry_set, verify_trust
+- kind: decision
+- logged: v0.7.0 · 2026-10-25
+
+Every command runs on a blocking thread (the keychain can take a moment, and on Linux asks D-Bus) and answers with the whole safety state, so the page has one render path. `secret_set` checks the app id against the family list; the value goes straight to the keychain and is not returned. The hook command is split before saving, so a bad line is refused at once. Checked in the real window under Xvfb with GNOME Keyring on the session bus: a secret kept through the form appeared in `secret-tool` and `secret list`, and not in settings.json.
 
 ## v0.6.0 · profiles and start policies {#v0-6-0}
 

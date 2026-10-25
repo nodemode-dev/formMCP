@@ -4,7 +4,7 @@
 
 - Rust (stable) for the engine, the command line and the shell.
 - Node 20.19 or newer for the window.
-- On Linux, WebKitGTK 4.1 and its build packages for the window (the installer names them). The MCP server and the command line do not need them.
+- On Linux, libdbus and pkg-config (`libdbus-1-dev pkg-config` on Debian or Ubuntu) for the system keychain, and WebKitGTK 4.1 and its build packages for the window (the installer names them). The MCP server and the command line need only libdbus. Keeping a secret also needs a running, unlocked Secret Service (GNOME Keyring or KWallet), which desktops have.
 
 ## From source
 

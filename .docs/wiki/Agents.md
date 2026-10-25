@@ -92,9 +92,29 @@ An app's server inherits formMCP's environment, so what an app needs (form.md's 
 
 For an app you use all the time, turn on "Always show tools" on its card in the window, or run `./formmcp cli expose formvis on` (saved in formMCP's `settings.json`; `FORMMCP_EXPOSE=formvis,formai` does the same for one session) makes formMCP start it when the client lists tools and show its tools directly, as `formvis__<tool>`, described with `[FormVis]` in front. The client then sees them without `app_tools`; formMCP tells it when the app's tools change. Off for every app by default, because each exposed app costs its whole tool list in every conversation. `expose formvis off` takes it out.
 
+## Secrets, the file check, hooks and tracing
+
+Open Safety in the window, or use the command line:
+
+```bash
+./formmcp cli secret set formmd FORMMD_MCP_TOKEN < token.txt   # read from stdin, kept in the system keychain
+./formmcp cli secret list                                      # names and whether each is in the keychain
+./formmcp cli secret remove formmd FORMMD_MCP_TOKEN
+./formmcp cli redact off                                       # results as apps send them (the log is still cleaned)
+./formmcp cli verify formvis                                   # check its installed files now
+./formmcp cli verify --trust formvis                           # accept the files as they are, after a change you made
+./formmcp cli hook before "python3 /path/policy.py"            # off: hook before off
+./formmcp cli hook after "python3 /path/audit.py"
+./formmcp cli telemetry http://127.0.0.1:4318                  # off: telemetry off
+```
+
+A secret is given to that app's server only, as the environment variable named, when formMCP starts it; a running server keeps the value it started with. If the keychain cannot be read (on Linux, no Secret Service running), the app is not started and the agent is told why.
+
+A before hook gets one JSON object on stdin: `event` ("before"), `app`, `tool`, `arguments` (secrets hidden), `client`, `transport` and `formmcp`. To refuse, print `{"decision":"deny","reason":"..."}` or exit with 2 (the first line of stderr is the reason); exit 0 with nothing printed, or `{"decision":"allow"}`, lets the call run. If the hook cannot start, exits otherwise, prints something that is not JSON or takes longer than 10 s (`FORMMCP_HOOK_TIMEOUT`), the call is refused. The after hook gets the same fields plus `ok`, `ms` and `result`; what it prints is ignored. Hooks apply to app tool calls (`call_app` and always-shown tools).
+
 ## Activity
 
-Every formMCP server appends one line per event to `log.jsonl` in formMCP's settings folder: a session starting (the client's name, the agent it counts as, stdio or HTTP), HTTP starting, stopping and refusing a request, each tool call (formMCP's tool, the app and the app's tool, whether it worked, how long it took) and each app server started (route, tool count, or why not). Arguments and results are never recorded. The window's Activity panel shows it as it happens; the file rolls over at 1 MB.
+Every formMCP server appends one line per event to `log.jsonl` in formMCP's settings folder: a session starting (the client's name, the agent it counts as, stdio or HTTP), HTTP starting, stopping and refusing a request, each tool call (formMCP's tool, the app and the app's tool, whether it worked, how long it took, how many secrets were hidden) and each app server started (route, tool count, the file check, or why not), and each hook's decision. Arguments and results are never recorded, and every line is passed through the same hiding of secrets. The window's Activity panel shows it as it happens; the file rolls over at 1 MB.
 
 ## Where the list comes from
 

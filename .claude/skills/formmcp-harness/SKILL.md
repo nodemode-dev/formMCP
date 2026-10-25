@@ -26,12 +26,13 @@ formMCP is one MCP server for the whole Form family. It keeps the conversation s
 2. If the app has `reach`, call `app_tools` for that one app, read its instructions and the tool you need, then `call_app`. Load another app only when the task moves to it.
 3. Before a `call_app` that changes the person's files or computer (the app's tool is not read-only, or says so), say what will change and get their go-ahead. The app's own tool descriptions and annotations decide this, not formMCP's.
 4. If the app has no `reach`: when `installed` is false, say which app fits and that FormPortal (`id` `formai`) installs and updates the Form apps; formMCP never installs. When `installed` is true but `reach` is null, FormPortal could not be found to start it, or the app's install names no launcher yet; say so plainly.
-5. When `app_tools` or `call_app` fails, the message carries the app's own last output. Pass on what it asks for (for example form.md asks for `FORMMD_MCP_TOKEN`, a personal API token from its Account settings, set in the client's config for formmcp) instead of retrying.
+5. When `app_tools` or `call_app` fails, the message carries the app's own last output. Pass on what it asks for (for example form.md asks for `FORMMD_MCP_TOKEN`, a personal API token from its Account settings, which the person keeps in formMCP's Safety panel or with `formmcp cli secret set formmd FORMMD_MCP_TOKEN`; never ask them to paste it into the chat) instead of retrying.
 
 6. An app missing from `family_apps`, or refused as "turned off" for this agent, and a tool missing from `app_tools` (listed in `hidden`) or refused in `call_app`, were turned off by the person in formMCP's window, directly or through a profile the message names. Say so and suggest they turn it on there; do not look for a way around it.
 7. When `app_tools` shows `offers.resources` or `offers.prompts`, the app's own documents and prompt templates are reachable through `app_resources` and `read_app_resource`, `app_prompts` and `get_app_prompt`; read what the task needs rather than everything.
 8. Tools named `<id>__<tool>` (for example `formai__status`) are an app's own tools that the person chose to always show; they behave as `call_app` with that app.
 9. `source` in `family_apps` says whether the list is the signed family catalogue or the bundled list, and why; mention it only when it matters (a newer app the person names is missing, for example).
+10. "[redacted by formMCP]" in a result stands for a secret or token formMCP hid; work without it. A call refused by "formMCP's before-call hook", or an app "not started" because its installed files changed, was stopped by a rule the person set or by formMCP's check: tell them the reason as given and do not retry around it.
 
 ## Without MCP
 
