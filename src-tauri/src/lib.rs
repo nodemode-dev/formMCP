@@ -60,7 +60,9 @@ fn log_tail(from: u64) -> Value {
 
 pub fn run() {
     if std::env::args().nth(1).as_deref() == Some("mcp") {
-        let code = match mcp::serve() {
+        let args: Vec<String> = std::env::args().collect();
+        let client = args.iter().position(|a| a == "--client").and_then(|i| args.get(i + 1)).cloned();
+        let code = match mcp::serve(client.as_deref()) {
             Ok(()) => 0,
             Err(e) => {
                 eprintln!("formmcp: {e}");

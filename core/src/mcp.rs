@@ -8,8 +8,9 @@ use crate::child::{call_timeout, AppServer};
 use crate::log;
 use crate::family::{App, Family};
 use crate::reach::Places;
-use crate::settings::Settings;
+use crate::settings::{client_key, client_label, Settings};
 use crate::suggest::suggest;
+use crate::toolcache;
 use crate::CORE_VERSION;
 
 const EXPOSED_SEPARATOR: &str = "__";
@@ -18,6 +19,9 @@ pub struct Gateway {
     pub family: Family,
     pub places: Places,
     pub settings: Settings,
+    pub client: String,
+    pub transport: &'static str,
+    forced_client: bool,
     running: HashMap<String, (String, AppServer)>,
     catalog_read: bool,
     list_changed: bool,
@@ -25,7 +29,25 @@ pub struct Gateway {
 
 impl Gateway {
     pub fn new(family: Family, places: Places) -> Gateway {
-        Gateway { family, places, settings: Settings::load(), running: HashMap::new(), catalog_read: false, list_changed: false }
+        Gateway { family, places, settings: Settings::load(), client: "other".into(), transport: "stdio", forced_client: false, running: HashMap::new(), catalog_read: false, list_changed: false }
+    }
+
+    pub fn force_client(&mut self, name: &str) {
+        self.client = client_key(name).to_string();
+        self.forced_client = true;
+    }
+
+    pub fn set_session_client(&mut self, asked: Option<&str>) {
+        self.forced_client = asked.is_some();
+        self.client = asked.map(client_key).unwrap_or("other").to_string();
+    }
+
+    pub fn reload_settings(&mut self) {
+        self.settings = Settings::load();
+    }
+
+    pub fn is_off(&self, id: &str) -> bool {
+        self.settings.is_off(&self.client, id)
     }
 
     pub fn ensure_catalog(&mut self) {
@@ -44,6 +66,9 @@ impl Gateway {
         let mut out = Vec::new();
         for id in self.settings.expose.clone() {
             let Some(app) = self.family.get(&id).cloned() else { continue };
+            if self.is_off(&app.id) {
+                continue;
+            }
             let started = self.server(&app).map(|(_, s)| {
                 if s.tools_changed {
                     let _ = s.load_tools();
@@ -54,6 +79,9 @@ impl Gateway {
                 Ok(tools) => {
                     for tool in tools {
                         let Some(name) = tool.get("name").and_then(Value::as_str) else { continue };
+                        if self.settings.tool_hidden(&app.id, name) {
+                            continue;
+                        }
                         let mut renamed = tool.clone();
                         renamed["name"] = Value::String(format!("{}{EXPOSED_SEPARATOR}{name}", app.id));
                         let said = tool.get("description").and_then(Value::as_str).unwrap_or_default();
@@ -72,7 +100,11 @@ impl Gateway {
         if name.trim().is_empty() {
             return Err("app is required: an id from family_apps, for example formvis".into());
         }
-        self.family.get(name).cloned().ok_or_else(|| format!("there is no Form app {name:?}; family_apps lists them"))
+        let app = self.family.get(name).cloned().ok_or_else(|| format!("there is no Form app {name:?}; family_apps lists them"))?;
+        if self.is_off(&app.id) {
+            return Err(format!("{} is turned off for {} in formMCP; the person can turn it on in formMCP's window", app.name, client_label(&self.client)));
+        }
+        Ok(app)
     }
 
     fn server(&mut self, app: &App) -> Result<&mut (String, AppServer), String> {
@@ -105,6 +137,7 @@ impl Gateway {
                 }
             };
             log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": true, "tools": server.tools.len(), "ms": started.elapsed().as_millis() as u64 }));
+            toolcache::remember(&app.id, &server.server, &server.tools);
             self.running.insert(app.id.clone(), (route.label().to_string(), server));
         }
         self.running.get_mut(&app.id).ok_or_else(|| "the app's server is gone".to_string())
@@ -114,7 +147,11 @@ impl Gateway {
 const PROTOCOL: &str = "2025-06-18";
 const SUPPORTED: [&str; 4] = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 
-const INSTRUCTIONS: &str = "formMCP is the one connection to the Form family of desktop apps (image, video, audio, layout, vector, notes and more, by nodemode.ai). Call suggest_app with the person's task to get the app that fits and the next step, or family_apps for the whole list (whether each app has an MCP server and whether this computer can reach it). For a reachable app, app_tools starts it and lists its own tools, and call_app runs one of them; load one app at a time, only when the task needs it. formMCP never installs anything: when an app is missing, tell the person which one fits and that FormPortal installs and updates the Form apps. formMCP does not handle skills: the Form apps' released skills are viewed and downloaded in formskills.";
+pub fn supported(version: &str) -> bool {
+    SUPPORTED.contains(&version.trim())
+}
+
+const INSTRUCTIONS: &str = "formMCP is the one connection to the Form family of desktop apps (image, video, audio, layout, vector, notes and more, by nodemode.ai). Call suggest_app with the person's task to get the app that fits and the next step, or family_apps for the whole list (whether each app has an MCP server and whether this computer can reach it). For a reachable app, app_tools starts it and lists its own tools, and call_app runs one of them; load one app at a time, only when the task needs it. An app's own resources and prompts, when it offers them, come through app_resources and read_app_resource, app_prompts and get_app_prompt. The person may have turned some apps or tools off for this agent in formMCP's window: they are left out of the lists and refused with the reason. formMCP never installs anything: when an app is missing, tell the person which one fits and that FormPortal installs and updates the Form apps. formMCP does not handle skills: the Form apps' released skills are viewed and downloaded in formskills.";
 
 fn tools() -> Value {
     json!([
@@ -141,7 +178,30 @@ fn tools() -> Value {
               "app": { "type": "string", "description": "An id from family_apps." },
               "tool": { "type": "string", "description": "A tool name from app_tools." },
               "arguments": { "type": "object", "description": "The tool's arguments, as its input schema in app_tools describes." } }, "required": ["app", "tool"] },
-          "annotations": { "readOnlyHint": false, "destructiveHint": true, "openWorldHint": true } }
+          "annotations": { "readOnlyHint": false, "destructiveHint": true, "openWorldHint": true } },
+        { "name": "app_resources", "title": "One app's resources",
+          "description": "Starts one Form app's MCP server (or reuses it) and lists the resources it offers (documents, project state, references, each with a uri) and its resource templates. Empty, with a note, when the app offers none.",
+          "inputSchema": { "type": "object", "properties": {
+              "app": { "type": "string", "description": "An id from family_apps." } }, "required": ["app"] },
+          "annotations": { "readOnlyHint": true, "openWorldHint": false } },
+        { "name": "read_app_resource", "title": "Read one app resource",
+          "description": "Reads one resource by the uri app_resources gave (or one filled in from its templates) and returns its contents as the app sent them.",
+          "inputSchema": { "type": "object", "properties": {
+              "app": { "type": "string", "description": "An id from family_apps." },
+              "uri": { "type": "string", "description": "The resource's uri." } }, "required": ["app", "uri"] },
+          "annotations": { "readOnlyHint": true, "openWorldHint": false } },
+        { "name": "app_prompts", "title": "One app's prompts",
+          "description": "Lists the prompt templates one Form app offers, with their arguments. Empty, with a note, when the app offers none.",
+          "inputSchema": { "type": "object", "properties": {
+              "app": { "type": "string", "description": "An id from family_apps." } }, "required": ["app"] },
+          "annotations": { "readOnlyHint": true, "openWorldHint": false } },
+        { "name": "get_app_prompt", "title": "Fill one app prompt",
+          "description": "Fills one prompt from app_prompts with its arguments and returns the app's messages, ready to follow.",
+          "inputSchema": { "type": "object", "properties": {
+              "app": { "type": "string", "description": "An id from family_apps." },
+              "name": { "type": "string", "description": "A prompt name from app_prompts." },
+              "arguments": { "type": "object", "description": "The prompt's arguments as strings.", "additionalProperties": { "type": "string" } } }, "required": ["app", "name"] },
+          "annotations": { "readOnlyHint": true, "openWorldHint": false } }
     ])
 }
 
@@ -153,7 +213,9 @@ fn suggest_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     let limit = args.get("limit").and_then(Value::as_u64).unwrap_or(3) as usize;
     gateway.places.refresh();
     let running: HashMap<String, String> = gateway.running.iter().map(|(k, (v, _))| (k.clone(), v.clone())).collect();
-    let picks = suggest(&gateway.family, &gateway.places, &|id: &str| running.get(id).cloned(), &task, limit);
+    let mut picks = suggest(&gateway.family, &gateway.places, &|id: &str| running.get(id).cloned(), &task, 5);
+    picks.retain(|p| !gateway.is_off(&p.id));
+    picks.truncate(limit);
     let note = if picks.is_empty() { "No app matched the words of the task; call family_apps and choose by kind and summary." } else { "Best first. formMCP never installs: FormPortal installs and updates the Form apps." };
     Ok(json!({ "task": task, "apps": picks, "note": note }))
 }
@@ -161,11 +223,13 @@ fn suggest_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
 fn family_apps(gateway: &mut Gateway, args: &Value) -> Value {
     let mcp_only = args.get("mcp_only").and_then(Value::as_bool).unwrap_or(false);
     gateway.places.refresh();
-    let Gateway { family, places, running, .. } = gateway;
+    let Gateway { family, places, running, settings, client, .. } = gateway;
+    let off = family.apps.iter().filter(|a| settings.is_off(client, &a.id)).count();
     let apps: Vec<Value> = family
         .apps
         .iter()
         .filter(|a| !mcp_only || a.mcp)
+        .filter(|a| !settings.is_off(client, &a.id))
         .map(|a| {
             let reach = places.reach(a);
             let via = running.get(&a.id).map(|(v, _)| v.clone()).or_else(|| reach.route.as_ref().map(|r| r.label().to_string()));
@@ -176,6 +240,7 @@ fn family_apps(gateway: &mut Gateway, args: &Value) -> Value {
         "count": apps.len(),
         "apps": apps,
         "source": family.describe_source(),
+        "turned_off": off,
         "install": "formMCP never installs. FormPortal (id formai) installs, updates and removes the Form apps."
     })
 }
@@ -183,18 +248,77 @@ fn family_apps(gateway: &mut Gateway, args: &Value) -> Value {
 fn app_tools(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     let app = gateway.app(args)?;
     let refresh = args.get("refresh").and_then(Value::as_bool).unwrap_or(false);
+    let hidden_of = gateway.settings.hidden_tools.get(&app.id).cloned().unwrap_or_default();
     let (via, server) = gateway.server(&app)?;
     if refresh || server.tools_changed {
         server.load_tools()?;
+        toolcache::remember(&app.id, &server.server, &server.tools);
     }
+    let named = |t: &Value| t.get("name").and_then(Value::as_str).unwrap_or_default().to_string();
+    let shown: Vec<Value> = server.tools.iter().filter(|t| !hidden_of.contains(&named(t))).cloned().collect();
+    let hidden: Vec<String> = server.tools.iter().map(named).filter(|n| hidden_of.contains(n)).collect();
     Ok(json!({
         "app": app.id,
         "via": via,
         "server": server.server,
         "instructions": server.instructions,
-        "count": server.tools.len(),
-        "tools": server.tools
+        "count": shown.len(),
+        "tools": shown,
+        "hidden": hidden,
+        "offers": { "resources": server.offers("resources"), "prompts": server.offers("prompts") }
     }))
+}
+
+fn app_resources(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
+    let app = gateway.app(args)?;
+    let (via, server) = gateway.server(&app)?;
+    if !server.offers("resources") {
+        return Ok(json!({ "app": app.id, "via": via, "count": 0, "resources": [], "templates": [], "note": format!("{} offers no resources", app.name) }));
+    }
+    let resources = server.list_all("resources/list", "resources")?;
+    let templates = server.list_all("resources/templates/list", "resourceTemplates").unwrap_or_default();
+    Ok(json!({ "app": app.id, "via": via, "count": resources.len(), "resources": resources, "templates": templates }))
+}
+
+fn read_app_resource(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
+    let app = gateway.app(args)?;
+    let uri = args.get("uri").and_then(Value::as_str).unwrap_or_default().to_string();
+    if uri.trim().is_empty() {
+        return Err("uri is required: one from app_resources".into());
+    }
+    let (_, server) = gateway.server(&app)?;
+    if !server.offers("resources") {
+        return Err(format!("{} offers no resources", app.name));
+    }
+    let read = server.request("resources/read", json!({ "uri": uri }), call_timeout())?;
+    let contents: Vec<Value> = read.get("contents").and_then(Value::as_array).cloned().unwrap_or_default();
+    let blocks: Vec<Value> = contents.into_iter().map(|c| json!({ "type": "resource", "resource": c })).collect();
+    Ok(json!({ "content": blocks, "isError": false }))
+}
+
+fn app_prompts(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
+    let app = gateway.app(args)?;
+    let (via, server) = gateway.server(&app)?;
+    if !server.offers("prompts") {
+        return Ok(json!({ "app": app.id, "via": via, "count": 0, "prompts": [], "note": format!("{} offers no prompts", app.name) }));
+    }
+    let prompts = server.list_all("prompts/list", "prompts")?;
+    Ok(json!({ "app": app.id, "via": via, "count": prompts.len(), "prompts": prompts }))
+}
+
+fn get_app_prompt(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
+    let app = gateway.app(args)?;
+    let name = args.get("name").and_then(Value::as_str).unwrap_or_default().to_string();
+    if name.trim().is_empty() {
+        return Err("name is required: a prompt name from app_prompts".into());
+    }
+    let arguments = args.get("arguments").cloned().unwrap_or_else(|| json!({}));
+    let (_, server) = gateway.server(&app)?;
+    if !server.offers("prompts") {
+        return Err(format!("{} offers no prompts", app.name));
+    }
+    let filled = server.request("prompts/get", json!({ "name": name, "arguments": arguments }), call_timeout())?;
+    Ok(json!({ "app": app.id, "prompt": name, "description": filled.get("description"), "messages": filled.get("messages") }))
 }
 
 fn call_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
@@ -202,6 +326,9 @@ fn call_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     let tool = args.get("tool").and_then(Value::as_str).unwrap_or_default().to_string();
     if tool.is_empty() {
         return Err("tool is required: a name from app_tools".into());
+    }
+    if gateway.settings.tool_hidden(&app.id, &tool) {
+        return Err(format!("{tool} in {} is turned off in formMCP; the person can turn it on in formMCP's window", app.name));
     }
     let arguments = args.get("arguments").cloned().unwrap_or_else(|| json!({}));
     let exposed = gateway.settings.expose.iter().any(|e| e == &app.id);
@@ -225,8 +352,12 @@ fn call(gateway: &mut Gateway, name: &str, args: &Value) -> Result<Outcome, Stri
         "suggest_app" => suggest_app(gateway, args).map(Outcome::Mine),
         "app_tools" => app_tools(gateway, args).map(Outcome::Mine),
         "call_app" => call_app(gateway, args).map(Outcome::Passed),
+        "app_resources" => app_resources(gateway, args).map(Outcome::Mine),
+        "read_app_resource" => read_app_resource(gateway, args).map(Outcome::Passed),
+        "app_prompts" => app_prompts(gateway, args).map(Outcome::Mine),
+        "get_app_prompt" => get_app_prompt(gateway, args).map(Outcome::Mine),
         other => match other.split_once(EXPOSED_SEPARATOR) {
-            Some((id, tool)) if gateway.settings.expose.iter().any(|e| e == id) => {
+            Some((id, tool)) if gateway.settings.expose.iter().any(|e| e == id) && !gateway.is_off(id) => {
                 call_app(gateway, &json!({ "app": id, "tool": tool, "arguments": args })).map(Outcome::Passed)
             }
             _ => Err(format!("no tool named {other:?}; tools/list has the tools")),
@@ -237,16 +368,20 @@ fn call(gateway: &mut Gateway, name: &str, args: &Value) -> Result<Outcome, Stri
 pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
     let id = msg.get("id").cloned()?;
     let method = msg.get("method").and_then(Value::as_str).unwrap_or_default();
+    gateway.reload_settings();
     let params = msg.get("params").cloned().unwrap_or(Value::Null);
     let result = match method {
         "initialize" => {
             let asked = params.get("protocolVersion").and_then(Value::as_str).unwrap_or(PROTOCOL);
             let version = if SUPPORTED.contains(&asked) { asked } else { PROTOCOL };
             let client = params.get("clientInfo").cloned().unwrap_or(Value::Null);
-            log::record("session", json!({ "client": client.get("name"), "client_version": client.get("version"), "expose": gateway.settings.expose }));
+            if !gateway.forced_client {
+                gateway.client = client_key(client.get("name").and_then(Value::as_str).unwrap_or_default()).to_string();
+            }
+            log::record("session", json!({ "client": client.get("name"), "client_version": client.get("version"), "as": gateway.client, "transport": gateway.transport, "expose": gateway.settings.expose }));
             json!({
                 "protocolVersion": version,
-                "capabilities": { "tools": { "listChanged": !gateway.settings.expose.is_empty() } },
+                "capabilities": { "tools": { "listChanged": !gateway.settings.expose.is_empty() && gateway.transport == "stdio" } },
                 "serverInfo": { "name": "formmcp", "title": "formMCP", "version": CORE_VERSION },
                 "instructions": INSTRUCTIONS
             })
@@ -271,7 +406,7 @@ pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
                 None => (args.get("app").and_then(Value::as_str).map(str::to_string), args.get("tool").and_then(Value::as_str).map(str::to_string)),
             };
             let ok = !answer.get("isError").and_then(Value::as_bool).unwrap_or(false);
-            log::record("call", json!({ "name": name, "app": app, "tool": tool, "ok": ok, "ms": started.elapsed().as_millis() as u64 }));
+            log::record("call", json!({ "name": name, "app": app, "tool": tool, "ok": ok, "ms": started.elapsed().as_millis() as u64, "as": gateway.client, "transport": gateway.transport }));
             answer
         }
         "resources/list" => json!({ "resources": [] }),
@@ -281,8 +416,11 @@ pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
     Some(json!({ "jsonrpc": "2.0", "id": id, "result": result }))
 }
 
-pub fn serve() -> io::Result<()> {
+pub fn serve(client: Option<&str>) -> io::Result<()> {
     let mut gateway = Gateway::new(Family::bundled().map_err(io::Error::other)?, Places::from_env());
+    if let Some(name) = client {
+        gateway.force_client(name);
+    }
     let stdin = io::stdin();
     let mut out = io::stdout().lock();
     for line in stdin.lock().lines() {

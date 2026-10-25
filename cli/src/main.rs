@@ -2,7 +2,7 @@ use std::process::ExitCode;
 
 use formmcp_core::clients::{self, Client, Launcher, CLIENTS};
 use formmcp_core::settings::{self, Settings};
-use formmcp_core::{catalog, mcp, suggest, Family, Places, CORE_VERSION};
+use formmcp_core::{catalog, http, mcp, suggest, toolcache, Family, Places, CORE_VERSION};
 use serde_json::json;
 
 const HELP: &str = "formmcp-cli: formMCP without the window
@@ -15,7 +15,13 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   expose <id> on|off    always list that app's own tools in formMCP's tool list (saved in settings.json)
   agents [status|install|remove] [claude,codex,cursor]
                         add formMCP to Claude Code, Codex and Cursor for this user account, or take it out
-  mcp                   serve formMCP's MCP tools on stdin and stdout
+  for <agent> <id> on|off   offer an app to one agent or not: claude, codex, cursor or other (saved in settings.json)
+  tool <id> <tool> on|off   offer one of an app's tools or not, to every agent
+  tools <id>            the app's tools formMCP last saw, and which are off (JSON)
+  settings              what settings.json holds now, with the HTTP address (JSON)
+  mcp [--client AGENT]  serve formMCP's MCP tools on stdin and stdout; --client names the agent (else its own name decides)
+  serve [--port N]      serve formMCP over HTTP on 127.0.0.1 only, at http://127.0.0.1:5625/mcp, until stopped
+  http token|rotate     print the HTTP access token, or make a new one (the old one stops working)
 
   FORMMCP_DEV_ROOTS     folders holding Form app checkouts (path list); a checkout's own launcher is used first
   FORMPORTAL_ROOT       FormPortal's folder, when it is not in the usual place
@@ -26,7 +32,8 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   FORMMCP_OFFLINE       1 reads only FormPortal's kept copy of the catalogue
   FORMAI_CATALOG_PUBKEY extra trusted catalogue keys, comma separated
   FORMMCP_EXPOSE        app ids to always list, comma separated (overrides settings.json)
-  FORMMCP_HOME          where settings.json lives
+  FORMMCP_HOME          where settings.json, the log and the HTTP token live
+  FORMMCP_HTTP_PORT     the HTTP port (5625, or settings.json's http_port)
   version               print the version
   help                  this text
 ";
@@ -38,14 +45,61 @@ fn print(value: &serde_json::Value) {
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let command = args.first().map(String::as_str).unwrap_or("help");
+    let flag = |name: &str| args.iter().position(|a| a == name).and_then(|i| args.get(i + 1)).cloned();
     if command == "mcp" {
-        return match mcp::serve() {
+        return match mcp::serve(flag("--client").as_deref()) {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
                 eprintln!("formmcp: {e}");
                 ExitCode::FAILURE
             }
         };
+    }
+    if command == "serve" {
+        let port = match flag("--port") {
+            Some(p) => match p.parse::<u16>() {
+                Ok(p) => p,
+                Err(_) => {
+                    eprintln!("formmcp: --port needs a number, for example 5625");
+                    return ExitCode::FAILURE;
+                }
+            },
+            None => Settings::load().port(),
+        };
+        return match http::start(port) {
+            Ok(server) => {
+                eprintln!("formmcp: serving {} (127.0.0.1 only); send the header Authorization: Bearer <token> (`formmcp http token`). Ctrl+C stops.", http::address(server.port));
+                server.wait();
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("formmcp: {e}");
+                ExitCode::FAILURE
+            }
+        };
+    }
+    if command == "http" {
+        let result = match args.get(1).map(String::as_str) {
+            Some("token") => settings::token(),
+            Some("rotate") => settings::rotate_token(),
+            _ => Err("http token or http rotate".to_string()),
+        };
+        return match result {
+            Ok(token) => {
+                println!("{token}");
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("formmcp: {e}");
+                ExitCode::FAILURE
+            }
+        };
+    }
+    if command == "settings" {
+        let saved = Settings::saved();
+        let port = Settings::load().port();
+        print(&json!({ "file": settings::path(), "settings": saved, "http": { "address": http::address(port), "token_file": settings::token_path() } }));
+        return ExitCode::SUCCESS;
     }
     if matches!(command, "version" | "--version" | "-V") {
         println!("formMCP {CORE_VERSION}");
@@ -106,6 +160,66 @@ fn main() -> ExitCode {
                     ExitCode::FAILURE
                 }
             }
+        }
+        "for" | "tool" => {
+            let words: Vec<&str> = args[1..].iter().map(String::as_str).collect();
+            let (agent, id, tool, onoff) = match (command, words.as_slice()) {
+                ("for", [agent, id, onoff]) => (Some(*agent), *id, None, *onoff),
+                ("tool", [id, tool, onoff]) => (None, *id, Some(*tool), *onoff),
+                _ => {
+                    eprintln!("formmcp: for <agent> <id> on|off, or tool <id> <tool> on|off");
+                    return ExitCode::FAILURE;
+                }
+            };
+            let Some(app) = family.get(id) else {
+                eprintln!("formmcp: no Form app {id:?}; apps lists them");
+                return ExitCode::FAILURE;
+            };
+            if let Some(a) = agent {
+                if !settings::CLIENT_KEYS.contains(&a) {
+                    eprintln!("formmcp: there is no agent {a:?}; use claude, codex, cursor or other");
+                    return ExitCode::FAILURE;
+                }
+            }
+            let on = match onoff {
+                "on" => true,
+                "off" => false,
+                other => {
+                    eprintln!("formmcp: {other:?}: use on or off");
+                    return ExitCode::FAILURE;
+                }
+            };
+            let mut saved = Settings::saved();
+            match (agent, tool) {
+                (Some(a), _) => saved.set_app_for(a, &app.id, on),
+                (_, Some(t)) => saved.set_tool(&app.id, t, on),
+                _ => {}
+            }
+            match saved.save() {
+                Ok(path) => {
+                    print(&json!({ "off": saved.off, "hidden_tools": saved.hidden_tools, "settings": path, "note": "running formMCP servers use this from their next request" }));
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("formmcp: {e}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        "tools" => {
+            let Some(app) = args.get(1).and_then(|id| family.get(id)) else {
+                eprintln!("formmcp: tools <id>; apps lists the ids");
+                return ExitCode::FAILURE;
+            };
+            let saved = Settings::saved();
+            match toolcache::known(&app.id) {
+                Some(known) => {
+                    let rows: Vec<_> = known.tools.iter().map(|t| json!({ "name": t.name, "on": !saved.tool_hidden(&app.id, &t.name), "read_only": t.read_only, "description": t.description })).collect();
+                    print(&json!({ "app": app.id, "server": known.server, "loaded": known.loaded, "tools": rows }));
+                }
+                None => print(&json!({ "app": app.id, "tools": [], "note": "formMCP has not started this app yet; its tools are listed once an agent or the window loads them" })),
+            }
+            ExitCode::SUCCESS
         }
         "agents" => {
             let action = args.get(1).map(String::as_str).unwrap_or("status");

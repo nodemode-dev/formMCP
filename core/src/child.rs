@@ -29,6 +29,7 @@ pub struct AppServer {
     stderr: Arc<Mutex<VecDeque<String>>>,
     next_id: u64,
     pub server: Value,
+    pub capabilities: Value,
     pub instructions: Option<String>,
     pub tools: Vec<Value>,
     pub tools_changed: bool,
@@ -67,35 +68,44 @@ impl AppServer {
                 }
             }
         });
-        let mut app = AppServer { process, stdin, lines, stderr: tail, next_id: 1, server: Value::Null, instructions: None, tools: Vec::new(), tools_changed: false };
+        let mut app = AppServer { process, stdin, lines, stderr: tail, next_id: 1, server: Value::Null, capabilities: Value::Null, instructions: None, tools: Vec::new(), tools_changed: false };
         let init = app.request(
             "initialize",
             json!({ "protocolVersion": PROTOCOL, "capabilities": {}, "clientInfo": { "name": "formmcp", "title": "formMCP", "version": CORE_VERSION } }),
             start_timeout(),
         )?;
         app.server = init.get("serverInfo").cloned().unwrap_or(Value::Null);
+        app.capabilities = init.get("capabilities").cloned().unwrap_or(Value::Null);
         app.instructions = init.get("instructions").and_then(Value::as_str).map(str::to_string);
         app.notify("notifications/initialized", json!({}))?;
         app.load_tools()?;
         Ok(app)
     }
 
-    pub fn load_tools(&mut self) -> Result<(), String> {
-        let mut tools = Vec::new();
+    pub fn list_all(&mut self, method: &str, key: &str) -> Result<Vec<Value>, String> {
+        let mut found = Vec::new();
         let mut cursor: Option<String> = None;
         for _ in 0..50 {
             let params = match &cursor {
                 Some(c) => json!({ "cursor": c }),
                 None => json!({}),
             };
-            let page = self.request("tools/list", params, call_timeout())?;
-            tools.extend(page.get("tools").and_then(Value::as_array).cloned().unwrap_or_default());
+            let page = self.request(method, params, call_timeout())?;
+            found.extend(page.get(key).and_then(Value::as_array).cloned().unwrap_or_default());
             cursor = page.get("nextCursor").and_then(Value::as_str).map(str::to_string);
             if cursor.is_none() {
                 break;
             }
         }
-        self.tools = tools;
+        Ok(found)
+    }
+
+    pub fn offers(&self, capability: &str) -> bool {
+        self.capabilities.get(capability).is_some_and(|c| !c.is_null())
+    }
+
+    pub fn load_tools(&mut self) -> Result<(), String> {
+        self.tools = self.list_all("tools/list", "tools")?;
         self.tools_changed = false;
         Ok(())
     }
