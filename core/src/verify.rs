@@ -48,6 +48,26 @@ struct PortalVersion {
     version: String,
     path: PathBuf,
     sha256: String,
+    #[serde(default)]
+    files: Option<PathBuf>,
+}
+
+#[derive(Deserialize)]
+struct PortalFiles {
+    format: String,
+    product: String,
+    version: String,
+    files: BTreeMap<String, String>,
+}
+
+fn portal_files(install: &PortalVersion, app: &str) -> Result<Option<BTreeMap<String, String>>, String> {
+    let Some(record) = &install.files else { return Ok(None) };
+    let text = fs::read_to_string(record).map_err(|e| format!("FormPortal's file record {} could not be read ({e})", record.display()))?;
+    let found: PortalFiles = serde_json::from_str(&text).map_err(|e| format!("FormPortal's file record {} is not readable ({e})", record.display()))?;
+    if found.format != "formportal-files" || found.product != app || found.version != install.version {
+        return Err(format!("FormPortal's file record {} is for {} {}, not {app} {}", record.display(), found.product, found.version, install.version));
+    }
+    Ok(Some(found.files))
 }
 
 pub fn path() -> PathBuf {
@@ -150,6 +170,18 @@ pub fn check(portal_root: &Path, app: &str) -> Result<Checked, String> {
     let files = walk(&install.path)?;
     if files.is_empty() {
         return Err(format!("{} is empty", install.path.display()));
+    }
+    if let Some(recorded) = portal_files(&install, app)? {
+        let changed = differences(&recorded, &files);
+        if !changed.is_empty() {
+            let more = if changed.len() > SHOWN { format!(" and {} more", changed.len() - SHOWN) } else { String::new() };
+            return Err(format!(
+                "{app} {} differs from what FormPortal recorded when it installed it: {}{more}. formMCP will not start it. Reinstall or repair it with FormPortal",
+                install.version,
+                changed.iter().take(SHOWN).cloned().collect::<Vec<_>>().join(", ")
+            ));
+        }
+        return Ok(Checked { app: app.to_string(), version: install.version, outcome: "formportal", files: files.len(), ms: started.elapsed().as_millis() as u64 });
     }
     let mut all = load();
     let outcome = match all.get(app) {

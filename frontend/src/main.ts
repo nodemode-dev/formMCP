@@ -428,7 +428,7 @@ function describe(e: LogEvent): string {
   if (e.event === "http-start") return `HTTP started on 127.0.0.1:${e.port ?? ""}`;
   if (e.event === "http-stop") return `HTTP stopped on 127.0.0.1:${e.port ?? ""}`;
   if (e.event === "http-refused") return `HTTP request refused (${e.status ?? ""}): ${e.reason ?? ""}`;
-  if (e.event === "app-start") return e.ok ? `Started ${e.app} through ${e.via}${e.policy === "session" ? " with the session" : e.policy === "keep" ? " to keep running" : ""} (${e.tools ?? 0} tools, ${e.ms} ms${e.verified === "match" ? ", files as recorded" : e.verified === "baseline" ? ", files recorded" : ""})` : `${e.stage === "verify" ? "Refused to start" : "Could not start"} ${e.app} through ${e.via}: ${e.error ?? ""}`;
+  if (e.event === "app-start") return e.ok ? `Started ${e.app} through ${e.via}${e.policy === "session" ? " with the session" : e.policy === "keep" ? " to keep running" : ""} (${e.tools ?? 0} tools, ${e.ms} ms${e.verified === "formportal" ? ", files as FormPortal installed them" : e.verified === "match" ? ", files as recorded" : e.verified === "baseline" ? ", files recorded" : ""})` : `${e.stage === "verify" ? "Refused to start" : "Could not start"} ${e.app} through ${e.via}: ${e.error ?? ""}`;
   if (e.event === "hook") return e.hook === "before" && e.ok ? `Before-call hook allowed ${e.app} · ${e.tool}` : `${e.hook === "after" ? "After" : "Before"}-call hook ${e.ok ? "ran" : e.error ? `failed: ${e.error}` : `refused ${e.app} · ${e.tool}${e.reason ? `: ${e.reason}` : ""}`}`;
   if (e.event === "telemetry") return `Tracing could not send: ${e.error ?? ""}`;
   const parts = [e.name ?? "call", e.app, e.tool].filter(Boolean).join(" · ");
