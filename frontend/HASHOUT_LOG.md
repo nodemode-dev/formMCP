@@ -2,8 +2,24 @@
 
 Living log for formMCP's window. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.5.0
-Last updated: 2026-10-25 · the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+Current build version: v0.6.0
+Last updated: 2026-10-25 · profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+
+## v0.6.0 · profiles and start selects {#v0-6-0}
+
+### index.html, main.ts · the Profile picker and panel
+- refers-to: index.html :: #profile-pick, #profiles-toggle, #profiles, #profile-form, #profile-name, #profile-save, #profile-import, #profile-file, #profile-note, #profile-list · src/main.ts :: showProfiles, profileAction, profileNameOk, showAgent, START_LABELS, describe
+- kind: decision
+- logged: v0.6.0 · 2026-10-25
+
+The Profile picker follows the Apps for picker: it shows and sets the chosen agent's profile. The panel is a fixed 168 px section between the filter row and the cards, opened only by its button, so nothing moves while its content changes. Import reads the chosen file in the page (no path is sent to the shell, so no file dialog plugin is needed) and sends its text. Delete wants a second click within 4 s. A switch an agent's profile turns off shows off, locked, with the profile named in its title. The start select sits with the card's switches.
+
+### app.css · four layout fixes found by the checks
+- refers-to: src/styles/app.css :: .profile-row .btn, #profile-save, .app-switches, .clients, .http, .status, .tools, .profiles, .log
+- kind: fix
+- logged: v0.6.0 · 2026-10-25
+
+The global `.btn` places buttons in grid column 2 (for the agent cards), so the profile row's Export and Delete landed on each other; the row resets it. The Save button's label names the agent, and its width changing moved Import (CLS 0.0002); it has a fixed width. At 640 by 520 with the panel open the fixed rows shrank and the status line slid under the HTTP bar; they no longer shrink, and the activity panel gives way to 72 px. In the real window (WebKitGTK) a card's wrapped switch row was not counted in its height, so Always show tools hung over the card's edge (Chromium did count it); the switches now stack in a grid. The filter row wraps rather than scroll sideways.
 
 ## v0.5.0 · the HTTP bar, apps per agent and the Tools panel {#v0-5-0}
 

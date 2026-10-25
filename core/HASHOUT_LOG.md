@@ -2,8 +2,26 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.5.0
-Last updated: 2026-10-25 · HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.6.0
+Last updated: 2026-10-25 · profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.6.0 · profiles and start policies {#v0-6-0}
+
+### settings.rs · profiles only narrow
+- refers-to: core/src/settings.rs :: Profile, ProfileFile, Settings.profiles, Settings.use_profile, Settings.start, is_off, profile_of, profile_hides_app, hides_tool, start_of, set_start, profile_from, set_profile_for, delete_profile, read_profile, write_profile, export_profile, downloads_dir, profile_name_ok, START_POLICIES, PROFILE_FORMAT
+- kind: decision
+- logged: v0.6.0 · 2026-10-25
+
+A profile is apps off, tools off and start policies under a name; `use_profile` maps an agent to one. Resolution is a union: what the agent's own switches turn off, plus what its profile turns off, so a profile someone else wrote can never widen what an agent reaches (the safe reading for a shared file). Start policies from the profile take the place of the app's own. Saving copies the agent's own switches, every tool switch and every start policy. The file format (`formmcp-profile`, version 1, the profile's fields flattened beside its name) is checked on import: other formats and versions refused, the name limited to 1 to 40 letters, digits, spaces, hyphens and underscores (it becomes a file name on export), unknown app ids and policies dropped and named back, 256 KB at most. Export never overwrites: it picks `(2)`, `(3)` and so on.
+
+### mcp.rs · start policies
+- refers-to: core/src/mcp.rs :: Gateway.pending, Gateway.last_used, server, start_early, sweep_idle, idle_limit, start_app_server, running_apps, app
+- kind: decision
+- logged: v0.6.0 · 2026-10-25
+
+`demand` (the default) stops an app after `FORMMCP_IDLE_MINUTES` (10) without use, which frees memory in long sessions. There is no timer: the sweep runs at the start of every request, so an idle app stops at the next request rather than at the minute; a session that goes quiet keeps its apps until it ends, as before. `session` starts an app on a background thread at initialize, so initialize answers at once and the first call finds the app ready (`server()` waits on the thread's result when the app is asked for sooner); `start_early` returns before reading the catalogue when no app has that policy, so sessions without it are unchanged. `keep` is never swept. Over HTTP the gateway is shared, so the sweep uses the policy as the current session's agent sees it. Every start is logged with its policy, every idle stop as `app-stop`; an exposed app that stops raises the tools-changed notice. App starting moved into `start_app_server`, shared by both paths.
+
+Checked over stdio with the scratch formvis server: `session` started formvis before any call (the first `app_tools` took 1 ms); `demand` with `FORMMCP_IDLE_MINUTES=0` stopped it at the next request and started it again when asked; `keep` with the same setting did not; an unknown policy is refused. Profiles: one saved from Codex's settings (formvis off, a tool off, formvis kept) and used for Claude Code turned formvis off for Claude Code only, refused with the profile's name; a tools-only profile used for Cursor hid one tool for Cursor only; export and import round-trip; an import with an unknown app and an unknown policy dropped both and said so; another format and a name with a path refused; deleting a profile in use releases the agent; a second export to the same folder got ` (2)`.
 
 ## v0.5.0 · HTTP, apps per agent, tool switches, resources and prompts {#v0-5-0}
 

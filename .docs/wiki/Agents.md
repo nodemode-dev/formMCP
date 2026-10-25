@@ -42,6 +42,25 @@ The window's Apps for picker chooses an agent (Claude Code, Codex, Cursor, or ot
 
 The card's Tools panel turns single tools off for every agent (`./formmcp cli tool formvis erase_all off`): left out of `app_tools` and the always-shown tools, refused by `call_app`. The panel lists the tools formMCP saw when it last started the app; Load tools starts it once to see them. Settings are read again on every request, so running servers follow a change at once (an agent that cached its tool list sees always-shown tools change the next time it lists them).
 
+## Profiles
+
+A profile is a name for a set of apps off, tools off and start policies. Save one from an agent's current settings (Profiles, then Save, in the window; `./formmcp cli profile save <name> --from <agent>`), choose it for any agent with the Profile picker (`profile use <agent> <name>`), and share it: `profile export <name>` writes `formmcp-profile-<name>.json` to Downloads (never over an existing file), `profile import <file>` (or Import in the window) reads one. A profile in use adds to what is off for that agent and never turns anything back on; its start policies take the place of the app's own. Importing drops, and names, apps this formMCP does not know and policies it does not have; another format, a name outside 1 to 40 letters, digits, spaces, hyphens and underscores, or a file over 256 KB is refused. An app a profile turns off is refused with the profile's name.
+
+```json
+{ "format": "formmcp-profile", "format_version": 1, "name": "Quiet desk",
+  "apps_off": ["formvis"], "hidden_tools": { "formvis": ["erase_all"] }, "start": { "formai": "session" } }
+```
+
+## When an app's server starts
+
+| Policy | Starts | Stops |
+| --- | --- | --- |
+| `demand` (default) | the first time an agent needs the app | after `FORMMCP_IDLE_MINUTES` (10) without a call, checked at the next request; or when the session ends |
+| `session` | in the background when an agent's session starts, so the first call does not wait | when the session ends |
+| `keep` | the first time an agent needs it | when the session ends (or, over HTTP, when the window or `serve` stops) |
+
+Set it on the card's start select or with `./formmcp cli start <id> demand|session|keep`. Over HTTP all sessions share the app servers, so `keep` holds an app across sessions.
+
 ## HTTP
 
 Press Start in the window's HTTP bar, or run `./formmcp cli serve` (`--port N`, else `FORMMCP_HTTP_PORT`, `http_port` in settings.json, or 5625). The server listens on 127.0.0.1 only and implements Streamable HTTP (protocol 2025-06-18; older versions accepted):

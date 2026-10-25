@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.6.0 · 2026-10-25
+
+- Profiles: save what an agent gets (apps off, tools off, start policies) under a name, choose a profile per agent, and export or import it as one file to share. A profile only ever turns more off, never less.
+- Start policies per app: start on demand and stop after 10 idle minutes (the default), start in the background when an agent's session starts, or keep running while formMCP runs.
+- When a profile turns an app off, the agent is told which profile did it.
+- The activity log shows apps stopped for being idle and how each app was started.
+- `formmcp start` and `formmcp profile` on the command line.
+
 ## v0.5.0 · 2026-10-25
 
 - formMCP also answers over HTTP, on this computer only: Start in the window (or `formmcp serve`) and point an agent at `http://127.0.0.1:5625/mcp` with the access token. Copy setup gives the address, the header and a ready Claude Code command; New token replaces the token at once.

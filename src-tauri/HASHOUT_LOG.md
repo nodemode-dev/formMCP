@@ -2,8 +2,17 @@
 
 Living log for formMCP's desktop shell. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.5.0
-Last updated: 2026-10-25 · HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+Current build version: v0.6.0
+Last updated: 2026-10-25 · profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+
+## v0.6.0 · profiles and start policies {#v0-6-0}
+
+### lib.rs · set_start, profile_use, profile_save, profile_delete, profile_export, profile_import, profiles_of
+- refers-to: src-tauri/src/lib.rs :: snapshot_now, profiles_of, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import
+- kind: decision
+- logged: v0.6.0 · 2026-10-25
+
+`snapshot` now separates an agent's own switch (`off_for`) from what its profile turns off (`profile_off_for`), gives each app's own start policy, and lists the profiles with counts and the agents using each. `profile_import` takes the file's text from the page and checks it against the bundled family list; `profile_export` writes to the Downloads folder and returns the path. Checked in the real window: FormPortal set to start with the session, HTTP started, and an HTTP session from outside started FormPortal's real server in the background (logged "with the session", 33 tools).
 
 ## v0.5.0 · HTTP inside the window, agents and tool switches {#v0-5-0}
 

@@ -22,4 +22,4 @@ formMCP is one MCP server for the whole Form family. Add it to Claude Code, Code
 
 ## What comes next
 
-formMCP is in formcompiler's registry (v0.4.2) under the same id and name as in FormPortal, FormTray and FormRanker. v0.5.0 adds HTTP, apps per agent, tool switches, and apps' resources and prompts. Next, from the parity plan: v0.6.0 (named profiles, a start-up policy per app) and v0.7.0 (secrets in the keychain, redaction, a file check before an installed app starts, hooks, tracing). formMCP stays with the Form family only (owner). The owner's first push, `compile_v*` branch and the family's catalogue key pair are still to come.
+formMCP is in formcompiler's registry (v0.4.2) under the same id and name as in FormPortal, FormTray and FormRanker. v0.5.0 adds HTTP, apps per agent, tool switches, and apps' resources and prompts; v0.6.0 profiles and a start-up policy per app. Next, from the parity plan: v0.7.0 (secrets in the keychain, redaction, a file check before an installed app starts, hooks, tracing). formMCP stays with the Form family only (owner). The owner's first push, `compile_v*` branch and the family's catalogue key pair are still to come.
