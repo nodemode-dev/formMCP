@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use formmcp_core::clients::{self, Client, Launcher, CLIENTS};
 use formmcp_core::settings::{self, Settings, CLIENT_KEYS};
-use formmcp_core::{catalog, http, log, mcp, toolcache, Family, Places};
+use formmcp_core::{catalog, hooks, http, log, mcp, secrets, telemetry, toolcache, verify, Family, Places};
 use serde_json::{json, Value};
 
 #[derive(Default)]
@@ -213,6 +213,85 @@ async fn connect(client: String, on: bool) -> Result<Value, String> {
     .map_err(|e| e.to_string())?
 }
 
+fn safety_now() -> Value {
+    let saved = Settings::saved();
+    let checked: Vec<Value> = verify::baselines().into_iter().map(|(app, (version, files, at))| json!({ "app": app, "version": version, "files": files, "at": at })).collect();
+    json!({ "redact": !saved.redact_off, "verify": !saved.verify_off, "hooks": { "before": saved.hooks.before, "after": saved.hooks.after }, "telemetry": saved.telemetry, "secrets": secrets::list(&saved), "checked": checked })
+}
+
+async fn safety_after(change: impl FnOnce() -> Result<(), String> + Send + 'static) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || change().map(|()| safety_now())).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn safety() -> Result<Value, String> {
+    safety_after(|| Ok(())).await
+}
+
+#[tauri::command]
+async fn secret_set(app: String, name: String, value: String) -> Result<Value, String> {
+    let family = Family::bundled()?;
+    let id = family.get(&app).map(|a| a.id.clone()).ok_or_else(|| format!("there is no Form app {app:?}"))?;
+    safety_after(move || secrets::set(&id, name.trim(), &value)).await
+}
+
+#[tauri::command]
+async fn secret_remove(app: String, name: String) -> Result<Value, String> {
+    safety_after(move || secrets::remove(&app, &name)).await
+}
+
+#[tauri::command]
+async fn safety_switch(redact: Option<bool>, verify: Option<bool>) -> Result<Value, String> {
+    safety_after(move || {
+        let mut saved = Settings::saved();
+        if let Some(on) = redact {
+            saved.redact_off = !on;
+        }
+        if let Some(on) = verify {
+            saved.verify_off = !on;
+        }
+        saved.save().map(|_| ())
+    })
+    .await
+}
+
+#[tauri::command]
+async fn hook_set(which: String, line: String) -> Result<Value, String> {
+    safety_after(move || {
+        let line = line.trim().to_string();
+        hooks::split(&line)?;
+        let mut saved = Settings::saved();
+        match which.as_str() {
+            "before" => saved.hooks.before = line,
+            "after" => saved.hooks.after = line,
+            other => return Err(format!("there is no {other:?} hook; before or after")),
+        }
+        saved.save().map(|_| ())
+    })
+    .await
+}
+
+#[tauri::command]
+async fn telemetry_set(address: Option<String>) -> Result<Value, String> {
+    safety_after(move || {
+        let mut saved = Settings::saved();
+        saved.telemetry = match address.map(|a| a.trim().trim_end_matches('/').to_string()).filter(|a| !a.is_empty()) {
+            Some(a) => match telemetry::endpoint_problem(&a) {
+                Some(problem) => return Err(problem),
+                None => Some(a),
+            },
+            None => None,
+        };
+        saved.save().map(|_| ())
+    })
+    .await
+}
+
+#[tauri::command]
+async fn verify_trust(app: String) -> Result<Value, String> {
+    safety_after(move || verify::trust(&Places::from_env().portal_root, &app).map(|_| ())).await
+}
+
 #[tauri::command]
 fn log_tail(from: u64) -> Value {
     let (events, next) = log::tail(from);
@@ -234,7 +313,7 @@ pub fn run() {
     }
     tauri::Builder::default()
         .manage(Http::default())
-        .invoke_handler(tauri::generate_handler![snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import])
+        .invoke_handler(tauri::generate_handler![snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import, safety, secret_set, secret_remove, safety_switch, hook_set, telemetry_set, verify_trust])
         .run(tauri::generate_context!())
         .expect("formMCP could not start its window");
 }

@@ -116,7 +116,9 @@ type HttpState = { running: boolean; port: number; address: string };
 type Snapshot = { source: string; apps: LiveApp[]; clients: ClientState[]; formportal: boolean; env_expose: boolean; http: HttpState; profiles: Profiles };
 type ToolRow = { name: string; description: string; read_only: boolean; on: boolean };
 type ToolList = { app: string; loaded: number | null; tools: ToolRow[] };
-type LogEvent = { t: number; event: string; client?: string; name?: string; app?: string | null; tool?: string | null; ok?: boolean; ms?: number; via?: string; error?: string; tools?: number; as?: string; transport?: string; port?: number; status?: number; reason?: string; minutes?: number; policy?: string; profile?: string | null };
+type LogEvent = { t: number; event: string; client?: string; name?: string; app?: string | null; tool?: string | null; ok?: boolean; ms?: number; via?: string; error?: string; tools?: number; as?: string; transport?: string; port?: number; status?: number; reason?: string | null; minutes?: number; policy?: string; profile?: string | null; stage?: string; hook?: string; redacted?: number | null; verified?: string | null };
+type SecretRow = { app: string; name: string; stored: boolean; error: string | null };
+type Safety = { redact: boolean; verify: boolean; hooks: { before?: string; after?: string }; telemetry: string | null; secrets: SecretRow[]; checked: { app: string; version: string; files: number; at: number }[] };
 
 const invoke = (window as unknown as { __TAURI__?: { core?: { invoke?: Invoke } } }).__TAURI__?.core?.invoke;
 const status = document.getElementById("status") as HTMLParagraphElement;
@@ -172,6 +174,111 @@ const profileList = document.getElementById("profile-list") as HTMLUListElement;
 const profileOff = new Map<string, Set<string>>();
 let profilesNow: Profiles = { list: [], in_use: {} };
 
+const safetyToggle = document.getElementById("safety-toggle") as HTMLButtonElement;
+const safetyBox = document.getElementById("safety") as HTMLElement;
+const safetyNote = document.getElementById("safety-note") as HTMLElement;
+const secretForm = document.getElementById("secret-form") as HTMLFormElement;
+const secretApp = document.getElementById("secret-app") as HTMLSelectElement;
+const secretName = document.getElementById("secret-name") as HTMLInputElement;
+const secretValue = document.getElementById("secret-value") as HTMLInputElement;
+const secretSave = document.getElementById("secret-save") as HTMLButtonElement;
+const safetyList = document.getElementById("safety-list") as HTMLUListElement;
+const redactSwitch = document.getElementById("redact-switch") as HTMLButtonElement;
+const verifySwitch = document.getElementById("verify-switch") as HTMLButtonElement;
+const hookForm = document.getElementById("hook-form") as HTMLFormElement;
+const hookBefore = document.getElementById("hook-before") as HTMLInputElement;
+const hookAfter = document.getElementById("hook-after") as HTMLInputElement;
+const hookSave = document.getElementById("hook-save") as HTMLButtonElement;
+const traceForm = document.getElementById("trace-form") as HTMLFormElement;
+const traceAddress = document.getElementById("trace-address") as HTMLInputElement;
+const traceSave = document.getElementById("trace-save") as HTMLButtonElement;
+let safetyNow: Safety | null = null;
+
+for (const app of family.apps.filter((a) => a.mcp)) {
+  const o = el("option", "", app.name);
+  o.value = app.id;
+  secretApp.append(o);
+}
+
+function appName(id: string): string {
+  return family.apps.find((a) => a.id === id)?.name ?? id;
+}
+
+function closeSafety(): void {
+  safetyBox.hidden = true;
+  safetyToggle.setAttribute("aria-expanded", "false");
+}
+
+function twoClick(button: HTMLButtonElement, ask: string, run: () => void): void {
+  let armed = 0;
+  button.addEventListener("click", () => {
+    if (Date.now() > armed) {
+      armed = Date.now() + 4000;
+      setText(safetyNote, ask);
+      return;
+    }
+    button.disabled = true;
+    run();
+  });
+}
+
+function showSafety(s: Safety): void {
+  safetyNow = s;
+  redactSwitch.setAttribute("aria-checked", String(s.redact));
+  verifySwitch.setAttribute("aria-checked", String(s.verify));
+  redactSwitch.disabled = false;
+  verifySwitch.disabled = false;
+  if (document.activeElement !== hookBefore) hookBefore.value = s.hooks.before ?? "";
+  if (document.activeElement !== hookAfter) hookAfter.value = s.hooks.after ?? "";
+  if (document.activeElement !== traceAddress) traceAddress.value = s.telemetry ?? "";
+  hookSave.disabled = hookBefore.value.trim() === (s.hooks.before ?? "") && hookAfter.value.trim() === (s.hooks.after ?? "");
+  traceSave.disabled = traceAddress.value.trim().replace(/\/+$/, "") === (s.telemetry ?? "");
+  const secretRows = s.secrets.map((r) => {
+    const li = el("li", "profile-row");
+    const what = el("span", `profile-what${r.stored ? "" : " is-fail"}`, `Secret ${r.name} for ${appName(r.app)} · ${r.stored ? "in the keychain" : r.error ?? "missing"}`);
+    what.title = r.error ?? "";
+    const remove = el("button", "btn btn-small btn-danger", "Remove");
+    remove.type = "button";
+    twoClick(remove, `Click Remove again to delete ${r.name} for ${appName(r.app)} from the keychain.`, () => void safetyCall("secret_remove", { app: r.app, name: r.name }, `Removed ${r.name} for ${appName(r.app)}.`));
+    li.append(what, remove);
+    return li;
+  });
+  const checkedRows = s.checked.map((c) => {
+    const li = el("li", "profile-row");
+    const when = new Date(c.at * 1000).toLocaleDateString();
+    li.append(el("span", "profile-what", `Files of ${appName(c.app)} ${c.version} · ${c.files} recorded ${when}`));
+    const again = el("button", "btn btn-small", "Record again");
+    again.type = "button";
+    again.title = "Accept the files as they are now, after you changed them yourself";
+    twoClick(again, `Click Record again to accept ${appName(c.app)}'s files as they are now. Only do this for a change you made.`, () => void safetyCall("verify_trust", { app: c.app }, `Recorded ${appName(c.app)}'s files as they are now.`));
+    li.append(again);
+    return li;
+  });
+  safetyList.replaceChildren(...checkedRows, ...secretRows);
+}
+
+async function safetyCall(cmd: string, args: Record<string, unknown>, done: string): Promise<boolean> {
+  if (!invoke) return false;
+  try {
+    showSafety((await invoke(cmd, args)) as Safety);
+    if (done) setText(safetyNote, done);
+    return true;
+  } catch (e) {
+    setText(safetyNote, `Could not save: ${String(e)}`);
+    if (safetyNow) showSafety(safetyNow);
+    return false;
+  }
+}
+
+async function loadSafety(): Promise<void> {
+  if (!invoke) return;
+  try {
+    showSafety((await invoke("safety")) as Safety);
+  } catch (e) {
+    setText(safetyNote, `Could not read the safety settings: ${String(e)}`);
+  }
+}
+
 function profileNameOk(name: string): boolean {
   return /^[A-Za-z0-9_-]([A-Za-z0-9 _-]{0,38}[A-Za-z0-9_-])?$/.test(name);
 }
@@ -192,6 +299,7 @@ function showProfiles(p: Profiles): void {
   profilePick.value = p.in_use[agentPick.value] ?? "";
   profilePick.disabled = !invoke || !names.length;
   profilesToggle.disabled = !invoke;
+  safetyToggle.disabled = !invoke;
   const items = p.list.map((r) => {
     const li = el("li", "profile-row");
     const name = el("span", "profile-name", r.name);
@@ -320,9 +428,11 @@ function describe(e: LogEvent): string {
   if (e.event === "http-start") return `HTTP started on 127.0.0.1:${e.port ?? ""}`;
   if (e.event === "http-stop") return `HTTP stopped on 127.0.0.1:${e.port ?? ""}`;
   if (e.event === "http-refused") return `HTTP request refused (${e.status ?? ""}): ${e.reason ?? ""}`;
-  if (e.event === "app-start") return e.ok ? `Started ${e.app} through ${e.via}${e.policy === "session" ? " with the session" : e.policy === "keep" ? " to keep running" : ""} (${e.tools ?? 0} tools, ${e.ms} ms)` : `Could not start ${e.app} through ${e.via}: ${e.error ?? ""}`;
+  if (e.event === "app-start") return e.ok ? `Started ${e.app} through ${e.via}${e.policy === "session" ? " with the session" : e.policy === "keep" ? " to keep running" : ""} (${e.tools ?? 0} tools, ${e.ms} ms${e.verified === "match" ? ", files as recorded" : e.verified === "baseline" ? ", files recorded" : ""})` : `${e.stage === "verify" ? "Refused to start" : "Could not start"} ${e.app} through ${e.via}: ${e.error ?? ""}`;
+  if (e.event === "hook") return e.hook === "before" && e.ok ? `Before-call hook allowed ${e.app} · ${e.tool}` : `${e.hook === "after" ? "After" : "Before"}-call hook ${e.ok ? "ran" : e.error ? `failed: ${e.error}` : `refused ${e.app} · ${e.tool}${e.reason ? `: ${e.reason}` : ""}`}`;
+  if (e.event === "telemetry") return `Tracing could not send: ${e.error ?? ""}`;
   const parts = [e.name ?? "call", e.app, e.tool].filter(Boolean).join(" · ");
-  return `${parts} · ${e.ok ? "ok" : "failed"} · ${e.ms ?? 0} ms`;
+  return `${parts} · ${e.ok ? "ok" : "failed"} · ${e.ms ?? 0} ms${e.redacted ? ` · ${e.redacted} hidden` : ""}`;
 }
 
 async function pollLog(): Promise<void> {
@@ -333,7 +443,7 @@ async function pollLog(): Promise<void> {
     if (events.length) {
       const atEnd = logList.scrollTop + logList.clientHeight >= logList.scrollHeight - 4;
       const items = events.map((e) => {
-        const li = el("li", `log-row${e.ok === false || e.event === "http-refused" ? " is-fail" : ""}`);
+        const li = el("li", `log-row${e.ok === false || e.event === "http-refused" || e.event === "telemetry" ? " is-fail" : ""}`);
         li.append(el("time", "log-time", clock(e.t)), el("span", "log-text", describe(e)));
         return li;
       });
@@ -395,8 +505,68 @@ if (invoke) {
   });
   profilesToggle.addEventListener("click", () => {
     const open = profilesBox.hidden;
+    if (open) closeSafety();
     profilesBox.hidden = !open;
     profilesToggle.setAttribute("aria-expanded", String(open));
+  });
+  safetyToggle.addEventListener("click", () => {
+    const open = safetyBox.hidden;
+    if (open) {
+      profilesBox.hidden = true;
+      profilesToggle.setAttribute("aria-expanded", "false");
+      void loadSafety();
+    }
+    safetyBox.hidden = !open;
+    safetyToggle.setAttribute("aria-expanded", String(open));
+  });
+  const secretReady = (): void => {
+    secretSave.disabled = !/^[A-Z_][A-Z0-9_]{0,63}$/.test(secretName.value.trim()) || !secretValue.value;
+  };
+  secretName.addEventListener("input", secretReady);
+  secretValue.addEventListener("input", secretReady);
+  secretForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const app = secretApp.value;
+    const name = secretName.value.trim();
+    const value = secretValue.value;
+    secretSave.disabled = true;
+    void safetyCall("secret_set", { app, name, value }, `Kept ${name} for ${appName(app)} in the keychain; formMCP gives it to ${appName(app)} the next time it starts the app.`).then((ok) => {
+      if (ok) {
+        secretValue.value = "";
+        secretName.value = "";
+      }
+      secretReady();
+    });
+  });
+  for (const [sw, key] of [[redactSwitch, "redact"], [verifySwitch, "verify"]] as const) {
+    sw.addEventListener("click", () => {
+      const on = sw.getAttribute("aria-checked") !== "true";
+      sw.disabled = true;
+      void safetyCall("safety_switch", { [key]: on }, key === "redact" ? (on ? "Secrets and token-shaped text are hidden in results from the next request." : "Results go to agents as apps send them; the log is still cleaned.") : on ? "Installed apps' files are checked before each start." : "Installed apps start without the file check.");
+    });
+  }
+  const hookReady = (): void => {
+    hookSave.disabled = hookBefore.value.trim() === (safetyNow?.hooks.before ?? "") && hookAfter.value.trim() === (safetyNow?.hooks.after ?? "");
+  };
+  hookBefore.addEventListener("input", hookReady);
+  hookAfter.addEventListener("input", hookReady);
+  hookForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hookSave.disabled = true;
+    const before = hookBefore.value.trim();
+    const after = hookAfter.value.trim();
+    const ok = (before === (safetyNow?.hooks.before ?? "") || (await safetyCall("hook_set", { which: "before", line: before }, ""))) && (await safetyCall("hook_set", { which: "after", line: after }, ""));
+    if (ok) setText(safetyNote, before || after ? `Hooks saved: ${before ? "before each call" : ""}${before && after ? " and " : ""}${after ? "after each call" : ""}. A before hook that fails or times out refuses the call.` : "No hooks: calls run without them.");
+    hookReady();
+  });
+  traceAddress.addEventListener("input", () => {
+    traceSave.disabled = traceAddress.value.trim().replace(/\/+$/, "") === (safetyNow?.telemetry ?? "");
+  });
+  traceForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const address = traceAddress.value.trim();
+    traceSave.disabled = true;
+    void safetyCall("telemetry_set", { address: address || null }, address ? `Each call and app start is sent to ${address} as a trace and metrics: names and outcomes only, never arguments or results.` : "Tracing is off.");
   });
   profileName.addEventListener("input", () => {
     profileSave.disabled = !profileNameOk(profileName.value.trim());

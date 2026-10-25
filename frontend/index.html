@@ -67,6 +67,7 @@
           </select>
         </label>
         <button class="btn btn-small" id="profiles-toggle" type="button" aria-expanded="false" disabled>Profiles</button>
+        <button class="btn btn-small" id="safety-toggle" type="button" aria-expanded="false" disabled>Safety</button>
         <p class="count" id="count" aria-live="polite"></p>
       </div>
       <section class="profiles" id="profiles" aria-label="Profiles" hidden>
@@ -78,6 +79,43 @@
         </form>
         <p class="profile-note" id="profile-note">A profile keeps apps off, tools off and start policies under one name. Used for an agent, it only turns more off; export one to share it.</p>
         <ul class="profile-list" id="profile-list"></ul>
+      </section>
+      <section class="safety" id="safety" aria-label="Safety" hidden>
+        <p class="profile-note" id="safety-note">Secrets stay in this computer's keychain. Everything here applies to every agent from its next request.</p>
+        <div class="safety-body">
+          <div class="safety-row">
+            <span class="safety-label">Secrets</span>
+            <form class="safety-form" id="secret-form" autocomplete="off">
+              <select id="secret-app" aria-label="The app the secret is for"></select>
+              <input id="secret-name" type="text" maxlength="64" placeholder="FORMMD_MCP_TOKEN" aria-label="Environment variable name" spellcheck="false" />
+              <input id="secret-value" type="password" placeholder="Value" aria-label="Secret value" autocomplete="new-password" />
+              <button class="btn btn-small" id="secret-save" type="submit" disabled>Keep</button>
+            </form>
+          </div>
+          <div class="safety-row">
+            <span class="safety-label">Protect</span>
+            <div class="safety-switches">
+              <button class="switch" id="redact-switch" type="button" role="switch" aria-checked="true" disabled title="Replaces known secrets and token-shaped text in what apps send back, before an agent sees it; the activity log is always cleaned"><span class="switch-track"></span><span class="switch-label">Hide secrets in results</span></button>
+              <button class="switch" id="verify-switch" type="button" role="switch" aria-checked="true" disabled title="Before starting an app FormPortal installed, compares its files with what formMCP recorded the first time it started that version"><span class="switch-track"></span><span class="switch-label">Check installed apps' files before they start</span></button>
+            </div>
+          </div>
+          <div class="safety-row">
+            <span class="safety-label">Hooks</span>
+            <form class="safety-form" id="hook-form" autocomplete="off">
+              <input id="hook-before" type="text" placeholder="Before each app tool call: a command, or empty" aria-label="Before-call hook command" spellcheck="false" />
+              <input id="hook-after" type="text" placeholder="After each call: a command, or empty" aria-label="After-call hook command" spellcheck="false" />
+              <button class="btn btn-small" id="hook-save" type="submit" disabled>Save</button>
+            </form>
+          </div>
+          <div class="safety-row">
+            <span class="safety-label">Tracing</span>
+            <form class="safety-form" id="trace-form" autocomplete="off">
+              <input id="trace-address" type="text" placeholder="OpenTelemetry collector, for example http://127.0.0.1:4318; empty for off" aria-label="OpenTelemetry collector address" spellcheck="false" />
+              <button class="btn btn-small" id="trace-save" type="submit" disabled>Save</button>
+            </form>
+          </div>
+          <ul class="profile-list safety-list" id="safety-list"></ul>
+        </div>
       </section>
       <ul class="apps" id="apps"></ul>
       <section class="log" aria-label="Activity">

@@ -493,8 +493,110 @@ html.booting body {
 .http,
 .status,
 .tools,
-.profiles {
+.profiles,
+.safety {
   flex-shrink: 0;
+}
+
+.safety {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--sp-2);
+  height: 212px;
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-m);
+  background: var(--pane);
+}
+
+@media (max-height: 640px) {
+  .safety {
+    height: 148px;
+  }
+}
+
+.safety-body {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-2);
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.safety-row {
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 28px;
+}
+
+.safety-label {
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+}
+
+.safety-form {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.safety-form input,
+.safety-form select {
+  flex: 1 1 8em;
+  min-width: 0;
+  height: 26px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-s);
+  background: var(--ground);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-s);
+}
+
+.safety-form select {
+  flex: 0 1 9em;
+}
+
+.safety-form input:focus-visible,
+.safety-form select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.safety-form .btn {
+  flex: none;
+  grid-row: auto;
+  grid-column: auto;
+}
+
+.safety-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.safety-list {
+  margin-left: calc(5.5em + var(--sp-2));
+  overflow: visible;
+}
+
+.safety-list:empty {
+  display: none;
+}
+
+.safety-list .profile-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 24px;
+}
+
+.safety-list .is-fail {
+  color: var(--fault);
 }
 
 .log {
