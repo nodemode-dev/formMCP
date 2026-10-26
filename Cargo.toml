@@ -9,5 +9,5 @@ license = "GPL-3.0-only"
 authors = ["nodemode-ai"]
 
 [profile.release]
-strip = true
+strip = false
 lto = true
