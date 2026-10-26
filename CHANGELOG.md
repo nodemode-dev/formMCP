@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.4 · 2026-10-26
+
+- A test suite checks the family list and the signed catalogue, which apps this computer can reach, the MCP server over stdio and over HTTP (its access token, Host and Origin checks), and that a call to an app that cannot start fails at once with the reason; it runs on every change. Nothing in the app changes.
+
 ## v0.7.3 · 2026-10-26
 
 - Release builds keep their symbols (`strip = false`), because macOS builds fail when the release profile strips the binary. Nothing in the app changes.
