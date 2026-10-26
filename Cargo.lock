@@ -1184,6 +1184,8 @@ dependencies = [
 name = "formmcp-cli"
 version = "0.7.3"
 dependencies = [
+ "base64 0.22.1",
+ "ed25519-dalek",
  "formmcp-core",
  "serde_json",
 ]

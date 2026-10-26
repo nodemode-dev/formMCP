@@ -2,8 +2,16 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.7.1
-Last updated: 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.7.4
+Last updated: 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.7.4 · the test suite {#v0-7-4}
+
+- refers-to: cli/tests/support/mod.rs, cli/tests/family_and_reach.rs, cli/tests/mcp_stdio_and_http.rs, core/tests/family_contract.rs, cli/Cargo.toml [dev-dependencies]
+- kind: decision
+- logged: v0.7.4 · 2026-10-26
+
+`FAMILY_TEST_PLAN.md` P1 for formMCP. The tests drive the built `formmcp-cli` the way agents and the window do (the `apps`, `reach` and `http` commands, `mcp` over stdio, `serve` over HTTP), each in a sandbox whose environment is cleared and then set: `HOME`, `FORMMCP_HOME`, `FORMPORTAL_ROOT` and the XDG folders inside a temporary folder, `PATH` holding only the sandbox's own `bin`, and `FORMMCP_CATALOG` pointing at a file that is not there unless the test writes one, so nothing reaches the network or the person's settings, keychain token or FormPortal. Catalogues are signed in the test with keys from fixed seeds and trusted through `FORMAI_CATALOG_PUBKEY`; `base64` and `ed25519-dalek` are dev-dependencies of the cli for that (already in the lock through core, so no new crate). Apps are made reachable with fakes: an `installed.json` and a `formportal-cli` script in the sandbox for the FormPortal route, a launcher script in a dev root for the dev route; a launcher that exits at once proves a dead app server fails within seconds although `FORMMCP_START_TIMEOUT` is 600. The plan's "reachability probes only loopback" is covered where formMCP makes requests at all, the catalogue fetch: plain http to a non-loopback address is refused before any request. The 22 apps and their MCP flags are read from `core/data/family.json` itself, the generated list, so the test checks that formMCP serves what it bundles; the count is asserted too, so a list shrinking unnoticed fails. `family_contract.rs` is the formai_dev template with this repo's version sites (the workspace version, tauri.conf.json, package.json, the README badge, the wiki Home). Proven on a copy of the tree: accepting any token, dropping the Host or the Origin check, accepting any signature, allowing an unsigned catalogue always, listing formMCP itself, counting beta installs and starting an app with no MCP server each fail the suite.
 
 ## v0.7.1 · the file check against FormPortal's record {#v0-7-1}
 

@@ -13,3 +13,7 @@ path = "src/main.rs"
 [dependencies]
 formmcp-core = { path = "../core" }
 serde_json = "1"
+
+[dev-dependencies]
+base64 = "0.22"
+ed25519-dalek = "2"
