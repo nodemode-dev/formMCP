@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.3 · 2026-10-26
+
+- Release builds keep their symbols (`strip = false`), because macOS builds fail when the release profile strips the binary. Nothing in the app changes.
+
 ## v0.7.2 · 2026-10-25
 
 - The window's build tooling moves to Vite 8.3.5, which clears two command-injection advisories in the development server's editor launcher. It is a development dependency only; nothing in the installed app changes.
