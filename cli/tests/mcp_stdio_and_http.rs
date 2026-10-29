@@ -62,6 +62,18 @@ fn an_unknown_tool_or_method_is_an_error_not_a_crash() {
 }
 
 #[test]
+fn a_line_that_is_not_utf8_is_a_parse_error_and_the_server_stays_up() {
+    let s = Sandbox::new("client-not-utf8");
+    let mut m = Stdio2::start(&s, &[]);
+    m.initialize();
+    m.send_raw(b"\xff\xfe not json\n");
+    let error = m.next(Duration::from_secs(30));
+    assert_eq!(error["error"]["code"], json!(-32700), "{error}");
+    let still = m.call(2, "tools/list", json!({}));
+    assert_eq!(names(&still), expected());
+}
+
+#[test]
 fn calling_an_app_that_is_not_installed_fails_at_once_with_the_reason() {
     let s = Sandbox::new("unreachable");
     let mut m = Stdio2::start(&s, &[]);

@@ -546,8 +546,9 @@ pub fn serve(client: Option<&str>) -> io::Result<()> {
     }
     let stdin = io::stdin();
     let mut out = io::stdout().lock();
-    for line in stdin.lock().lines() {
-        let line = line?;
+    for raw in stdin.lock().split(b'\n') {
+        let raw = raw?;
+        let line = String::from_utf8_lossy(&raw);
         if line.trim().is_empty() {
             continue;
         }

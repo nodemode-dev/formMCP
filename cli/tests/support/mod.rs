@@ -137,6 +137,16 @@ impl Stdio2 {
         self.stdin.flush().unwrap();
     }
 
+    pub fn send_raw(&mut self, bytes: &[u8]) {
+        self.stdin.write_all(bytes).unwrap();
+        self.stdin.flush().unwrap();
+    }
+
+    pub fn next(&mut self, within: Duration) -> Value {
+        let line = self.lines.recv_timeout(within).unwrap_or_else(|_| panic!("no line within {within:?}"));
+        serde_json::from_str(&line).unwrap_or_else(|e| panic!("not JSON ({e}): {line}"))
+    }
+
     pub fn reply(&mut self, id: u64, within: Duration) -> Value {
         let deadline = Instant::now() + within;
         loop {
