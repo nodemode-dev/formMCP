@@ -95,6 +95,22 @@ fn calling_an_app_whose_server_dies_at_start_fails_promptly() {
 
 #[cfg(unix)]
 #[test]
+fn timeouts_too_large_for_a_deadline_wait_without_one() {
+    use std::os::unix::fs::PermissionsExt;
+    let s = Sandbox::new("huge-timeout");
+    std::fs::create_dir_all(s.path("dev/formpdf")).unwrap();
+    let launcher = s.path("dev/formpdf/formpdf");
+    std::fs::write(&launcher, "#!/bin/sh\necho 'formpdf: no engine here' >&2\nexit 3\n").unwrap();
+    std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let mut m = Stdio2::start(&s, &[("FORMMCP_DEV_ROOTS", s.path("dev").to_str().unwrap()), ("FORMMCP_START_TIMEOUT", "18446744073709551615"), ("FORMMCP_IDLE_MINUTES", "18446744073709551615")]);
+    m.initialize();
+    let reply = m.call(2, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
+    assert!(format!("{reply}").contains("did not start"), "{reply}");
+    assert_eq!(names(&m.call(3, "tools/list", json!({}))), expected());
+}
+
+#[cfg(unix)]
+#[test]
 fn an_app_that_writes_bytes_that_are_not_utf8_still_answers() {
     use std::os::unix::fs::PermissionsExt;
     let s = Sandbox::new("not-utf8");

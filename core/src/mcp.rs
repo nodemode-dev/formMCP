@@ -197,7 +197,7 @@ impl Gateway {
 
 pub fn idle_limit() -> Duration {
     let minutes = std::env::var("FORMMCP_IDLE_MINUTES").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(10);
-    Duration::from_secs(minutes * 60)
+    Duration::from_secs(minutes.saturating_mul(60))
 }
 
 fn start_app_server(app: &App, places: &Places, policy: &str, settings: &Settings) -> Result<(String, AppServer), String> {

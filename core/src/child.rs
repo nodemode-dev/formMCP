@@ -147,10 +147,13 @@ impl AppServer {
         let id = self.next_id;
         self.next_id += 1;
         self.write(&json!({ "jsonrpc": "2.0", "id": id, "method": method, "params": params }))?;
-        let deadline = Instant::now() + timeout;
+        let deadline = Instant::now().checked_add(timeout);
         loop {
-            let left = deadline.saturating_duration_since(Instant::now());
-            let message = match self.lines.recv_timeout(left) {
+            let next = match deadline {
+                Some(d) => self.lines.recv_timeout(d.saturating_duration_since(Instant::now())),
+                None => self.lines.recv().map_err(|_| RecvTimeoutError::Disconnected),
+            };
+            let message = match next {
                 Ok(m) => m,
                 Err(RecvTimeoutError::Timeout) => return Err(format!("the app did not answer {method} within {} s{}", timeout.as_secs(), self.detail())),
                 Err(RecvTimeoutError::Disconnected) => return Err(format!("the app's server exited while answering {method}{}", self.detail())),
