@@ -197,7 +197,7 @@ impl Gateway {
 
 pub fn idle_limit() -> Duration {
     let minutes = std::env::var("FORMMCP_IDLE_MINUTES").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(10);
-    Duration::from_secs(minutes * 60)
+    Duration::from_secs(minutes.saturating_mul(60))
 }
 
 fn start_app_server(app: &App, places: &Places, policy: &str, settings: &Settings) -> Result<(String, AppServer), String> {
@@ -546,8 +546,9 @@ pub fn serve(client: Option<&str>) -> io::Result<()> {
     }
     let stdin = io::stdin();
     let mut out = io::stdout().lock();
-    for line in stdin.lock().lines() {
-        let line = line?;
+    for raw in stdin.lock().split(b'\n') {
+        let raw = raw?;
+        let line = String::from_utf8_lossy(&raw);
         if line.trim().is_empty() {
             continue;
         }

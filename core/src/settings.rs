@@ -200,7 +200,7 @@ impl Settings {
             std::fs::create_dir_all(parent).map_err(|e| format!("{}: {e}", parent.display()))?;
         }
         let text = serde_json::to_string_pretty(self).map_err(|e| e.to_string())? + "\n";
-        std::fs::write(&file, text).map_err(|e| format!("{}: {e}", file.display()))?;
+        write_private(&file, &text)?;
         Ok(file)
     }
 
@@ -312,7 +312,8 @@ fn write_private(path: &Path, text: &str) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| format!("{}: {e}", parent.display()))?;
     }
-    let part = path.with_extension(format!("part-{}", std::process::id()));
+    static WRITES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let part = path.with_extension(format!("part-{}-{}", std::process::id(), WRITES.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
     let mut options = std::fs::OpenOptions::new();
     options.write(true).create(true).truncate(true);
     #[cfg(unix)]

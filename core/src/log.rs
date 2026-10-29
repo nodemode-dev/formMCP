@@ -46,12 +46,13 @@ pub fn tail(from: u64) -> (Vec<Value>, u64) {
     if handle.seek(SeekFrom::Start(start)).is_err() {
         return (Vec::new(), size);
     }
-    let mut text = String::new();
-    if handle.read_to_string(&mut text).is_err() {
+    let mut bytes = Vec::new();
+    if handle.take(size - start).read_to_end(&mut bytes).is_err() {
         return (Vec::new(), size);
     }
+    let text = String::from_utf8_lossy(&bytes);
     let mut lines: Vec<&str> = text.split('\n').collect();
-    let complete_end = if text.ends_with('\n') { size } else { size - lines.last().map(|l| l.len() as u64).unwrap_or(0) };
+    let complete_end = start + bytes.iter().rposition(|b| *b == b'\n').map(|i| i as u64 + 1).unwrap_or(0);
     if !text.ends_with('\n') {
         lines.pop();
     }

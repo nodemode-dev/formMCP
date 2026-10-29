@@ -62,6 +62,18 @@ fn an_unknown_tool_or_method_is_an_error_not_a_crash() {
 }
 
 #[test]
+fn a_line_that_is_not_utf8_is_a_parse_error_and_the_server_stays_up() {
+    let s = Sandbox::new("client-not-utf8");
+    let mut m = Stdio2::start(&s, &[]);
+    m.initialize();
+    m.send_raw(b"\xff\xfe not json\n");
+    let error = m.next(Duration::from_secs(30));
+    assert_eq!(error["error"]["code"], json!(-32700), "{error}");
+    let still = m.call(2, "tools/list", json!({}));
+    assert_eq!(names(&still), expected());
+}
+
+#[test]
 fn calling_an_app_that_is_not_installed_fails_at_once_with_the_reason() {
     let s = Sandbox::new("unreachable");
     let mut m = Stdio2::start(&s, &[]);
@@ -91,6 +103,50 @@ fn calling_an_app_whose_server_dies_at_start_fails_promptly() {
     assert!(started.elapsed() < Duration::from_secs(15), "took {:?}", started.elapsed());
     let all = format!("{reply}");
     assert!(all.contains("did not start") || all.contains("stopped"), "{all}");
+}
+
+#[cfg(unix)]
+#[test]
+fn timeouts_too_large_for_a_deadline_wait_without_one() {
+    use std::os::unix::fs::PermissionsExt;
+    let s = Sandbox::new("huge-timeout");
+    std::fs::create_dir_all(s.path("dev/formpdf")).unwrap();
+    let launcher = s.path("dev/formpdf/formpdf");
+    std::fs::write(&launcher, "#!/bin/sh\necho 'formpdf: no engine here' >&2\nexit 3\n").unwrap();
+    std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let mut m = Stdio2::start(&s, &[("FORMMCP_DEV_ROOTS", s.path("dev").to_str().unwrap()), ("FORMMCP_START_TIMEOUT", "18446744073709551615"), ("FORMMCP_IDLE_MINUTES", "18446744073709551615")]);
+    m.initialize();
+    let reply = m.call(2, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
+    assert!(format!("{reply}").contains("did not start"), "{reply}");
+    assert_eq!(names(&m.call(3, "tools/list", json!({}))), expected());
+}
+
+#[cfg(unix)]
+#[test]
+fn an_app_that_writes_bytes_that_are_not_utf8_still_answers() {
+    use std::os::unix::fs::PermissionsExt;
+    let s = Sandbox::new("not-utf8");
+    std::fs::create_dir_all(s.path("dev/formpdf")).unwrap();
+    let launcher = s.path("dev/formpdf/formpdf");
+    let script = concat!(
+        "#!/bin/sh\n",
+        "i=0\n",
+        "while [ $i -lt 10000 ]; do printf 'engine log \\377\\376 line\\n' >&2; i=$((i+1)); done\n",
+        "printf 'not json \\377\\n'\n",
+        "read -r line\n",
+        "printf '%s\\n' '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{\"tools\":{}},\"serverInfo\":{\"name\":\"fakepdf\",\"version\":\"1\"}}}'\n",
+        "read -r line\n",
+        "read -r line\n",
+        "printf '%s\\n' '{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"tools\":[{\"name\":\"ping\",\"inputSchema\":{\"type\":\"object\"}}]}}'\n",
+        "while read -r line; do :; done\n",
+    );
+    std::fs::write(&launcher, script).unwrap();
+    std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let mut m = Stdio2::start(&s, &[("FORMMCP_DEV_ROOTS", s.path("dev").to_str().unwrap()), ("FORMMCP_START_TIMEOUT", "20")]);
+    m.initialize();
+    let reply = m.call(2, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
+    assert_ne!(reply["result"]["isError"], json!(true), "{reply}");
+    assert_eq!(reply["result"]["structuredContent"]["tools"][0]["name"], "ping", "{reply}");
 }
 
 #[test]
@@ -170,6 +226,18 @@ fn http_answers_only_at_mcp_and_sends_no_stream() {
     assert_eq!(post(&http, &[auth.clone(), ("MCP-Protocol-Version", "1999-01-01".into())], init_body()).0, 400);
     let (status, _, _) = http.raw("POST", "/mcp", &[host, auth], "{not json");
     assert_eq!(status, 400);
+}
+
+#[test]
+fn http_refuses_a_chunk_size_that_would_overflow_and_keeps_serving() {
+    let s = Sandbox::new("http-chunk");
+    let http = Http::start(&s);
+    let auth = ("Authorization", format!("Bearer {}", token(&s)));
+    let host = ("Host", format!("127.0.0.1:{}", http.port));
+    let chunked = ("Transfer-Encoding", "chunked".to_string());
+    let (status, _, _) = http.raw("POST", "/mcp", &[host.clone(), auth.clone(), chunked], "1\r\n{\r\nffffffffffffffff\r\nx\r\n0\r\n\r\n");
+    assert_eq!(status, 413);
+    assert_eq!(post(&http, &[auth], init_body()).0, 200);
 }
 
 #[test]
