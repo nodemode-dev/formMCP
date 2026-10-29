@@ -201,6 +201,18 @@ fn http_answers_only_at_mcp_and_sends_no_stream() {
 }
 
 #[test]
+fn http_refuses_a_chunk_size_that_would_overflow_and_keeps_serving() {
+    let s = Sandbox::new("http-chunk");
+    let http = Http::start(&s);
+    let auth = ("Authorization", format!("Bearer {}", token(&s)));
+    let host = ("Host", format!("127.0.0.1:{}", http.port));
+    let chunked = ("Transfer-Encoding", "chunked".to_string());
+    let (status, _, _) = http.raw("POST", "/mcp", &[host.clone(), auth.clone(), chunked], "1\r\n{\r\nffffffffffffffff\r\nx\r\n0\r\n\r\n");
+    assert_eq!(status, 413);
+    assert_eq!(post(&http, &[auth], init_body()).0, 200);
+}
+
+#[test]
 fn a_rotated_token_stops_the_old_one() {
     let s = Sandbox::new("http-rotate");
     let http = Http::start(&s);

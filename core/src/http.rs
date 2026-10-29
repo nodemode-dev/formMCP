@@ -126,7 +126,7 @@ fn read_request(stream: &TcpStream) -> Result<Request, Reply> {
                 let _ = read_line(&mut reader, &mut used);
                 break;
             }
-            if body.len() + size > BODY_MAX {
+            if body.len().checked_add(size).is_none_or(|total| total > BODY_MAX) {
                 return Err(Reply::empty(413, "Payload Too Large"));
             }
             let mut chunk = vec![0; size + 2];
