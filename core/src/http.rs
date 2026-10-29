@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
@@ -228,7 +228,7 @@ fn handle(req: Request, state: &Mutex<State>, port: u16) -> Reply {
         }
         "DELETE" => {
             let Some(id) = session else { return Reply::text(400, "Bad Request", "Mcp-Session-Id is required") };
-            let Ok(mut st) = state.lock() else { return Reply::empty(500, "Internal Server Error") };
+            let mut st = state.lock().unwrap_or_else(PoisonError::into_inner);
             if st.sessions.remove(&id).is_some() {
                 st.order.retain(|s| s != &id);
                 Reply::empty(200, "OK")
@@ -245,7 +245,7 @@ fn handle(req: Request, state: &Mutex<State>, port: u16) -> Reply {
                 one => vec![one.clone()],
             };
             let initializing = messages.iter().any(|m| m.get("method").and_then(Value::as_str) == Some("initialize"));
-            let Ok(mut st) = state.lock() else { return Reply::empty(500, "Internal Server Error") };
+            let mut st = state.lock().unwrap_or_else(PoisonError::into_inner);
             let mut new_session = None;
             if initializing {
                 st.gateway.set_session_client(param(&req.query, "client"));
