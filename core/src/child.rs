@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::path::PathBuf;
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
@@ -20,6 +20,17 @@ pub fn start_timeout() -> Duration {
 
 pub fn call_timeout() -> Duration {
     Duration::from_secs(std::env::var("FORMMCP_CALL_TIMEOUT").ok().and_then(|v| v.parse().ok()).unwrap_or(900))
+}
+
+fn lossy_lines(from: impl Read) -> impl Iterator<Item = String> {
+    let mut reader = BufReader::new(from);
+    std::iter::from_fn(move || {
+        let mut raw = Vec::new();
+        match reader.read_until(b'\n', &mut raw) {
+            Ok(0) | Err(_) => None,
+            Ok(_) => Some(String::from_utf8_lossy(&raw).trim_end_matches(['\r', '\n']).to_string()),
+        }
+    })
 }
 
 pub struct AppServer {
@@ -49,7 +60,7 @@ impl AppServer {
         let stderr = process.stderr.take().ok_or("no stderr from the app's server")?;
         let (send, lines) = mpsc::channel();
         thread::spawn(move || {
-            for line in BufReader::new(stdout).lines().map_while(Result::ok) {
+            for line in lossy_lines(stdout) {
                 if let Ok(value) = serde_json::from_str::<Value>(line.trim()) {
                     if send.send(value).is_err() {
                         break;
@@ -60,7 +71,7 @@ impl AppServer {
         let tail = Arc::new(Mutex::new(VecDeque::with_capacity(STDERR_TAIL)));
         let keep = Arc::clone(&tail);
         thread::spawn(move || {
-            for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+            for line in lossy_lines(stderr) {
                 if let Ok(mut t) = keep.lock() {
                     if t.len() == STDERR_TAIL {
                         t.pop_front();

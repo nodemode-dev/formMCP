@@ -93,6 +93,34 @@ fn calling_an_app_whose_server_dies_at_start_fails_promptly() {
     assert!(all.contains("did not start") || all.contains("stopped"), "{all}");
 }
 
+#[cfg(unix)]
+#[test]
+fn an_app_that_writes_bytes_that_are_not_utf8_still_answers() {
+    use std::os::unix::fs::PermissionsExt;
+    let s = Sandbox::new("not-utf8");
+    std::fs::create_dir_all(s.path("dev/formpdf")).unwrap();
+    let launcher = s.path("dev/formpdf/formpdf");
+    let script = concat!(
+        "#!/bin/sh\n",
+        "i=0\n",
+        "while [ $i -lt 10000 ]; do printf 'engine log \\377\\376 line\\n' >&2; i=$((i+1)); done\n",
+        "printf 'not json \\377\\n'\n",
+        "read -r line\n",
+        "printf '%s\\n' '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{\"tools\":{}},\"serverInfo\":{\"name\":\"fakepdf\",\"version\":\"1\"}}}'\n",
+        "read -r line\n",
+        "read -r line\n",
+        "printf '%s\\n' '{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"tools\":[{\"name\":\"ping\",\"inputSchema\":{\"type\":\"object\"}}]}}'\n",
+        "while read -r line; do :; done\n",
+    );
+    std::fs::write(&launcher, script).unwrap();
+    std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let mut m = Stdio2::start(&s, &[("FORMMCP_DEV_ROOTS", s.path("dev").to_str().unwrap()), ("FORMMCP_START_TIMEOUT", "20")]);
+    m.initialize();
+    let reply = m.call(2, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
+    assert_ne!(reply["result"]["isError"], json!(true), "{reply}");
+    assert_eq!(reply["result"]["structuredContent"]["tools"][0]["name"], "ping", "{reply}");
+}
+
 #[test]
 fn an_app_with_no_mcp_server_is_refused_with_the_reason() {
     let s = Sandbox::new("no-mcp");
