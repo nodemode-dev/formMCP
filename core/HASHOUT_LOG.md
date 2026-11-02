@@ -2,8 +2,17 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.7.4
-Last updated: 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.7.5
+Last updated: 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.7.5 · the catalogue from the public download store {#v0-7-5}
+
+### catalog.rs, setup/family.py · dl.formai.studio
+- refers-to: core/src/catalog.rs :: DEFAULT_CATALOG · core/src/suggest.rs :: PORTAL_PAGE · setup/family.py :: build, main · core/data/family.json · core/tests/catalog_default.rs · cli/tests/family_and_reach.rs
+- kind: decision
+- logged: v0.7.5 · 2026-11-02
+
+`DEFAULT_CATALOG` was the `catalog` release on formcompiler's own GitHub page, a private repository that never serves the public. formcompiler's feed now copies the signed catalogue to its download store (formcompiler `docs/GO_PUBLIC.md` section 4), so the default is `https://dl.formai.studio/catalog/apps.json`, the same address FormPortal reads (`cli/src/ops.rs` and `frontend/src/bridge/tauri.ts` there). The signature is still `<url>.sig`, which the store serves beside it as `catalog/apps.json.sig`. `FORMMCP_CATALOG`, loopback http, files, `FORMMCP_OFFLINE` and FormPortal's kept copy are unchanged. The repositories moved to the `nodemode-dev` organisation: `PORTAL_PAGE`, the generator's `source.repository` and the docs say so, and `family.json` was regenerated from formcompiler 0.6.1 (f0e3201), which brings the new repository addresses, FormPromo and FormRanker (24 apps, so the count in `family_and_reach.rs` is 24) and the registry's current `released` flags. `catalog_default.rs` pins the default and its signature address.
 
 ## v0.7.4 · the test suite {#v0-7-4}
 

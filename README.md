@@ -5,7 +5,7 @@
 <p align="center"><b>One MCP connection from Claude Code, Codex and Cursor to the whole Form family. Small on context, and it never installs anything.</b></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.7.4-f97316" alt="version v0.7.4" />
+  <img src="https://img.shields.io/badge/version-v0.7.5-f97316" alt="version v0.7.5" />
   <img src="https://img.shields.io/badge/MCP-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Cursor-8b5cf6" alt="MCP for Claude Code, Codex and Cursor" />
   <img src="https://img.shields.io/badge/Tauri-2-24C8DB" alt="Tauri 2" />
   <img src="https://img.shields.io/badge/Rust-stable-B7410E" alt="Rust stable" />
@@ -83,7 +83,7 @@ This repository is already wired for agents: `.mcp.json` (Claude Code), `.codex/
 | 5621 | Vite preview (localhost only) |
 | 5625 | formMCP over HTTP, while the window or `formmcp serve` runs (127.0.0.1 only; `FORMMCP_HTTP_PORT` or `http_port` in settings.json changes it) |
 
-**Releases.** formMCP builds nothing in this repository. After the version bump lands on main, push a branch `compile_vX.Y.Z` cut from that commit; CI runs on it, and formcompiler (`nodemode-ai/formcompiler`) builds the bundles with `./build_app` (`build_app.bat` on Windows) and drafts the release `formMCP-vX.Y.Z` (`apps/formMCP.json` in its registry). `./build_app` also builds the app on your own machine.
+**Releases.** formMCP builds nothing in this repository. After the version bump lands on main, push a branch `compile_vX.Y.Z` cut from that commit; CI runs on it, and formcompiler (`nodemode-dev/formcompiler`) builds the bundles with `./build_app` (`build_app.bat` on Windows) and drafts the release `formMCP-vX.Y.Z` (`apps/formMCP.json` in its registry). `./build_app` also builds the app on your own machine.
 
 ## Status
 

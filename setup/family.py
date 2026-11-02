@@ -45,14 +45,14 @@ def build(compiler):
     return {
         "format": FORMAT,
         "format_version": 1,
-        "source": {"repository": "nodemode-ai/formcompiler", "version": version, "commit": git(compiler, "rev-parse", "HEAD")},
+        "source": {"repository": "nodemode-dev/formcompiler", "version": version, "commit": git(compiler, "rev-parse", "HEAD")},
         "apps": apps,
     }
 
 
 def main():
     parser = argparse.ArgumentParser(description="core/data/family.json from formcompiler's registry")
-    parser.add_argument("--compiler", required=True, help="a checkout of nodemode-ai/formcompiler")
+    parser.add_argument("--compiler", required=True, help="a checkout of nodemode-dev/formcompiler")
     parser.add_argument("--check", action="store_true", help="fail when core/data/family.json differs")
     args = parser.parse_args()
     text = json.dumps(build(Path(args.compiler).resolve()), indent=2, ensure_ascii=False) + "\n"

@@ -103,7 +103,7 @@ pub fn product(id: &str, mcp: bool, version: Option<&str>) -> Value {
         Some(v) => json!({ "stable": { "version": v, "published": "2026-10-26T00:00:00Z", "notes": "", "artifacts": [] } }),
         None => json!({}),
     };
-    json!({ "id": id, "name": format!("Name of {id}"), "kind": "test", "summary": format!("{id} from the catalogue"), "identifier": format!("dev.test.{id}"), "repository": format!("https://github.com/nodemode-ai/{id}"), "licence": "GPL-3.0-only", "state": "live", "agents": { "mcp": mcp, "skills": false }, "channels": channels })
+    json!({ "id": id, "name": format!("Name of {id}"), "kind": "test", "summary": format!("{id} from the catalogue"), "identifier": format!("dev.test.{id}"), "repository": format!("https://github.com/nodemode-dev/{id}"), "licence": "GPL-3.0-only", "state": "live", "agents": { "mcp": mcp, "skills": false }, "channels": channels })
 }
 
 pub struct Stdio2 {

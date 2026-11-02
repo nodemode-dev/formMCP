@@ -19,7 +19,7 @@ fn with_no_catalogue_the_bundled_family_is_listed_with_its_flags() {
     let expected: Vec<String> = bundled["apps"].as_array().unwrap().iter().map(|a| a["id"].as_str().unwrap().to_string()).collect();
     assert_eq!(listing["count"], json!(expected.len()));
     assert_eq!(ids(&listing), expected);
-    assert_eq!(expected.len(), 22);
+    assert_eq!(expected.len(), 24);
     for want in bundled["apps"].as_array().unwrap() {
         let got = app(&listing, want["id"].as_str().unwrap());
         assert_eq!(got["mcp"], want["mcp"], "{}", want["id"]);
