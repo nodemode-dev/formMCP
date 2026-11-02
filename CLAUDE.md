@@ -1,6 +1,6 @@
 # formMCP
 
-Rules for agents working in this repository. Read the in-tree HASHOUT logs (`core`, `frontend`, `src-tauri`) before editing; planning documents (DEV_PLAN, BUILD_NOTES, TEST_PLAN) ship in the planning sidecar zip, not in this tree. Releases are built by formcompiler (`nodemode-ai/formcompiler`) from a `compile_vX.Y.Z` branch; this repository's GitHub workflow only runs checks.
+Rules for agents working in this repository. Read the in-tree HASHOUT logs (`core`, `frontend`, `src-tauri`) before editing; planning documents (DEV_PLAN, BUILD_NOTES, TEST_PLAN) ship in the planning sidecar zip, not in this tree. Releases are built by formcompiler (`nodemode-dev/formcompiler`) from a `compile_vX.Y.Z` branch; this repository's GitHub workflow only runs checks.
 
 ## What formMCP is, and is not
 

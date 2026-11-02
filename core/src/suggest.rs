@@ -4,7 +4,7 @@ use crate::family::{App, Family};
 use crate::reach::Places;
 
 const PORTAL_ID: &str = "formai";
-const PORTAL_PAGE: &str = "https://github.com/nodemode-ai/formportal";
+const PORTAL_PAGE: &str = "https://github.com/nodemode-dev/formportal";
 
 const STOP: &[&str] = &[
     "a", "an", "the", "and", "or", "to", "of", "in", "on", "for", "with", "my", "me", "i", "it", "this", "that", "is", "are", "be", "can", "you", "your", "some", "from", "into", "by", "at", "as", "do", "make", "want", "need", "please", "help", "new", "using", "use", "app", "apps", "file", "files", "form", "out", "own", "machine", "one", "all", "every", "more", "up", "get", "like", "something", "thing", "things", "work", "way",

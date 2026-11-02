@@ -7,7 +7,7 @@ Licensed under the GNU General Public License v3.0 (SPDX `GPL-3.0-only`). See `L
 
 ## Dependencies
 
-formMCP's own code and art (the icon in `assets/`, `frontend/public/` and `src-tauri/icons/`) are the owner's. The family list in `core/data/family.json` is generated from formcompiler's registry (`nodemode-ai/formcompiler`, GPL-3.0-only, the same owner). The window's design tokens and layer scale come from FormTray (`nodemode-ai/formtray`, GPL-3.0-only, the same owner).
+formMCP's own code and art (the icon in `assets/`, `frontend/public/` and `src-tauri/icons/`) are the owner's. The family list in `core/data/family.json` is generated from formcompiler's registry (`nodemode-dev/formcompiler`, GPL-3.0-only, the same owner). The window's design tokens and layer scale come from FormTray (`nodemode-dev/formtray`, GPL-3.0-only, the same owner).
 
 Its dependencies are MIT, Apache-2.0 or dual MIT and Apache-2.0, with some BSD-3-Clause, ISC, Zlib, Unicode-3.0, CDLA-Permissive-2.0 and CC0 crates, as their manifests declare (checked with `cargo metadata` against `Cargo.lock`, 420 packages in the shell's graph at v0.3.0). The main ones:
 

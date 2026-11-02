@@ -2,3 +2,4 @@
 # The same keys as FormPortal's core/catalog_keys.txt. formcompiler makes the pair: python3 scripts/catalog.py keygen
 # prints FORMCOMPILER_CATALOG_KEY (the private seed, a formcompiler secret only) and the public key, which goes on a line below.
 # FORMAI_CATALOG_PUBKEY (comma separated) adds keys at run time.
+P3Cgp37EmB2jOBtTWRNFtO8xMq8hsb+Ii3U5+UrYNtY=

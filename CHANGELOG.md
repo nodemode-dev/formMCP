@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.7.5 · 2026-11-02
+
+- The family catalogue is read from the public download store, `https://dl.formai.studio/catalog/apps.json` with its signature beside it, instead of formcompiler's private release page. `FORMMCP_CATALOG` still overrides it.
+- This build trusts the family's production catalogue key (`P3Cgp37EmB2jOBtTWRNFtO8xMq8hsb+Ii3U5+UrYNtY=`), so a catalogue formcompiler signs is used instead of being refused as untrusted.
+- Links to the Form repositories point at the `nodemode-dev` organisation, and the built-in family list is regenerated from formcompiler 0.6.1: it now holds 24 apps, FormPromo and FormRanker among them.
+
 ## v0.7.4 · 2026-10-26
 
 - A test suite checks the family list and the signed catalogue, which apps this computer can reach, the MCP server over stdio and over HTTP (its access token, Host and Origin checks), and that a call to an app that cannot start fails at once with the reason; it runs on every change. Nothing in the app changes.
