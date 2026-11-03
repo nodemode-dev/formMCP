@@ -5,7 +5,7 @@
 <p align="center"><b>One MCP connection from Claude Code, Codex and Cursor to the whole Form family. Small on context, and it never installs anything.</b></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.7.5-f97316" alt="version v0.7.5" />
+  <img src="https://img.shields.io/badge/version-v0.7.6-f97316" alt="version v0.7.6" />
   <img src="https://img.shields.io/badge/MCP-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Cursor-8b5cf6" alt="MCP for Claude Code, Codex and Cursor" />
   <img src="https://img.shields.io/badge/Tauri-2-24C8DB" alt="Tauri 2" />
   <img src="https://img.shields.io/badge/Rust-stable-B7410E" alt="Rust stable" />

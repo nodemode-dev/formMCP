@@ -2,8 +2,17 @@
 
 Living log for formMCP's desktop shell. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.7.0
-Last updated: 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+Current build version: v0.7.6
+Last updated: 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+
+## v0.7.6 · the publisher and the licence in the bundle {#publisher}
+
+### tauri.conf.json, Cargo.toml · publisher, copyright, license, licenseFile, authors
+- refers-to: src-tauri/tauri.conf.json :: bundle.publisher, bundle.copyright, bundle.license, bundle.licenseFile; Cargo.toml :: workspace.package.authors
+- kind: decision
+- logged: v0.7.6 · 2026-11-03
+
+The launch punch list (2026-11-03): the About of a downloaded app says NodeAgentc, Inc., not nodemode-ai, and lists the licence. formMCP has no About of its own: on macOS the application menu's About panel reads the bundle's copyright, and Tauri's default About metadata takes its authors from `bundle.publisher`; tauri-build writes `CompanyName` from `bundle.publisher` into the Windows version resource, and the .deb's Maintainer is the crate's `authors`. The bundle now names the publisher, `licenseFile` points at the LICENSE at the root (`../LICENSE` from `src-tauri`) beside the `license` (GPL-3.0-only) it already named, and `authors` is the company. Checked here: the JSON parses; no build was run.
 
 ## v0.7.0 · the safety commands {#v0-7-0}
 
