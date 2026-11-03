@@ -47,7 +47,7 @@ Markdown or an emoji in any tracked text.
 
 - Keep each pull request to one change, with tests for what it adds or fixes.
 - Write commit subjects in Conventional Commits: `feat(core): ...`, `fix(cli): ...`,
-  `docs(...)`. Leave the version alone; the maintainer bumps it when releasing (see
+  `docs(...)`. Leave the version alone; a maintainer bumps it when releasing (see
   [.docs/BRANCHING.md](.docs/BRANCHING.md)).
 - `core/data/family.json` is generated: change formcompiler's registry and run
   `./formmcp family --compiler PATH`, never edit it by hand.
@@ -62,14 +62,24 @@ Markdown or an emoji in any tracked text.
 - Every new dependency, binary, font or data file gets a row in `NOTICE.md` before it
   is used.
 
+## Maintainers
+
+FormMCP is maintained by:
+
+- the [nodemode-dev](https://github.com/nodemode-dev) organisation on GitHub
+- [@nodemode-ai](https://github.com/nodemode-ai)
+- [@gbarnai](https://github.com/gbarnai)
+
+Reach them through issues and pull requests.
+
 ## How changes land
 
-Only the maintainer pushes to `main`. Everyone else forks the repository and opens a pull request into `main`. A pull request merges when all four checks pass on an up-to-date branch and the maintainer has approved it after its last push.
+Only a maintainer pushes to `main`. Everyone else forks the repository and opens a pull request into `main`. A pull request merges when all four checks pass on an up-to-date branch and a maintainer has approved it after its last push.
 
 ## Releases
 
-A release is a version, and only the maintainer makes one: after the version is bumped on
-`main`, the maintainer cuts a `compile_vX.Y.Z` branch, and formcompiler
+A release is a version, and only a maintainer makes one: after the version is bumped on
+`main`, a maintainer cuts a `compile_vX.Y.Z` branch, and formcompiler
 (`nodemode-dev/formcompiler`) builds every platform and publishes them together. No
 push from a contributor starts a release. See [.docs/BRANCHING.md](.docs/BRANCHING.md).
 
