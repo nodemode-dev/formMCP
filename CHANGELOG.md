@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.6 · 2026-11-03
+
+- The app is named FormMCP in its window, title bar and installers, and it has the unified Form family icon. The command line, the bundle identifier and the program names are unchanged.
+
 ## v0.7.5 · 2026-11-02
 
 - The family catalogue is read from the public download store, `https://dl.formai.studio/catalog/apps.json` with its signature beside it, instead of formcompiler's private release page. `FORMMCP_CATALOG` still overrides it.
