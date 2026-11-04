@@ -101,17 +101,17 @@ bundle="$ROOT/target/release/bundle"
 version="$(node -p 'require("./src-tauri/tauri.conf.json").version')"
 
 if [ "$os" = macos ]; then
-  app="$bundle/macos/formMCP.app"
+  app="$bundle/macos/FormMCP.app"
   [ -d "$app" ] || die "the build finished but $app is missing"
   codesign --verify --deep --strict "$app" 2>/dev/null || say "codesign could not verify the app; it is ad-hoc signed, so macOS may ask once before it opens"
   step "packing the disk image"
   mkdir -p "$bundle/dmg"
-  dmg="$bundle/dmg/formMCP_${version}_$(uname -m).dmg"
+  dmg="$bundle/dmg/FormMCP_${version}_$(uname -m).dmg"
   stage="$(mktemp -d)"
-  ditto "$app" "$stage/formMCP.app"
+  ditto "$app" "$stage/FormMCP.app"
   ln -s /Applications "$stage/Applications"
   rm -f "$dmg"
-  hdiutil create -quiet -volname formMCP -srcfolder "$stage" -ov -format UDZO "$dmg"
+  hdiutil create -quiet -volname FormMCP -srcfolder "$stage" -ov -format UDZO "$dmg"
   rm -rf "$stage"
   say "app: $app"
   say "disk image: $dmg"
@@ -119,10 +119,10 @@ if [ "$os" = macos ]; then
   if [ "$install_app" != no ]; then
     dest=/Applications
     [ -w "$dest" ] || { dest="$HOME/Applications"; mkdir -p "$dest"; }
-    rm -rf "$dest/formMCP.app"
-    ditto "$app" "$dest/formMCP.app"
-    xattr -dr com.apple.quarantine "$dest/formMCP.app" 2>/dev/null || true
-    target_app="$dest/formMCP.app"
+    rm -rf "$dest/FormMCP.app"
+    ditto "$app" "$dest/FormMCP.app"
+    xattr -dr com.apple.quarantine "$dest/FormMCP.app" 2>/dev/null || true
+    target_app="$dest/FormMCP.app"
     say "installed: $target_app"
   fi
   if [ "$open_app" = 1 ]; then open "${target_app:-$app}"; fi
