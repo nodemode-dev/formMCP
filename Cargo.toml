@@ -3,10 +3,10 @@ members = ["core", "cli", "src-tauri"]
 resolver = "2"
 
 [workspace.package]
-version = "0.7.7"
+version = "0.7.8"
 edition = "2021"
 license = "GPL-3.0-only"
-authors = ["nodemode-ai"]
+authors = ["NodeAgentc, Inc."]
 
 [profile.release]
 strip = false

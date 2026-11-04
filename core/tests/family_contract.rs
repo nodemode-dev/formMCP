@@ -7,7 +7,7 @@ const VERSION_SITES: &[(&str, &str, char)] = &[
     ("Cargo.toml", "version = \"", '"'),
     ("src-tauri/tauri.conf.json", "  \"version\": \"", '"'),
     ("frontend/package.json", "  \"version\": \"", '"'),
-    ("README.md", "  <img src=\"https://img.shields.io/badge/version-v", '-'),
+    ("README.md", "  <img alt=\"version ", '"'),
     (".docs/wiki/Home.md", "**Current version:** v", ' '),
 ];
 

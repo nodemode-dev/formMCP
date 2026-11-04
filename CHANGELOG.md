@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.8 · 2026-11-04
+
+- README in the Form family template (Mackin's #6), merged with main. Nothing in the app changed.
+
 ## v0.7.7 · 2026-11-04
 
 - The README is rewritten in the Form family layout, with screenshots of the window. Nothing in the app changed.
@@ -7,6 +11,7 @@
 ## v0.7.6 · 2026-11-03
 
 - The app is named FormMCP in its window, title bar and installers, and it has the unified Form family icon. The command line, the bundle identifier and the program names are unchanged.
+- The installers and the app metadata name NodeAgentc, Inc. as the publisher, with the licence (GPL-3.0-only): the bundle sets `publisher`, `copyright`, `license` and `licenseFile`, so the macOS About panel, the Windows file properties and installer, and the Linux packages say the same. No change to the app itself.
 
 ## v0.7.5 · 2026-11-02
 
