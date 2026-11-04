@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.7 · 2026-11-04
+
+- The README is rewritten in the Form family layout, with screenshots of the window. Nothing in the app changed.
+
 ## v0.7.6 · 2026-11-03
 
 - The app is named FormMCP in its window, title bar and installers, and it has the unified Form family icon. The command line, the bundle identifier and the program names are unchanged.
