@@ -22,6 +22,7 @@ Its dependencies are MIT, Apache-2.0 or dual MIT and Apache-2.0, with some BSD-3
 | sha2 0.10 | the digests of an installed app's files (`core`, v0.7.0); MIT OR Apache-2.0, already in the graph through the dalek crates |
 | tauri 2, tauri-build | the desktop shell |
 | Vite, TypeScript, @tauri-apps/cli, @types/node (build only) | building the window and the app; not shipped |
+| `demo/index.html` and `demo/assets/` (v0.8.0) | the offline browser demo, compiled by Vite (MIT) from this repository's own window, tokens, family list and the TypeScript in `demo/src/`; the icon is the app's own; no third-party code, font or media is added |
 
 Every new dependency, binary, font or data file gets a row here before it is used.
 

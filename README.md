@@ -107,6 +107,10 @@ FormMCP suggests; FormPortal installs. The agent sees one short list and loads o
 
 All FormMCP builds are compiled and released from [FormCompiler](https://github.com/nodemode-dev/formcompiler); this repo holds the source.
 
+## Demo
+
+Open [`demo/index.html`](demo/index.html) in a browser (double-click it, no server or install needed) to use the real FormMCP window on the real family list: rank apps for a task with `suggest_app`, run the MCP tools in a console, hide secrets in results, and save, import and export profiles. Nothing is installed or sent anywhere. See [`demo/README.md`](demo/README.md).
+
 ## Run it from source
 
 Prefer it in your browser, or want to contribute? Run the web UI straight from this repo.
