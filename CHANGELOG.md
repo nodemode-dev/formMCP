@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8.2 · 2026-11-07
+
+- FormMCP opens with the Form family's splash: a rounded dark card with the app icon and a progress bar that stays for at least 2.6 seconds, then the window appears whole with no white frame. On macOS the card's corners are cut round to match. Nothing else in the app changed.
+
 ## v0.8.1 · 2026-11-07
 
 - The browser demo opens on the family's real pictures: each app card carries its app's own icon, a reel of nine Form apps' verified demo screenshots sits above the clients, and the Lab has a Flows tab that replays three realistic tasks (a trailer, a podcast episode, a poster) as the MCP calls an agent would make. Credits for every picture, and for the photographs, footage and recordings visible in the screenshots, are in `demo/CREDITS.md`. The app itself is unchanged.
