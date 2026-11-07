@@ -5,6 +5,45 @@ Living log for formMCP's window. Source files stay comment-free; what they would
 Current build version: v0.8.4
 Last updated: 2026-11-07 · v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
 
+## v0.9.0 · the extension host {#v0-9-0}
+
+### src/ext/host-bridge.ts · the kit, unchanged
+- refers-to: frontend/src/ext/host-bridge.ts · NOTICE.md
+- kind: decision
+- logged: v0.9.0 · 2026-11-07
+
+The Form Extension Contract kit's `host/host-bridge.ts`, copied whole (`cp`) and never edited, copied again after the lead's 07:47 kit update (`open`, `MountOptions.onRequest`, the headless idle clock): the sandboxed frame, the origin check, permissions, timeouts, grants per id, version and permission set in local storage, and the 256 KB store. formMCP adapts it by passing handlers in `ext/extensions.ts`.
+
+### src/ext/extensions.ts, main.ts · the host in the window
+- refers-to: src/ext/extensions.ts :: watchInvoke, mountExtensions, CATALOGUE, MUTATING, snapshotDoc, applyDocument, runOne, select, openPanel, runCommand, buildMenu, fillRow, updateRows, reload, poll, serveAgents, consent, theme · src/main.ts :: invoke, the mountExtensions call before `booting` comes off
+- kind: decision
+- logged: v0.9.0 · 2026-11-07
+
+`mountExtensions` builds every node (the Extensions button and its menu, the hidden Undo, the Extensions panel, the dock section, the dialog, the consent dialog, the hidden frame holder) in the same task as the rest of the window, before `booting` is removed, so the first frame is the final layout; it changes no markup in index.html, which keeps the demo's copy of the page working unedited. formMCP has no menu bar, so the menu is a popover under a button in the filter row, on the overlay layer; Undo keeps its place with `visibility`. The panel and the dock are fixed-height sections like Profiles and Safety (opening Profiles or Safety closes the panel, and the panel closes them). Rows are kept in a map by id and refilled only when their record or grant state changed; rows already shown keep their place and a new extension is appended after them (sorted again at the next start), so a reload moves nothing on screen; the list is never rebuilt. This follows formcut's note in the round's contract issues (section 8). The menu is rebuilt only when the ready commands change, and it is hidden then.
+
+`watchInvoke` wraps the window's own invoke, so every command main.ts or an extension runs that changes settings sends `document.changed` (debounced 50 ms), and a `snapshot` that differs from the last one sends it with `refresh`; selection is the Apps for picker and the filter chips, `selection.changed` on either. The document is the snapshot joined with the bundled family list; the commands are the window's own minus the safety, secret, hook, tracing, token, HTTP, connect and export ones, plus `select_agent`, `select_filter` and `refresh`. `document.apply` marks the settings first (`settings_mark`), runs the ops through invoke, puts the mark back on a failure, and after a change shows Undo, which restores the mark; a change the person makes afterwards withdraws Undo, because restoring would also take that back. Consent is a native modal `<dialog>`, asked before any frame exists (the kit's `open` for panels, `runCommand` for headless commands), one at a time through a queue; Allow is stored by the kit, Not Now is not, so the next activation asks again, and a panel the person did not allow does not open. `notify` writes the status line, coloured by level for 6 s. In the app, frames load from `formext://` and lists come from window commands (real Tauri is told apart from the demo's shim by `__TAURI_INTERNALS__`); in a browser they come from `/api/extensions`, served by `extensions-dev.ts`. The window takes agent requests every second (which also tells the engine it is open) and polls the stamp every 2 s while focused.
+
+### extensions-dev.ts, vite.config.ts, vite.demo.config.ts · the browser route
+- refers-to: frontend/extensions-dev.ts :: extensionsDev, handle, run, cli · frontend/vite.config.ts :: plugins · frontend/vite.demo.config.ts :: plugins
+- kind: decision
+- logged: v0.9.0 · 2026-11-07
+
+A Vite plugin for the dev and preview servers only: `GET /api/extensions`, `/api/extensions/stamp` and `/api/extensions/files/{id}/{version}/{path}`, plus the agent mailbox (`GET /api/extensions/requests`, `POST /api/extensions/requests/{rid}`), each by running `formmcp-cli extensions ...` (`FORMMCP_CLI`, else `target/release` or `target/debug`), so the Rust resolver and its file checks are the only ones. The file is streamed from the canonical path the CLI returns, with the CLI's headers. The mailbox routes need an `X-FormMCP: 1` header, which a page on another origin cannot send without a preflight the server never answers. Vite warns that the config imports `./extensions-dev` without an extension under its future native loader; adding `.ts` needs `allowImportingTsExtensions`, left for later. The demo's shim gained `settings_mark` and `settings_restore` (demo/src/shim.ts) so the browser fixture build can undo.
+
+### styles/app.css · the extension surfaces
+- refers-to: src/styles/app.css :: .status[data-level], .ext-wrap, .ext-undo, .ext-menu, .ext-item, .ext-sep, .ext-panel, .ext-head, .ext-row, .ext-chip, .ext-state, .ext-path, .ext-dock, .formext-frame, .ext-dialog, .ext-consent-*, .ext-headless
+- kind: decision
+- logged: v0.9.0 · 2026-11-07
+
+Tokens only; the menu on `--z-overlay`; the dialogs in the top layer, so no z-index. The global `.btn` grid placement is reset inside the new rows, as the profile rows do.
+
+### src/ext/extensions.ts · files.save confirms the name; tool_load is no undo step
+- refers-to: src/ext/extensions.ts :: confirmName, saveFile, CATALOGUE.tool_load
+- kind: fix
+- logged: v0.9.0 · 2026-11-07
+
+Section 6 says a host with no save dialog asks the person to confirm the name in its own dialog before saving into Downloads; the window saved at once. A second modal `<dialog>` (built with the others before `booting` comes off, so it adds nothing to the first layout) shows the name in a text field; Save or Enter keeps it (an emptied field falls back to the asked name), Cancel or Escape answers -32002. `tool_load` starts an app to list its tools and changes no setting, so it is marked as a read: before, an extension's Load from App lit Undo and said "Undo puts the settings back", which would have undone nothing it did.
+
 ## v0.8.2 · the splash page and the ready call {#v0-8-2}
 
 ### public/splash.html, src/main.ts · the card and app_ready

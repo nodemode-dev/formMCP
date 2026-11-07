@@ -5,6 +5,22 @@ Living log for the offline demo. Source files stay comment-free; what they would
 Current build version: v0.8.4
 Last updated: 2026-11-07 · the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
 
+## v0.9.0 · the shim marks and restores settings {#v0-9-0}
+
+### shim.ts · settings_mark, settings_restore
+- refers-to: demo/src/shim.ts :: handlers.settings_mark, handlers.settings_restore
+- kind: decision
+- logged: v0.9.0 · 2026-11-07
+
+The window's extension host (frontend/src/ext/extensions.ts) makes an extension's changes one undoable step with these two commands, so the shim answers them from its in-memory settings: a JSON copy, and putting one back in place (the object is kept, its keys replaced) and saved. The demo's Vite dev server also serves the extension list and files (frontend/extensions-dev.ts), which makes it the browser fixture build for extension tests; the static `demo/index.html` has no such route, so its Extensions panel shows the empty state with the reason.
+
+### shim.ts · tool_list's loaded in seconds
+- refers-to: demo/src/shim.ts :: toolRows · src-tauri/src/lib.rs :: tool_list · core/src/toolcache.rs :: Known.loaded
+- kind: fix
+- logged: v0.9.0 · 2026-11-07
+
+The app's `tool_list` gives `loaded` as Unix seconds (`toolcache` stores `as_secs`); the shim gave `Date.now()`, milliseconds, so an extension reading the time saw a date fifty thousand years out in the demo. The shim now floors to seconds, and docs/EXTENSIONS.md states the unit.
+
 ## v0.8.1 · real media {#v0-8-1}
 
 ### media.ts · icons and the reel without a flash

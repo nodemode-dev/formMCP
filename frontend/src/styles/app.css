@@ -786,3 +786,289 @@ html.booting body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.status[data-level="error"],
+.status[data-level="warning"] {
+  color: var(--fault);
+}
+
+.status[data-level="success"] {
+  color: var(--live);
+}
+
+.ext-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.ext-undo {
+  visibility: hidden;
+}
+
+.ext-undo.is-ready {
+  visibility: visible;
+}
+
+.ext-menu {
+  position: absolute;
+  top: calc(100% + var(--sp-1));
+  right: 0;
+  z-index: var(--z-overlay);
+  display: grid;
+  min-width: 15em;
+  max-width: 24em;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: var(--sp-1);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-s);
+  background: var(--float);
+  box-shadow: var(--shadow);
+}
+
+.ext-item {
+  height: 28px;
+  padding: 0 var(--sp-2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.ext-item:hover,
+.ext-item:focus-visible {
+  background: var(--select);
+  outline: none;
+}
+
+.ext-sep {
+  width: 100%;
+  margin: var(--sp-1) 0;
+  border: 0;
+  border-top: 1px solid var(--edge);
+}
+
+.ext-panel {
+  display: grid;
+  flex-shrink: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--sp-2);
+  height: 212px;
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-m);
+  background: var(--pane);
+}
+
+@media (max-height: 640px) {
+  .ext-panel {
+    height: 148px;
+  }
+}
+
+.ext-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.ext-note {
+  flex: 1;
+  min-width: 0;
+}
+
+.ext-row {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: var(--sp-1) 0;
+  border-bottom: 1px solid var(--edge);
+}
+
+.ext-row-head,
+.ext-actions,
+.ext-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  min-height: 24px;
+}
+
+.ext-empty {
+  justify-content: space-between;
+}
+
+.ext-meta {
+  flex: none;
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+  font-variant-numeric: tabular-nums;
+}
+
+.ext-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.ext-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  font-size: var(--fs-s);
+  line-height: 1;
+}
+
+.ext-state {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ext-state-ready {
+  color: var(--live);
+}
+
+.ext-state-refused {
+  color: var(--fault);
+}
+
+.ext-path {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-s);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ext-dock {
+  display: grid;
+  flex-shrink: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 300px;
+  margin-bottom: var(--sp-3);
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-m);
+  background: var(--pane);
+}
+
+@media (max-height: 640px) {
+  .ext-dock {
+    height: 200px;
+  }
+}
+
+.ext-dock-head,
+.ext-dialog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+}
+
+.ext-dock-head {
+  border-bottom: 1px solid var(--edge);
+}
+
+.ext-dock-title,
+.ext-dialog-title {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ext-dock-body,
+.ext-dialog-body {
+  min-height: 0;
+}
+
+.formext-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--pane);
+}
+
+.ext-dialog {
+  width: min(560px, calc(100vw - 2 * var(--sp-5)));
+  padding: 0;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius-m);
+  background: var(--float);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.ext-dialog::backdrop {
+  background: var(--control-press);
+}
+
+.ext-dialog-title {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+}
+
+.ext-dialog-body {
+  height: 360px;
+  border-top: 1px solid var(--edge);
+  border-bottom: 1px solid var(--edge);
+}
+
+.ext-dialog-foot {
+  justify-content: flex-end;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.ext-dialog-foot .btn,
+.ext-head .btn,
+.ext-empty .btn,
+.ext-actions .btn,
+.ext-dock-head .btn {
+  grid-row: auto;
+  grid-column: auto;
+}
+
+.ext-consent-text {
+  margin: 0;
+  padding: 0 var(--sp-3);
+  color: var(--ink-soft);
+}
+
+.ext-consent-list {
+  margin: var(--sp-2) 0;
+  padding: 0 var(--sp-3) 0 calc(var(--sp-3) + 1.2em);
+}
+
+.ext-allow {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ext-headless {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}

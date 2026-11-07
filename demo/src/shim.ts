@@ -96,7 +96,7 @@ function safety(): unknown {
 function toolRows(id: string): unknown {
   const app = appOf(id);
   if (!app || !loaded.has(id)) return { app: id, loaded: null, tools: [] };
-  return { app: id, loaded: Date.now(), tools: sampleTools(app).map((t) => ({ ...t, on: !settings.hidden_tools[id]?.includes(t.name) })) };
+  return { app: id, loaded: Math.floor(Date.now() / 1000), tools: sampleTools(app).map((t) => ({ ...t, on: !settings.hidden_tools[id]?.includes(t.name) })) };
 }
 
 function download(name: string, text: string): void {
@@ -261,6 +261,14 @@ const handlers: Record<string, (args: Args) => unknown> = {
     return safety();
   },
   verify_trust: () => safety(),
+  settings_mark: () => JSON.stringify(settings),
+  settings_restore: (a) => {
+    const back = JSON.parse(str(a, "text")) as typeof settings;
+    for (const key of Object.keys(settings) as (keyof typeof settings)[]) delete settings[key];
+    Object.assign(settings, back);
+    save();
+    return null;
+  },
   log_tail: (a) => {
     const from = Number(a.from ?? 0);
     return { events: events.slice(from), next: events.length };

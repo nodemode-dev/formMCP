@@ -1,4 +1,5 @@
 import family from "../../core/data/family.json";
+import { mountExtensions, watchInvoke } from "./ext/extensions";
 
 type App = (typeof family.apps)[number];
 type Filter = "all" | "mcp";
@@ -120,7 +121,7 @@ type LogEvent = { t: number; event: string; client?: string; name?: string; app?
 type SecretRow = { app: string; name: string; stored: boolean; error: string | null };
 type Safety = { redact: boolean; verify: boolean; hooks: { before?: string; after?: string }; telemetry: string | null; secrets: SecretRow[]; checked: { app: string; version: string; files: number; at: number }[] };
 
-const invoke = (window as unknown as { __TAURI__?: { core?: { invoke?: Invoke } } }).__TAURI__?.core?.invoke;
+const invoke = watchInvoke((window as unknown as { __TAURI__?: { core?: { invoke?: Invoke } } }).__TAURI__?.core?.invoke);
 const status = document.getElementById("status") as HTMLParagraphElement;
 const source = document.getElementById("source") as HTMLElement;
 const logList = document.getElementById("log") as HTMLOListElement;
@@ -768,5 +769,6 @@ if (invoke) {
   agentPick.disabled = true;
 }
 
+mountExtensions({ invoke, refresh, family: family.apps, appVersion: __APP_VERSION__ });
 document.documentElement.classList.remove("booting");
 if (invoke) requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => void invoke("app_ready").catch(() => undefined))));

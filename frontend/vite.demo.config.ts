@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
+import { extensionsDev } from "./extensions-dev";
 
 const FRONTEND_PORT = 5620;
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf-8")) as { version: string };
@@ -16,6 +17,7 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   plugins: [
+    extensionsDev(),
     {
       name: "classic-script-for-file-urls",
       enforce: "post",
