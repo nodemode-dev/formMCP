@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.9.1 · 2026-11-07
+
+- Merges Greg's pull request, docs(readme): updates come through FormPortal. FormMCP has no in-app updater, so the README's Download section now says FormPortal keeps it up to date, with a link, and that a new version can also be downloaded from the links above.
+- Releases it with the extension host from v0.9.0 below. The app and the demos are otherwise unchanged; the demos are rebuilt for the version they show.
+
 ## v0.9.0 · 2026-11-07
 
 - Extensions, made to the Form Extension Contract (API 1). FormMCP reads FormPortal's `enabled.json` and form.ext's `dev.json` for `formmcp`, checks each manifest with the contract's rules and messages, and serves an extension's own files to a sandboxed frame (`formext://` in the app). The Extensions button in the filter row lists each extension's commands, opens the Extensions panel (name, version, source, permissions, state or the reason it was refused) and reloads the list; Manage in FormPortal opens FormPortal's extensions for FormMCP.

@@ -2,8 +2,8 @@
 
 Living log for demo 2. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.9.0
-Last updated: 2026-11-07 · v0.9.0 rebuilt with the window's Extensions button (empty list: no extension route in a file:// demo); first release of the connecting-agents demo
+Current build version: v0.9.1
+Last updated: 2026-11-07 · v0.9.1 rebuilt for the version it shows (no demo changes); v0.9.0 rebuilt with the window's Extensions button (empty list: no extension route in a file:// demo); first release of the connecting-agents demo
 
 ## v0.8.4 · connecting agents {#v0-8-4}
 
