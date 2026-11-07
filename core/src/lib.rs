@@ -1,6 +1,7 @@
 pub mod catalog;
 pub mod child;
 pub mod clients;
+pub mod extensions;
 pub mod family;
 pub mod hooks;
 pub mod http;
