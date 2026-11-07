@@ -4,4 +4,5 @@ import "../../frontend/src/styles/app.css";
 import "./demo.css";
 import "./shim";
 import "../../frontend/src/main";
+import "./media";
 import "./lab";

@@ -1,3 +1,5 @@
+import { buildFlows } from "./flows";
+import { iconNode } from "./media";
 import { MARK, PROFILE_FORMAT, appOf, familyApps, family, isOff, live, loaded, record, redact, redactValue, sampleTools, settings, suggest, toolHidden } from "./gateway";
 
 const AGENTS: [string, string][] = [["claude", "Claude Code"], ["codex", "Codex"], ["cursor", "Cursor"], ["other", "Other agents"]];
@@ -17,8 +19,8 @@ const TOOL_LIST: [string, string, string][] = [
 const SAMPLE_ARGS: Record<string, string> = {
   family_apps: '{ "mcp_only": true }',
   suggest_app: '{ "task": "cut the silences out of this interview video", "limit": 3 }',
-  app_tools: '{ "app": "formvis" }',
-  call_app: '{ "app": "formvis", "tool": "get_status", "arguments": {} }',
+  app_tools: '{ "app": "formcut" }',
+  call_app: '{ "app": "formcut", "tool": "formcut_find_scenes", "arguments": { "clip": "harbour.mp4" } }',
   app_resources: '{ "app": "formmd" }',
   read_app_resource: '{ "app": "formmd", "uri": "formmd://notes" }',
   app_prompts: '{ "app": "formwav" }',
@@ -88,7 +90,8 @@ function build(): void {
   close.type = "button";
   head.append(close);
 
-  const { bar, buttons } = tabs(["Suggest", "Console", "Redact"]);
+  const { bar, buttons } = tabs(["Flows", "Suggest", "Console", "Redact"]);
+  const flowsPane = buildFlows();
 
   const suggestPane = el("section", "lab-pane");
   const sForm = el("form", "lab-form");
@@ -120,12 +123,15 @@ function build(): void {
     const name = el("strong");
     name.translate = false;
     const meta = el("span", "app-kind");
-    top.append(name, meta);
+    const who = el("span", "lab-who");
+    const icon = el("span", "lab-icon");
+    who.append(icon, name);
+    top.append(who, meta);
     const sum = el("p", "app-summary");
     const next = el("p", "lab-next");
     li.append(top, sum, next);
     sList.append(li);
-    return { li, name, meta, sum, next };
+    return { li, name, icon, meta, sum, next, shown: "" };
   });
   suggestPane.append(sForm, sChips, sNote, sList);
 
@@ -142,6 +148,10 @@ function build(): void {
       s.li.hidden = !p;
       if (!p) return;
       setText(s.name, p.name);
+      if (s.shown !== p.id) {
+        s.icon.replaceChildren(iconNode(p.id, 22));
+        s.shown = p.id;
+      }
       setText(s.meta, `${p.kind} · score ${p.score} · ${p.mcp ? "MCP server" : "no MCP server"} · ${p.state}`);
       setText(s.sum, p.summary);
       setText(s.next, p.next);
@@ -285,7 +295,7 @@ function build(): void {
     if (f) void take(f);
   });
 
-  const panes = [suggestPane, consolePane, redactPane];
+  const panes = [flowsPane, suggestPane, consolePane, redactPane];
   const show = (i: number): void => {
     panes.forEach((p, n) => {
       p.hidden = n !== i;
@@ -322,7 +332,7 @@ function build(): void {
       return;
     }
     rIn.value = text;
-    show(2);
+    show(3);
     scan();
     setText(dropNote, `${file.name} (${text.length} characters) scanned.`);
   }
@@ -344,7 +354,7 @@ function build(): void {
     if (f) void take(f);
   });
 
-  lab.append(head, bar, suggestPane, consolePane, redactPane, drop, dropNote);
+  lab.append(head, bar, flowsPane, suggestPane, consolePane, redactPane, drop, dropNote);
   document.body.append(lab);
   show(0);
   run();
@@ -354,6 +364,13 @@ function build(): void {
     open?.setAttribute("aria-expanded", String(on));
   };
   open?.addEventListener("click", () => setOpen(lab.hidden === true));
+  document.addEventListener("lab-ask", (e) => {
+    const task = String((e as CustomEvent<{ task: string }>).detail.task);
+    sTask.value = task;
+    show(1);
+    setOpen(true);
+    run();
+  });
   close.addEventListener("click", () => setOpen(false));
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !lab.hidden) setOpen(false);

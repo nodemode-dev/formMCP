@@ -262,7 +262,42 @@ export function redactValue(v: unknown): number {
 
 export type SampleTool = { name: string; description: string; read_only: boolean };
 
+const TOOLSETS: Record<string, [string, string, boolean][]> = {
+  formcut: [
+    ["formcut_status", "what FormCut has open and whether a render is running", true],
+    ["formcut_list_media", "the clips, stills and audio in the open project", true],
+    ["formcut_import_media", "brings files into the project's media bin", false],
+    ["formcut_find_scenes", "finds the cuts inside a long clip", true],
+    ["formcut_add_clip", "places a clip on the timeline at a time", false],
+    ["formcut_music", "adds a music bed under the edit", false],
+    ["formcut_render", "renders the timeline to a file", false],
+  ],
+  formwav: [
+    ["formwav_status", "what FormWav has open", true],
+    ["formwav_analyze_media", "loudness, peaks and noise floor of a file", true],
+    ["formwav_list_effects", "the effects that can be applied", true],
+    ["formwav_apply_effect", "applies an effect to a clip or selection", false],
+    ["formwav_export_media", "exports the session or a clip to a file", false],
+  ],
+  formencoder: [
+    ["status", "the queue and what is encoding now", true],
+    ["probe", "media information of a file", true],
+    ["encode", "queues a file with a preset and waits for the output", false],
+    ["verify", "checks an encoded file against its settings", true],
+    ["family", "hands finished files to another Form app", false],
+  ],
+  formvis: [
+    ["list_layers", "the layers of the open document", true],
+    ["add_layer", "adds an empty layer above the active one", false],
+    ["set_layer", "changes a layer's name, opacity, blend mode or visibility", false],
+    ["apply_filter", "applies a filter to the active layer", false],
+    ["export_image", "saves the document as an image", false],
+  ],
+};
+
 export function sampleTools(app: App): SampleTool[] {
+  const set = TOOLSETS[app.id];
+  if (set) return set.map(([name, what, read_only]) => ({ name, description: `Simulated sample: ${what}.`, read_only }));
   return [
     { name: "get_status", description: `Simulated sample: what ${app.name} has open right now.`, read_only: true },
     { name: "list_items", description: `Simulated sample: the ${app.kind} items in the open project.`, read_only: true },
