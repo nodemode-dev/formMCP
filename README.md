@@ -88,6 +88,10 @@ FormMCP suggests; FormPortal installs. The agent sees one short list and loads o
 
 `.mcp.json`, `.codex/config.toml` and `.cursor/mcp.json` are already wired in this repo. See [`AGENTS.md`](AGENTS.md).
 
+## Extensions
+
+FormMCP loads extensions made to the Form Extension Contract (API 1): FormPortal installs them, form.ext runs one from a folder. The Extensions button in the filter row lists their commands, opens the Extensions panel and reloads the list; each extension runs in a sandboxed frame, asks once per version for what it needs, and changes FormMCP's settings only through the window's own commands, as one step you can undo. Agents reach them with `extensions_list` and `extension_command` (`./formmcp cli extensions`). What an extension can read and change is in [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md).
+
 ## Under the hood
 
 - **Headless first:** the engine and the MCP server need no window, and the installed app answers `formmcp mcp` without opening one.

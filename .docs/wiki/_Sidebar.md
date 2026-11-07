@@ -2,3 +2,4 @@
 - [Getting Started](Getting-Started)
 - [Architecture](Architecture)
 - [Agents](Agents)
+- [Extensions](Extensions)

@@ -34,6 +34,10 @@ formMCP is one MCP server for the whole Form family. It keeps the conversation s
 9. `source` in `family_apps` says whether the list is the signed family catalogue or the bundled list, and why; mention it only when it matters (a newer app the person names is missing, for example).
 10. "[redacted by formMCP]" in a result stands for a secret or token formMCP hid; work without it. A call refused by "formMCP's before-call hook", or an app "not started" because its installed files changed, was stopped by a rule the person set or by formMCP's check: tell them the reason as given and do not retry around it.
 
+## formMCP's own extensions
+
+`extensions_list` and `extension_command` are about extensions installed in formMCP itself (by FormPortal, or from a folder by form.ext), not about the other apps. `extensions_list` gives each one's `state` (`ready`, or `refused` with the `reason`), its permissions and its `commands`; `extension_command` (`id`, `command`, `args`) runs one in the formMCP window. The window must be open ("open FormMCP and ask again" otherwise), and the first run of a version asks the person there to allow it; a refusal fails the call, so do not retry it. A command can change formMCP's settings (apps and tools on or off, start policies, profiles): say so and get the go-ahead first. Without MCP: `./formmcp cli extensions` and `./formmcp cli extension <id> <command> [args JSON]`.
+
 ## Without MCP
 
 `./formmcp cli apps` (and `--mcp-only`) prints the list as JSON; `./formmcp cli app <id>` one app; `./formmcp cli reach` how each app would be started here; `./formmcp cli suggest <task>` the suggestions; `./formmcp cli catalog` where the list comes from; `./formmcp cli expose <id> on|off` always show an app's tools; `./formmcp cli for <agent> <id> on|off` and `tool <id> <tool> on|off` turn an app off for one agent or one tool off for all; `./formmcp cli agents install` adds formMCP to Claude Code, Codex and Cursor for the user account; `./formmcp cli serve` serves the same tools over HTTP on this computer (`http token` gives the access token).
