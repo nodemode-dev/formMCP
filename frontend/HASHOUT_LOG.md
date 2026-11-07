@@ -2,7 +2,7 @@
 
 Living log for formMCP's window. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.8.2
+Current build version: v0.8.3
 Last updated: 2026-11-07 · the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
 
 ## v0.8.2 · the splash page and the ready call {#v0-8-2}

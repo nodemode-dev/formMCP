@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8.3 · 2026-11-07
+
+- Fixes the 0.8.2 desktop build: the transparent splash needs Tauri's macOS private API, and the crate feature that goes with it was missing. Nothing else in the app changed.
+
 ## v0.8.2 · 2026-11-07
 
 - FormMCP opens with the Form family's splash: a rounded dark card with the app icon and a progress bar that stays for at least 2.6 seconds, then the window appears whole with no white frame. On macOS the card's corners are cut round to match. Nothing else in the app changed.
