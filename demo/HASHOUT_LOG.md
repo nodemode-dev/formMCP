@@ -2,8 +2,8 @@
 
 Living log for the offline demo. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.8.4
-Last updated: 2026-11-07 · the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
+Current build version: v0.9.0
+Last updated: 2026-11-07 · v0.9.0 the shim marks and restores settings, and gives tool_list's loaded in seconds; the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
 
 ## v0.9.0 · the shim marks and restores settings {#v0-9-0}
 

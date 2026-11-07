@@ -570,7 +570,7 @@ function buildHooks(): { pane: HTMLElement; paint: () => void } {
       out.className = "wb-code is-fail";
       return;
     }
-    const base: HookEvent = { event: which.value, app: app.value.trim(), tool: tool.value.trim(), arguments: parsed, client: "claude", transport: "stdio", formmcp: "0.8.4" };
+    const base: HookEvent = { event: which.value, app: app.value.trim(), tool: tool.value.trim(), arguments: parsed, client: "claude", transport: "stdio", formmcp: "0.9.0" };
     const event: HookEvent = which.value === "after" ? { ...base, ok: true, ms: 41, result: { simulated: true } } : base;
     setText(stdin, pretty(event));
     const lines: string[] = [];

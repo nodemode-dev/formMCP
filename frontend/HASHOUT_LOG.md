@@ -2,8 +2,8 @@
 
 Living log for formMCP's window. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.8.4
-Last updated: 2026-11-07 · v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+Current build version: v0.9.0
+Last updated: 2026-11-07 · v0.9.0 the extension host; v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
 
 ## v0.9.0 · the extension host {#v0-9-0}
 
@@ -43,6 +43,13 @@ Tokens only; the menu on `--z-overlay`; the dialogs in the top layer, so no z-in
 - logged: v0.9.0 · 2026-11-07
 
 Section 6 says a host with no save dialog asks the person to confirm the name in its own dialog before saving into Downloads; the window saved at once. A second modal `<dialog>` (built with the others before `booting` comes off, so it adds nothing to the first layout) shows the name in a text field; Save or Enter keeps it (an emptied field falls back to the asked name), Cancel or Escape answers -32002. `tool_load` starts an app to list its tools and changes no setting, so it is marked as a read: before, an extension's Load from App lit Undo and said "Undo puts the settings back", which would have undone nothing it did.
+
+### src/ext/extensions.ts · no fetch from a file:// page
+- refers-to: src/ext/extensions.ts :: fetchJson
+- kind: fix
+- logged: v0.9.0 · 2026-11-07
+
+The three offline demos open over file://, where `fetch("/api/extensions")` is a cross-origin request Chrome blocks and logs as a console error, every second for the agent mailbox. `fetchJson` now fails at once without a request on a `file:` page, so the panel shows its empty state with the reason and the console stays clean.
 
 ## v0.8.2 · the splash page and the ready call {#v0-8-2}
 

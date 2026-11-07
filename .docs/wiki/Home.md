@@ -2,7 +2,7 @@
 
 formMCP is one MCP server for the whole Form family. Add it to Claude Code, Codex or Cursor once, and the agent can see every Form app, with one line on what each is for, and whether it has an MCP server, whether or not any app is installed.
 
-**Current version:** v0.8.4 · **Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript and Vite window · **Team:** one owner (nodemode-ai)
+**Current version:** v0.9.0 · **Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript and Vite window · **Team:** one owner (nodemode-ai)
 
 | Page | What it covers |
 | --- | --- |

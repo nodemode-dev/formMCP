@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.0 · 2026-11-07
+
+- Extensions, made to the Form Extension Contract (API 1). FormMCP reads FormPortal's `enabled.json` and form.ext's `dev.json` for `formmcp`, checks each manifest with the contract's rules and messages, and serves an extension's own files to a sandboxed frame (`formext://` in the app). The Extensions button in the filter row lists each extension's commands, opens the Extensions panel (name, version, source, permissions, state or the reason it was refused) and reloads the list; Manage in FormPortal opens FormPortal's extensions for FormMCP.
+- An extension asks once per version, before its frame exists, for what it needs. It reads the apps, agents, profiles and HTTP state, and changes FormMCP's settings only through the window's own commands, as one step that Undo puts back; the safety settings, secrets, hooks, tracing and the token stay out of its reach. Files it saves go to Downloads after FormMCP asks for the name.
+- Agents reach extensions with the MCP tools `extensions_list` and `extension_command`, and with `formmcp cli extensions` and `formmcp cli extension ID COMMAND`; commands run in the open window.
+- The install list and the file check now find FormPortal's folder by FormPortal's own rule (on macOS `studio.formai.portal`, or `dev.formai.portal` when only that exists).
+- The API for extension authors is `docs/EXTENSIONS.md`. No extension ships with FormMCP.
+
 ## v0.8.4 · 2026-11-07
 
 - Two more browser demos beside the first, each running the real FormMCP window and linked from a small row at the top of all three. `demos/connect/` shows how agents are connected: the exact config FormMCP writes for Claude Code, Codex and Cursor from the file as it is on disk, HTTP mode with its token and each refusal, and what each agent sees under a profile. `demos/safety/` shows what FormMCP hides, checks and records: a recorded session replayed against the Safety settings, before-call and after-call hooks, tracing with the OTLP bodies, and the file check on installed apps. Credits are in each demo's `CREDITS.md`. The app itself is unchanged.

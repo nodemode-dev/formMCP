@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.8.4" src="https://img.shields.io/badge/version-0.8.4-eef0f4?style=flat-square">
+  <img alt="version 0.9.0" src="https://img.shields.io/badge/version-0.9.0-eef0f4?style=flat-square">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-B7410E?style=flat-square&logo=rust&logoColor=white">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square">
   <img alt="macOS, Windows, Linux" src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-native-2f7bf5?style=flat-square">
