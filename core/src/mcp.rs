@@ -12,7 +12,7 @@ use crate::family::{App, Family};
 use crate::reach::{Places, Route};
 use crate::settings::{client_key, client_label, Settings};
 use crate::suggest::suggest;
-use crate::{hooks, log, redact, secrets, telemetry, toolcache, verify};
+use crate::{extensions, hooks, log, redact, secrets, telemetry, toolcache, verify};
 use crate::CORE_VERSION;
 
 const EXPOSED_SEPARATOR: &str = "__";
@@ -294,7 +294,18 @@ fn tools() -> Value {
               "app": { "type": "string", "description": "An id from family_apps." },
               "name": { "type": "string", "description": "A prompt name from app_prompts." },
               "arguments": { "type": "object", "description": "The prompt's arguments as strings.", "additionalProperties": { "type": "string" } } }, "required": ["app", "name"] },
-          "annotations": { "readOnlyHint": true, "openWorldHint": false } }
+          "annotations": { "readOnlyHint": true, "openWorldHint": false } },
+        { "name": "extensions_list", "title": "formMCP's extensions",
+          "description": "The extensions installed in formMCP itself (by FormPortal, or run from a folder by form.ext): id, name, version, source (catalogue, sideload, development), state (ready or refused, with the reason), the permissions each asks for, and the commands each adds. These extend formMCP's window, not the other Form apps.",
+          "inputSchema": { "type": "object", "properties": {} },
+          "annotations": { "readOnlyHint": true, "openWorldHint": false } },
+        { "name": "extension_command", "title": "Run an extension's command",
+          "description": "Runs one command an extension adds to formMCP, in formMCP's window, which must be open. The first time an extension version runs, the window asks the person to allow what it asks for; a refusal fails the call. What it changes is what the extension's command does to formMCP's settings: say so and get the person's go-ahead first.",
+          "inputSchema": { "type": "object", "properties": {
+              "id": { "type": "string", "description": "An extension id from extensions_list." },
+              "command": { "type": "string", "description": "A command id from that extension's commands." },
+              "args": { "type": "object", "description": "Arguments for the command, when it takes any." } }, "required": ["id", "command"] },
+          "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false } }
     ])
 }
 
@@ -470,6 +481,13 @@ fn call(gateway: &mut Gateway, name: &str, args: &Value) -> Result<Outcome, Stri
         "read_app_resource" => read_app_resource(gateway, args).map(Outcome::Passed),
         "app_prompts" => app_prompts(gateway, args).map(Outcome::Mine),
         "get_app_prompt" => get_app_prompt(gateway, args).map(Outcome::Mine),
+        "extensions_list" => Ok(Outcome::Mine(json!({ "extensions": extensions::agent_rows() }))),
+        "extension_command" => {
+            let text = |key: &str| args.get(key).and_then(Value::as_str).map(str::to_string).ok_or_else(|| format!("{key} is required"));
+            let (id, command) = (text("id")?, text("command")?);
+            let given = args.get("args").cloned().unwrap_or_else(|| json!({}));
+            extensions::request(&id, &command, &given, &gateway.client).map(|result| Outcome::Mine(json!({ "id": id, "command": command, "result": result })))
+        }
         other => match other.split_once(EXPOSED_SEPARATOR) {
             Some((id, tool)) if gateway.settings.expose.iter().any(|e| e == id) && !gateway.is_off(id) => {
                 call_app(gateway, &json!({ "app": id, "tool": tool, "arguments": args })).map(Outcome::Passed)

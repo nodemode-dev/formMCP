@@ -1,8 +1,13 @@
+mod reveal;
+
+use std::borrow::Cow;
 use std::sync::Mutex;
+
+use tauri::{WebviewUrl, WebviewWindowBuilder};
 
 use formmcp_core::clients::{self, Client, Launcher, CLIENTS};
 use formmcp_core::settings::{self, Settings, CLIENT_KEYS};
-use formmcp_core::{catalog, hooks, http, log, mcp, secrets, telemetry, toolcache, verify, Family, Places};
+use formmcp_core::{catalog, extensions, hooks, http, log, mcp, secrets, telemetry, toolcache, verify, Family, Places};
 use serde_json::{json, Value};
 
 #[derive(Default)]
@@ -293,6 +298,67 @@ async fn verify_trust(app: String) -> Result<Value, String> {
 }
 
 #[tauri::command]
+async fn extensions_list() -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(|| extensions::listing(extensions::PROTOCOL_BASE)).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn extensions_stamp() -> Value {
+    extensions::stamp_value()
+}
+
+#[tauri::command]
+fn extension_requests() -> Vec<Value> {
+    extensions::take()
+}
+
+#[tauri::command]
+fn extension_finish(rid: String, outcome: Value) -> Result<(), String> {
+    extensions::finish(&rid, &outcome)
+}
+
+#[tauri::command]
+fn extension_save(name: String, data: String) -> Result<String, String> {
+    extensions::save_download(&name, &data).map(|p| p.display().to_string())
+}
+
+#[tauri::command]
+fn open_portal() -> Result<(), String> {
+    extensions::open_portal()
+}
+
+#[tauri::command]
+fn settings_mark() -> String {
+    extensions::settings_mark()
+}
+
+#[tauri::command]
+fn settings_restore(text: String) -> Result<(), String> {
+    extensions::settings_restore(&text)
+}
+
+fn formext_file(request: &tauri::http::Request<Vec<u8>>) -> tauri::http::Response<Cow<'static, [u8]>> {
+    let served = extensions::answer(&request.uri().to_string(), true);
+    let head = *request.method() == tauri::http::Method::HEAD;
+    let readable = head || *request.method() == tauri::http::Method::GET;
+    let body = served.file.as_ref().filter(|_| readable).and_then(|p| std::fs::read(p).ok());
+    let (status, headers) = match &body {
+        Some(_) => (200, served.headers),
+        None => (404, extensions::headers_for("text/plain", "")),
+    };
+    let mut reply = tauri::http::Response::builder().status(status);
+    for (k, v) in headers {
+        reply = reply.header(k, v);
+    }
+    let bytes = if status == 200 && !head { body.unwrap_or_default() } else { Vec::new() };
+    reply.body(Cow::Owned(bytes)).unwrap_or_else(|_| {
+        let mut empty = tauri::http::Response::new(Cow::Borrowed(&[][..]));
+        *empty.status_mut() = tauri::http::StatusCode::NOT_FOUND;
+        empty
+    })
+}
+
+#[tauri::command]
 fn log_tail(from: u64) -> Value {
     let (events, next) = log::tail(from);
     json!({ "events": events, "next": next })
@@ -311,9 +377,28 @@ pub fn run() {
         };
         std::process::exit(code);
     }
+    reveal::mark_launch();
     tauri::Builder::default()
         .manage(Http::default())
-        .invoke_handler(tauri::generate_handler![snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import, safety, secret_set, secret_remove, safety_switch, hook_set, telemetry_set, verify_trust])
+        .register_asynchronous_uri_scheme_protocol("formext", |_ctx, request, responder| {
+            std::thread::spawn(move || responder.respond(formext_file(&request)));
+        })
+        .setup(|app| {
+            let handle = app.handle().clone();
+            reveal::round_splash(&handle);
+            let window = WebviewWindowBuilder::new(&handle, "main", WebviewUrl::default())
+                .title("FormMCP")
+                .inner_size(900.0, 780.0)
+                .min_inner_size(560.0, 560.0)
+                .resizable(true)
+                .center()
+                .visible(reveal::BUILD_VISIBLE)
+                .background_color(reveal::BACKGROUND)
+                .build()?;
+            reveal::conceal(&window);
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![reveal::app_ready, snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import, safety, secret_set, secret_remove, safety_switch, hook_set, telemetry_set, verify_trust, extensions_list, extensions_stamp, extension_requests, extension_finish, extension_save, open_portal, settings_mark, settings_restore])
         .run(tauri::generate_context!())
         .expect("formMCP could not start its window");
 }

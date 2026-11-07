@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.9.1 · 2026-11-07
+
+- Merges Greg's pull request, docs(readme): updates come through FormPortal. FormMCP has no in-app updater, so the README's Download section now says FormPortal keeps it up to date, with a link, and that a new version can also be downloaded from the links above.
+- Releases it with the extension host from v0.9.0 below. The app and the demos are otherwise unchanged; the demos are rebuilt for the version they show.
+
+## v0.9.0 · 2026-11-07
+
+- Extensions, made to the Form Extension Contract (API 1). FormMCP reads FormPortal's `enabled.json` and form.ext's `dev.json` for `formmcp`, checks each manifest with the contract's rules and messages, and serves an extension's own files to a sandboxed frame (`formext://` in the app). The Extensions button in the filter row lists each extension's commands, opens the Extensions panel (name, version, source, permissions, state or the reason it was refused) and reloads the list; Manage in FormPortal opens FormPortal's extensions for FormMCP.
+- An extension asks once per version, before its frame exists, for what it needs. It reads the apps, agents, profiles and HTTP state, and changes FormMCP's settings only through the window's own commands, as one step that Undo puts back; the safety settings, secrets, hooks, tracing and the token stay out of its reach. Files it saves go to Downloads after FormMCP asks for the name.
+- Agents reach extensions with the MCP tools `extensions_list` and `extension_command`, and with `formmcp cli extensions` and `formmcp cli extension ID COMMAND`; commands run in the open window.
+- The install list and the file check now find FormPortal's folder by FormPortal's own rule (on macOS `studio.formai.portal`, or `dev.formai.portal` when only that exists).
+- The API for extension authors is `docs/EXTENSIONS.md`. No extension ships with FormMCP.
+
+## v0.8.4 · 2026-11-07
+
+- Two more browser demos beside the first, each running the real FormMCP window and linked from a small row at the top of all three. `demos/connect/` shows how agents are connected: the exact config FormMCP writes for Claude Code, Codex and Cursor from the file as it is on disk, HTTP mode with its token and each refusal, and what each agent sees under a profile. `demos/safety/` shows what FormMCP hides, checks and records: a recorded session replayed against the Safety settings, before-call and after-call hooks, tracing with the OTLP bodies, and the file check on installed apps. Credits are in each demo's `CREDITS.md`. The app itself is unchanged.
+
+## v0.8.3 · 2026-11-07
+
+- Fixes the 0.8.2 desktop build: the transparent splash needs Tauri's macOS private API, and the crate feature that goes with it was missing. Nothing else in the app changed.
+
+## v0.8.2 · 2026-11-07
+
+- FormMCP opens with the Form family's splash: a rounded dark card with the app icon and a progress bar that stays for at least 2.6 seconds, then the window appears whole with no white frame. On macOS the card's corners are cut round to match. Nothing else in the app changed.
+
+## v0.8.1 · 2026-11-07
+
+- The browser demo opens on the family's real pictures: each app card carries its app's own icon, a reel of nine Form apps' verified demo screenshots sits above the clients, and the Lab has a Flows tab that replays three realistic tasks (a trailer, a podcast episode, a poster) as the MCP calls an agent would make. Credits for every picture, and for the photographs, footage and recordings visible in the screenshots, are in `demo/CREDITS.md`. The app itself is unchanged.
+
+## v0.8.0 · 2026-11-07
+
+- An offline browser demo in `demo/`: open `demo/index.html` (no install, no server) to use the real FormMCP window on the real family list, with a Lab that ranks apps for a task with `suggest_app`, runs the MCP tools in a console and hides secrets in results. Nothing is installed or sent anywhere. The app itself is unchanged.
+
 ## v0.7.8 · 2026-11-04
 
 - README in the Form family template (Mackin's #6), merged with main. Nothing in the app changed.

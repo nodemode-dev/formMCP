@@ -5,6 +5,31 @@ Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files
 Current build version: v0.7.5
 Last updated: 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
 
+## v0.9.0 · the extension host {#v0-9-0}
+
+### extensions.rs · the resolver, ported line for line
+- refers-to: core/src/extensions.rs :: portal_root, version_tuple, Extension, Extension::public, check, resolve, stamp, csp_for, file_for, headers_for · core/src/lib.rs
+- kind: decision
+- logged: v0.9.0 · 2026-11-07
+
+The Form Extension Contract kit's `host/python/formext_host.py` in Rust, function for function and with the same refusal messages, so formMCP refuses an extension in the words every Python host uses. Python's `str()`, `repr()` and truthiness are kept where a message or a test depends on them (`py_str` gives `None` and `True`, `py_repr` single quotes, `or_value` is `x or default`), `[:80]` cuts by characters, `format_version` accepts what Python's `== 1` accepts, and `Path.resolve` plus `in parents` is `canonicalize` plus `starts_with` without equality. It follows the kit as updated by the round's lead at 07:47: a development extension's version comes from its manifest before any refusal, a non-object `entry` or `contributes` counts as missing, and a non-text `entry.ui` is refused with "its entry.ui is not a path inside the package". Checked against that Python module on the same folders: 9 refusal cases (API 2, native, minimum_app 9.1.0, entry.ui missing, `../` and null, id mismatch, no manifest, an unknown permission, another product with a development version) and the panel and command normalisation give identical `public()` rows. `portal_root` is the contract's (macOS prefers `studio.formai.portal` unless only `dev.formai.portal` exists); `reach::portal_root` now returns this one, so the install list and `verify` read FormPortal's folder by the same rule as `Portal::default_root` (FormPortal moved its macOS folder to `studio.formai.portal`, and the old `dev.formai.portal` alone missed every newer install).
+
+### extensions.rs · serving, the window's mailbox, undo marks
+- refers-to: core/src/extensions.rs :: PROTOCOL_BASE, HTTP_BASE, listing, stamp_value, parse_address, answer, Served, agent_rows, take, finish, request, window_open, settings_mark, settings_restore, save_download, open_portal
+- kind: decision
+- logged: v0.9.0 · 2026-11-07
+
+`answer` serves one file for both routes: `formext://{id}/{version}/{path}` (on Windows Tauri's `http://formext.localhost/{id}/...`), and `/api/extensions/files/{id}/{version}/{path}` for the browser build. It percent-decodes each part (a NUL or bad escape is a 404), and every answer, 404 included, carries nosniff, no-store, CORP and `Access-Control-Allow-Origin: *`; HTML gets the CSP with BASE `formext://{id}/{version}/` for the protocol and `'self'` for the browser route. `PROTOCOL_BASE` is `formext:/` so `public()`'s `{base}/{id}/` reads `formext://{id}/`. http.rs is untouched: a sandboxed frame cannot send the access token, and the extension files are not MCP.
+
+The MCP server runs in the agent's process (stdio) or in a thread of the window that shares nothing with the page, so `extension_command` reaches the window through files under `settings::dir()/extensions`: a request `requests/<rid>.json` (rid 24 hex characters, written whole then renamed), which the window takes within a second and deletes, and the answer `results/<rid>.json`. `take` also writes `window.alive`; a request is refused at once when that file is older than 5 s ("open FormMCP and ask again"), fails when the window stops taking for 10 s, and waits at most 300 s (a headless command may take 120 s plus the time the person needs for the consent dialog). Consent and the 120 s limit are the window's. `extensions_list` is answered by the engine with no window. `settings_mark` and `settings_restore` give the window a copy of settings.json and put it back, which makes an extension's `document.apply` one undoable step; the shell exposes them as window commands, not to extensions. `save_download` keeps the extension's file name minus path and reserved characters and numbers it like a profile export; `open_portal` hands `formai://extensions?product=formmcp` to the system's opener.
+
+### mcp.rs, cli · extensions_list, extension_command, `extensions`, `extension`
+- refers-to: core/src/mcp.rs :: tools, call · cli/src/main.rs :: extensions_command, HELP · cli/tests/mcp_stdio_and_http.rs :: TOOLS
+- kind: decision
+- logged: v0.9.0 · 2026-11-07
+
+Two more tools for the contract's agent access; arguments are not logged (the usual `call` record names the tool only). `TOOLS` in the stdio and HTTP test now lists ten; no new test was written. The CLI's `extensions` prints the agent rows, `extension` runs a command through the window, and `extensions window|stamp|file|take|finish` are what the Vite plugin in `frontend/extensions-dev.ts` calls, so the browser build runs the same Rust resolver and file checks as the app. Built and tested here against a link-only libdbus shim (`cargo test --locked -p formmcp-core -p formmcp-cli`: all pass; clippy adds no warning).
+
 ## v0.7.5 · the catalogue from the public download store {#v0-7-5}
 
 ### catalog.rs, setup/family.py · dl.formai.studio

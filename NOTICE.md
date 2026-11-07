@@ -22,6 +22,12 @@ Its dependencies are MIT, Apache-2.0 or dual MIT and Apache-2.0, with some BSD-3
 | sha2 0.10 | the digests of an installed app's files (`core`, v0.7.0); MIT OR Apache-2.0, already in the graph through the dalek crates |
 | tauri 2, tauri-build | the desktop shell |
 | Vite, TypeScript, @tauri-apps/cli, @types/node (build only) | building the window and the app; not shipped |
+| `demo/index.html` and `demo/assets/` (v0.8.0) | the offline browser demo, compiled by Vite (MIT) from this repository's own window, tokens, family list and the TypeScript in `demo/src/`; the icon is the app's own; no third-party code, font or media is added |
+
+| `demo/assets/media/` (v0.8.1) | the demo's pictures: the Form family's own app icons from the sibling repositories and the verified demo screenshots of nine Form apps, downscaled; every file, author, source and licence, and the Pexels, NASA and public-domain media visible in the screenshots, is listed in `demo/CREDITS.md` |
+| `demos/connect/assets/media/` (v0.8.4) | demo 2's pictures: the Form family's own app icons from the sibling repositories (the same files as demo 1) and formMCP's own window mark; every file, author, source and licence is listed in `demos/connect/CREDITS.md` |
+| Form Extension Contract kit, Apache-2.0, nodemode (v0.9.0) | the extension host: `frontend/src/ext/host-bridge.ts` is the kit's `host/host-bridge.ts` unchanged; `core/src/extensions.rs` is a line-for-line Rust port of the kit's `host/python/formext_host.py` (resolver and safe file serving) keeping its messages. Apache-2.0 is compatible with GPL-3.0 |
+| `demos/safety/assets/` (v0.8.4) | demo 3's pictures: the Form family's own app icons from the sibling repositories (the same files as demo 1) and formMCP's own window mark; every file, author, source and licence is listed in `demos/safety/CREDITS.md` |
 
 Every new dependency, binary, font or data file gets a row here before it is used.
 

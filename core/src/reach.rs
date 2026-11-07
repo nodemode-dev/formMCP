@@ -61,17 +61,7 @@ struct Install {
 }
 
 pub fn portal_root() -> PathBuf {
-    if let Some(root) = std::env::var_os("FORMPORTAL_ROOT") {
-        return PathBuf::from(root);
-    }
-    let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")).map(PathBuf::from).unwrap_or_default();
-    if cfg!(target_os = "macos") {
-        home.join("Library/Application Support/dev.formai.portal")
-    } else if cfg!(target_os = "windows") {
-        std::env::var_os("LOCALAPPDATA").map(PathBuf::from).unwrap_or_else(|| home.join("AppData/Local")).join("FormPortal")
-    } else {
-        std::env::var_os("XDG_DATA_HOME").map(PathBuf::from).unwrap_or_else(|| home.join(".local/share")).join("formportal")
-    }
+    crate::extensions::portal_root()
 }
 
 fn which(program: &str) -> Option<PathBuf> {

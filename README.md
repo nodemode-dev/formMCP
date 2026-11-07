@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.7.8" src="https://img.shields.io/badge/version-0.7.8-eef0f4?style=flat-square">
+  <img alt="version 0.9.1" src="https://img.shields.io/badge/version-0.9.1-eef0f4?style=flat-square">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-B7410E?style=flat-square&logo=rust&logoColor=white">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square">
   <img alt="macOS, Windows, Linux" src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-native-2f7bf5?style=flat-square">
@@ -88,6 +88,10 @@ FormMCP suggests; FormPortal installs. The agent sees one short list and loads o
 
 `.mcp.json`, `.codex/config.toml` and `.cursor/mcp.json` are already wired in this repo. See [`AGENTS.md`](AGENTS.md).
 
+## Extensions
+
+FormMCP loads extensions made to the Form Extension Contract (API 1): FormPortal installs them, form.ext runs one from a folder. The Extensions button in the filter row lists their commands, opens the Extensions panel and reloads the list; each extension runs in a sandboxed frame, asks once per version for what it needs, and changes FormMCP's settings only through the window's own commands, as one step you can undo. Agents reach them with `extensions_list` and `extension_command` (`./formmcp cli extensions`). What an extension can read and change is in [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md).
+
 ## Under the hood
 
 - **Headless first:** the engine and the MCP server need no window, and the installed app answers `formmcp mcp` without opening one.
@@ -108,6 +112,14 @@ FormMCP suggests; FormPortal installs. The agent sees one short list and loads o
 All FormMCP builds are compiled and released from [FormCompiler](https://github.com/nodemode-dev/formcompiler); this repo holds the source.
 
 **Updates come through FormPortal.** FormMCP does not update itself: install [FormPortal](https://formai.studio/formportal/) and it keeps FormMCP up to date, or download the new version from the links above.
+
+## Demo
+
+Three demos open in a browser by double-click, with no server or install, and each runs the real FormMCP window on the real family list. Nothing is installed or sent anywhere, and they link to each other.
+
+- [`demo/index.html`](demo/index.html), demo 1: rank apps for a task with `suggest_app`, run the MCP tools in a console, hide secrets in results, and save, import and export profiles. See [`demo/README.md`](demo/README.md).
+- [`demos/connect/index.html`](demos/connect/index.html), demo 2, connecting agents: the config FormMCP writes for Claude Code, Codex and Cursor, HTTP mode with its token and refusals, and what each agent sees under a profile. See [`demos/connect/README.md`](demos/connect/README.md).
+- [`demos/safety/index.html`](demos/safety/index.html), demo 3, safety and activity: secret hiding, hooks, tracing and the file check on a replayable log of agent calls. See [`demos/safety/README.md`](demos/safety/README.md).
 
 ## Run it from source
 
