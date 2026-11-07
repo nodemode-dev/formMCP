@@ -24,7 +24,7 @@ Its dependencies are MIT, Apache-2.0 or dual MIT and Apache-2.0, with some BSD-3
 | Vite, TypeScript, @tauri-apps/cli, @types/node (build only) | building the window and the app; not shipped |
 | `demo/index.html` and `demo/assets/` (v0.8.0) | the offline browser demo, compiled by Vite (MIT) from this repository's own window, tokens, family list and the TypeScript in `demo/src/`; the icon is the app's own; no third-party code, font or media is added |
 
-| `demo/assets/media/` (v0.8.1) | the demo's pictures: the Form family's own app icons and window screenshots from the sibling repositories, downscaled; every file, author, source and licence is listed in `demo/CREDITS.md`; no stock or third-party media |
+| `demo/assets/media/` (v0.8.1) | the demo's pictures: the Form family's own app icons from the sibling repositories and the verified demo screenshots of nine Form apps, downscaled; every file, author, source and licence, and the Pexels, NASA and public-domain media visible in the screenshots, is listed in `demo/CREDITS.md` |
 
 Every new dependency, binary, font or data file gets a row here before it is used.
 
