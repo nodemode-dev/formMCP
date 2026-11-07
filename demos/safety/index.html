@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en" class="booting">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <title>FormMCP demo: safety and activity</title>
+    <link rel="icon" href="./assets/formmcp-wnnLTqps.png" />
+    <script defer src="./assets/index-D9jOeBGW.js"></script>
+    <link rel="stylesheet" href="./assets/style-78gCkL4A.css">
+  </head>
+  <body>
+    <div class="shell">
+      <div class="demo-strip" id="demo-strip">
+        <span class="demo-text">Demo 3 of 3: safety and activity. The window is real; the machine, the apps and the hook scripts are simulated, and every rule is the engine's, ported.</span>
+        <nav class="demo-links" aria-label="Demos">
+          <a href="../../demo/index.html">Demo 1</a>
+          <a href="../connect/index.html">Demo 2</a>
+          <a href="./index.html" aria-current="page">Demo 3</a>
+        </nav>
+      </div>
+      <header class="bar">
+        <img class="mark" src="./assets/formmcp-wnnLTqps.png" width="32" height="32" alt="" />
+        <div class="title">
+          <h1 translate="no">formMCP</h1>
+          <p class="sub">What formMCP hides, checks and records on every agent call</p>
+        </div>
+        <span class="version" id="version" translate="no"></span>
+      </header>
+      <section class="clients" aria-label="Agent clients">
+        <div class="client" data-client="claude">
+          <span class="client-name" translate="no">Claude Code</span>
+          <span class="client-state" data-state></span>
+          <button class="btn" type="button" data-connect disabled>Connect</button>
+        </div>
+        <div class="client" data-client="codex">
+          <span class="client-name" translate="no">Codex</span>
+          <span class="client-state" data-state></span>
+          <button class="btn" type="button" data-connect disabled>Connect</button>
+        </div>
+        <div class="client" data-client="cursor">
+          <span class="client-name" translate="no">Cursor</span>
+          <span class="client-state" data-state></span>
+          <button class="btn" type="button" data-connect disabled>Connect</button>
+        </div>
+      </section>
+      <section class="http" aria-label="HTTP">
+        <span class="http-name">HTTP</span>
+        <span class="http-state" id="http-state">Off</span>
+        <button class="btn btn-small" id="http-copy" type="button" disabled title="Copies the address and the header with the access token, ready for an agent's MCP settings">Copy setup</button>
+        <button class="btn btn-small" id="http-rotate" type="button" disabled title="Makes a new access token; agents set up with the old one must be given the new one">New token</button>
+        <button class="btn btn-small" id="http-toggle" type="button" disabled>Start</button>
+      </section>
+      <p class="status" id="status" aria-live="polite"></p>
+      <section class="wb" id="wb" aria-label="Safety bench"></section>
+      <section class="log" aria-label="Activity">
+        <div class="log-head">
+          <span class="log-title">Activity</span>
+          <span class="log-hint">Sessions, tool calls and app starts through formMCP. Arguments are never recorded.</span>
+        </div>
+        <ol class="log-list" id="log"></ol>
+      </section>
+      <div class="tools" id="tools">
+        <div class="chips" role="group" aria-label="Show">
+          <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+          <button class="chip" type="button" data-filter="mcp" aria-pressed="false">MCP server</button>
+        </div>
+        <label class="agent-pick">
+          <span>Apps for</span>
+          <select id="agent">
+            <option value="claude">Claude Code</option>
+            <option value="codex">Codex</option>
+            <option value="cursor">Cursor</option>
+            <option value="other">Other agents</option>
+          </select>
+        </label>
+        <label class="agent-pick profile-pick">
+          <span>Profile</span>
+          <select id="profile-pick" disabled>
+            <option value="">None</option>
+          </select>
+        </label>
+        <button class="btn btn-small" id="profiles-toggle" type="button" aria-expanded="false" disabled>Profiles</button>
+        <button class="btn btn-small" id="safety-toggle" type="button" aria-expanded="false" disabled>Safety</button>
+        <p class="count" id="count" aria-live="polite"></p>
+      </div>
+      <section class="profiles" id="profiles" aria-label="Profiles" hidden>
+        <form class="profile-form" id="profile-form" autocomplete="off">
+          <input id="profile-name" type="text" maxlength="40" placeholder="Profile name" aria-label="Profile name" spellcheck="false" />
+          <button class="btn btn-small" id="profile-save" type="submit" disabled>Save Claude Code's settings</button>
+          <button class="btn btn-small" id="profile-import" type="button">Import</button>
+          <input id="profile-file" type="file" accept=".json,application/json" hidden />
+        </form>
+        <p class="profile-note" id="profile-note">A profile keeps apps off, tools off and start policies under one name. Used for an agent, it only turns more off; export one to share it.</p>
+        <ul class="profile-list" id="profile-list"></ul>
+      </section>
+      <section class="safety" id="safety" aria-label="Safety" hidden>
+        <p class="profile-note" id="safety-note">Secrets stay in this computer's keychain. Everything here applies to every agent from its next request.</p>
+        <div class="safety-body">
+          <div class="safety-row">
+            <span class="safety-label">Secrets</span>
+            <form class="safety-form" id="secret-form" autocomplete="off">
+              <select id="secret-app" aria-label="The app the secret is for"></select>
+              <input id="secret-name" type="text" maxlength="64" placeholder="FORMMD_MCP_TOKEN" aria-label="Environment variable name" spellcheck="false" />
+              <input id="secret-value" type="password" placeholder="Value" aria-label="Secret value" autocomplete="new-password" />
+              <button class="btn btn-small" id="secret-save" type="submit" disabled>Keep</button>
+            </form>
+          </div>
+          <div class="safety-row">
+            <span class="safety-label">Protect</span>
+            <div class="safety-switches">
+              <button class="switch" id="redact-switch" type="button" role="switch" aria-checked="true" disabled title="Replaces known secrets and token-shaped text in what apps send back, before an agent sees it; the activity log is always cleaned"><span class="switch-track"></span><span class="switch-label">Hide secrets in results</span></button>
+              <button class="switch" id="verify-switch" type="button" role="switch" aria-checked="true" disabled title="Before starting an app FormPortal installed, compares its files with what formMCP recorded the first time it started that version"><span class="switch-track"></span><span class="switch-label">Check installed apps' files before they start</span></button>
+            </div>
+          </div>
+          <div class="safety-row">
+            <span class="safety-label">Hooks</span>
+            <form class="safety-form" id="hook-form" autocomplete="off">
+              <input id="hook-before" type="text" placeholder="Before each app tool call: a command, or empty" aria-label="Before-call hook command" spellcheck="false" />
+              <input id="hook-after" type="text" placeholder="After each call: a command, or empty" aria-label="After-call hook command" spellcheck="false" />
+              <button class="btn btn-small" id="hook-save" type="submit" disabled>Save</button>
+            </form>
+          </div>
+          <div class="safety-row">
+            <span class="safety-label">Tracing</span>
+            <form class="safety-form" id="trace-form" autocomplete="off">
+              <input id="trace-address" type="text" placeholder="OpenTelemetry collector, for example http://127.0.0.1:4318; empty for off" aria-label="OpenTelemetry collector address" spellcheck="false" />
+              <button class="btn btn-small" id="trace-save" type="submit" disabled>Save</button>
+            </form>
+          </div>
+          <ul class="profile-list safety-list" id="safety-list"></ul>
+        </div>
+      </section>
+      <ul class="apps" id="apps"></ul>
+      <footer class="foot">
+        <span translate="no">by nodemode.ai</span>
+        <span class="source" id="source"></span>
+      </footer>
+    </div>
+  </body>
+</html>
