@@ -6,7 +6,7 @@ An offline, browser-runnable copy of the formMCP window. Open `demo/index.html` 
 
 The page is the real formMCP window, not a picture of it. `frontend/src/main.ts` and the real tokens, layers and `app.css` run unchanged, on the real family list (`core/data/family.json`, 24 apps). A small shim stands in for Tauri's `invoke`, so the window works the way the installed app does, with settings kept in memory (and in the browser's local storage when it is allowed).
 
-It opens on the family's real pictures: every card carries its app's own icon, and a reel above the clients shows real window screenshots of twelve Form apps. Choose a tile and the Lab asks `suggest_app` for a task that app serves. Every file, its source and its licence is in `CREDITS.md`. A few apps have no icon in a sibling repository and show a plain two-letter tile.
+It opens on the family's real pictures: every card carries its app's own icon, and a reel above the clients shows the verified demo screenshots of nine Form apps (FormCut, FormVis, FormWav, FormPDF, FormDeck, FormLit, form.md, FormEncoder, FormVFX), with the photographs, footage and recordings visible in them credited in `CREDITS.md`. Choose a tile and the Lab asks `suggest_app` for a task that app serves. Every file, its source and its licence is in `CREDITS.md`. A few apps have no icon in a sibling repository and show a plain two-letter tile.
 
 In the window itself:
 

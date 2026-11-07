@@ -1,7 +1,7 @@
 import { family } from "./gateway";
 
 const ICON_IDS = ["formmcp", "formai", "formcut", "formencoder", "formlit", "formmd", "formpdf", "formskills", "formslide", "formtray", "formvfx", "formvis", "formwav"];
-const SHOT_IDS = [...ICON_IDS, "mcp-agents", "mcp-safety", "mcp-hero"];
+const SHOT_IDS = ["formcut", "formencoder", "formlit", "formmd", "formpdf", "formslide", "formvfx", "formvis", "formwav", "mcp-agents", "mcp-safety", "mcp-hero"];
 
 export const REEL: [string, string][] = [
   ["formcut", "cut the silences out of this interview video"],
@@ -13,9 +13,6 @@ export const REEL: [string, string][] = [
   ["formmd", "take notes in markdown with a database"],
   ["formencoder", "convert a folder of videos to smaller files"],
   ["formvfx", "animate a title over footage"],
-  ["formai", "install and update the Form apps"],
-  ["formskills", "browse the skills the Form apps ship"],
-  ["formtray", "switch between open Form app windows"],
 ];
 
 export function iconUrl(id: string): string | null {

@@ -22,6 +22,7 @@ main.ts builds every card and removes `booting` in one task. media.ts runs after
 Six step rows are made once; a flow change or a run only changes their text and `data-state`. The screenshot is swapped only after the next one has decoded, in a fixed 16 by 10 frame. The first step calls the demo's real `suggest` port; app steps answer from `sampleTools` and a written simulated result, honour the agent's off switches and hidden tools, and pass through the same redaction. Tool names for FormCut, FormWav, FormEncoder and FormVis are the ones those apps publish; arguments and results are invented for the demo and marked simulated. The Authorization shape in the last trailer step is assembled from pieces at run time, as the Redact sample is.
 
 ### Not done
+- The sibling docs hero captures were dropped: they show photographs whose source and licence cannot be verified. The reel uses each sibling's verified demo screenshot instead, and every photo, clip or recording visible in them is credited in `CREDITS.md`. FormPortal, FormSkills and FormTray have no screenshot (theirs embed other apps' docs captures) and appear as icons only.
 - Twelve apps have no icon in a sibling repository's `assets/app-icon`, so they show a monogram, not artwork.
 - Checked in Chromium over file:// only.
 
