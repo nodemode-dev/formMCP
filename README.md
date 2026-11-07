@@ -111,6 +111,8 @@ FormMCP loads extensions made to the Form Extension Contract (API 1): FormPortal
 
 All FormMCP builds are compiled and released from [FormCompiler](https://github.com/nodemode-dev/formcompiler); this repo holds the source.
 
+**Updates come through FormPortal.** FormMCP does not update itself: install [FormPortal](https://formai.studio/formportal/) and it keeps FormMCP up to date, or download the new version from the links above.
+
 ## Demo
 
 Three demos open in a browser by double-click, with no server or install, and each runs the real FormMCP window on the real family list. Nothing is installed or sent anywhere, and they link to each other.
