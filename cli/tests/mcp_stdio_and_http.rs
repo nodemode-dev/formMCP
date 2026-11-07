@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 use serde_json::{json, Value};
 use support::*;
 
-const TOOLS: [&str; 8] = ["family_apps", "suggest_app", "app_tools", "call_app", "app_resources", "read_app_resource", "app_prompts", "get_app_prompt"];
+const TOOLS: [&str; 10] = ["family_apps", "suggest_app", "app_tools", "call_app", "app_resources", "read_app_resource", "app_prompts", "get_app_prompt", "extensions_list", "extension_command"];
 
 fn names(list: &Value) -> Vec<String> {
     let mut n: Vec<String> = list["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap().to_string()).collect();

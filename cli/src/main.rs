@@ -2,7 +2,7 @@ use std::process::ExitCode;
 
 use formmcp_core::clients::{self, Client, Launcher, CLIENTS};
 use formmcp_core::settings::{self, Settings};
-use formmcp_core::{catalog, hooks, http, mcp, redact, secrets, suggest, telemetry, toolcache, verify, Family, Places, CORE_VERSION};
+use formmcp_core::{catalog, extensions, hooks, http, mcp, redact, secrets, suggest, telemetry, toolcache, verify, Family, Places, CORE_VERSION};
 use serde_json::json;
 
 const HELP: &str = "formmcp-cli: formMCP without the window
@@ -36,6 +36,10 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   telemetry <address>|off
                         send a trace and metrics for each call and app start to an OpenTelemetry collector over HTTP,
                         for example http://127.0.0.1:4318 (names and outcomes only; OTEL_EXPORTER_OTLP_HEADERS is sent)
+  extensions [list]     formMCP's own extensions (FormPortal's enabled.json and form.ext's dev.json): state, reason,
+                        permissions and commands (JSON); window, stamp, file, take and finish serve the window in a browser
+  extension <id> <command> [args JSON]
+                        run an extension's command in the formMCP window, which must be open; it asks for consent there
   settings              what settings.json holds now, with the HTTP address (JSON)
   mcp [--client AGENT]  serve formMCP's MCP tools on stdin and stdout; --client names the agent (else its own name decides)
   serve [--port N]      serve formMCP over HTTP on 127.0.0.1 only, at http://127.0.0.1:5625/mcp, until stopped
@@ -58,6 +62,66 @@ const HELP: &str = "formmcp-cli: formMCP without the window
 
 fn print(value: &serde_json::Value) {
     println!("{}", serde_json::to_string_pretty(value).unwrap_or_default());
+}
+
+fn extensions_command(command: &str, rest: &[String]) -> ExitCode {
+    let fail = |e: String| {
+        eprintln!("formmcp: {e}");
+        ExitCode::FAILURE
+    };
+    if command == "extension" {
+        let (Some(id), Some(name)) = (rest.first(), rest.get(1)) else { return fail("extension <id> <command> [args as JSON]".into()) };
+        let given = match rest.get(2).map(|t| serde_json::from_str::<serde_json::Value>(t)) {
+            None => json!({}),
+            Some(Ok(v)) => v,
+            Some(Err(e)) => return fail(format!("the args are not JSON ({e})")),
+        };
+        return match extensions::request(id, name, &given, "cli") {
+            Ok(result) => {
+                print(&json!({ "id": id, "command": name, "result": result }));
+                ExitCode::SUCCESS
+            }
+            Err(e) => fail(e),
+        };
+    }
+    match rest.first().map(String::as_str) {
+        None | Some("list") => {
+            print(&json!({ "root": extensions::portal_root(), "extensions": extensions::agent_rows() }));
+            ExitCode::SUCCESS
+        }
+        Some("window") => {
+            let base = rest.get(1).map(String::as_str).unwrap_or(extensions::HTTP_BASE);
+            println!("{}", extensions::listing(base));
+            ExitCode::SUCCESS
+        }
+        Some("stamp") => {
+            println!("{}", extensions::stamp_value());
+            ExitCode::SUCCESS
+        }
+        Some("file") => {
+            let served = extensions::answer(rest.get(1).map(String::as_str).unwrap_or(""), false);
+            println!("{}", json!({ "status": served.status, "headers": served.headers, "file": served.file }));
+            ExitCode::SUCCESS
+        }
+        Some("take") => {
+            println!("{}", serde_json::Value::Array(extensions::take()));
+            ExitCode::SUCCESS
+        }
+        Some("finish") => {
+            let mut text = String::new();
+            if std::io::Read::read_to_string(&mut std::io::stdin(), &mut text).is_err() {
+                return fail("could not read the outcome from stdin".into());
+            }
+            match serde_json::from_str::<serde_json::Value>(&text) {
+                Ok(outcome) => match extensions::finish(rest.get(1).map(String::as_str).unwrap_or(""), &outcome) {
+                    Ok(()) => ExitCode::SUCCESS,
+                    Err(e) => fail(e),
+                },
+                Err(e) => fail(format!("the outcome is not JSON ({e})")),
+            }
+        }
+        Some(other) => fail(format!("extensions {other:?}: use list, window [BASE], stamp, file ADDRESS, take or finish RID")),
+    }
 }
 
 fn main() -> ExitCode {
@@ -118,6 +182,9 @@ fn main() -> ExitCode {
         let port = Settings::load().port();
         print(&json!({ "file": settings::path(), "settings": saved, "http": { "address": http::address(port), "token_file": settings::token_path() } }));
         return ExitCode::SUCCESS;
+    }
+    if command == "extensions" || command == "extension" {
+        return extensions_command(command, &args[1..]);
     }
     if matches!(command, "version" | "--version" | "-V") {
         println!("formMCP {CORE_VERSION}");
