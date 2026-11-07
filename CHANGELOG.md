@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8.1 · 2026-11-07
+
+- The browser demo opens on the family's real pictures: each app card carries its app's own icon, a reel of nine Form apps' verified demo screenshots sits above the clients, and the Lab has a Flows tab that replays three realistic tasks (a trailer, a podcast episode, a poster) as the MCP calls an agent would make. Credits for every picture, and for the photographs, footage and recordings visible in the screenshots, are in `demo/CREDITS.md`. The app itself is unchanged.
+
 ## v0.8.0 · 2026-11-07
 
 - An offline browser demo in `demo/`: open `demo/index.html` (no install, no server) to use the real FormMCP window on the real family list, with a Lab that ranks apps for a task with `suggest_app`, runs the MCP tools in a console and hides secrets in results. Nothing is installed or sent anywhere. The app itself is unchanged.
