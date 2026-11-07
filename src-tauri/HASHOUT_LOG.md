@@ -5,6 +5,15 @@ Living log for formMCP's desktop shell. Source files stay comment-free; what the
 Current build version: v0.8.2
 Last updated: 2026-11-07 · v0.8.2 the splash, the rounded card and the reveal; v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
 
+## v0.8.3 · the macos-private-api feature {#v0-8-3}
+
+### Cargo.toml · tauri features
+- refers-to: src-tauri/Cargo.toml :: dependencies.tauri
+- kind: decision
+- logged: v0.8.3 · 2026-11-07
+
+0.8.2 set `macOSPrivateApi: true` in tauri.conf.json (the transparent splash needs it) but left the tauri crate without the matching `macos-private-api` feature; tauri-build refuses a config that enables the private API when the feature is off, so the app would not have built. The feature is now on, as in formvis. Features do not change Cargo.lock. Not compiled here.
+
 ## v0.8.2 · the splash, the rounded card and the reveal {#v0-8-2}
 
 ### reveal.rs, lib.rs, tauri.conf.json, Cargo.toml, capabilities/default.json · splash window, reveal timing, macOS corner mask
