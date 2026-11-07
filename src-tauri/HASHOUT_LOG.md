@@ -5,6 +5,15 @@ Living log for formMCP's desktop shell. Source files stay comment-free; what the
 Current build version: v0.8.1
 Last updated: 2026-11-07 · v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
 
+## v0.8.2 · the splash, the rounded card and the reveal {#v0-8-2}
+
+### reveal.rs, lib.rs, tauri.conf.json, Cargo.toml, capabilities/default.json · splash window, reveal timing, macOS corner mask
+- refers-to: src-tauri/src/reveal.rs :: mark_launch, conceal, app_ready, show_main, set_seen, round_splash; src-tauri/src/lib.rs :: run; src-tauri/tauri.conf.json :: app.windows, app.macOSPrivateApi
+- kind: decision
+- logged: v0.8.2 · 2026-11-07
+
+Parity with formvis's shell (owner: all thirteen apps get the same splash and rounded corners). reveal.rs is formvis's, minus the traffic-light call (formMCP keeps the native title bar): the splash holds for at least 2.6 s from launch, its bar completes in 220 ms, the main window then appears whole and the splash closes; after 20 s the window shows anyway. The splash window comes from tauri.conf.json (360x200, undecorated, transparent, no shadow, hidden until `round_splash`, which on macOS makes the window non-opaque and masks its content layer to a 16 px radius). The main window moved from the config to `run`, built hidden on macOS (then on screen at alpha 0, clicks passing through) and visible elsewhere, with the family's dark ground (20, 22, 27) as its background in place of formvis's 10, 10, 10, so it matches the page's `--ground` and no white or off-colour frame shows. Size, minimum size and centring are as they were. The page calls `app_ready` three frames after it removes `booting`; the build's commands need no permission entries (build.rs lists none), and the capability now names the splash window. objc2 0.6 and objc2-app-kit 0.3 are macOS-only dependencies (MIT or Apache-2.0; already in the tree through Tauri). Not compiled: cargo check was skipped on the shared machine; the Rust was read against formvis's reveal.rs and main.rs.
+
 ## v0.7.6 · the publisher and the licence in the bundle {#publisher}
 
 ### tauri.conf.json, Cargo.toml · publisher, copyright, license, licenseFile, authors

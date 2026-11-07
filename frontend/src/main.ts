@@ -769,3 +769,4 @@ if (invoke) {
 }
 
 document.documentElement.classList.remove("booting");
+if (invoke) requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => void invoke("app_ready").catch(() => undefined))));

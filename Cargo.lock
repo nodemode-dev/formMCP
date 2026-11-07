@@ -1175,6 +1175,8 @@ name = "formmcp"
 version = "0.8.1"
 dependencies = [
  "formmcp-core",
+ "objc2",
+ "objc2-app-kit",
  "serde_json",
  "tauri",
  "tauri-build",

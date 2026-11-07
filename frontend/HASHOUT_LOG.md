@@ -5,6 +5,15 @@ Living log for formMCP's window. Source files stay comment-free; what they would
 Current build version: v0.7.1
 Last updated: 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
 
+## v0.8.2 · the splash page and the ready call {#v0-8-2}
+
+### public/splash.html, src/main.ts · the card and app_ready
+- refers-to: frontend/public/splash.html; src/main.ts :: end of module (booting removal, app_ready)
+- kind: decision
+- logged: v0.8.2 · 2026-11-07
+
+splash.html is formvis's card with FormMCP's name, icon (formmcp.png) and done hook (`formmcpSplashDone`): a transparent html and a body that is the card (16 px radius, 1 px edge, #0a0a0a), the 72 px icon, one line, and the 180 by 3 px family-gradient bar on the 2.6 s curve. main.ts invokes `app_ready` three animation frames after the `booting` class comes off, so the shell reveals the window once the first real layout is painted; in a browser there is no invoke and nothing happens.
+
 ## v0.7.1 · the log names FormPortal's file check {#v0-7-1}
 
 ### main.ts · describe

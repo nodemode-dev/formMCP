@@ -1,4 +1,8 @@
+mod reveal;
+
 use std::sync::Mutex;
+
+use tauri::{WebviewUrl, WebviewWindowBuilder};
 
 use formmcp_core::clients::{self, Client, Launcher, CLIENTS};
 use formmcp_core::settings::{self, Settings, CLIENT_KEYS};
@@ -311,9 +315,25 @@ pub fn run() {
         };
         std::process::exit(code);
     }
+    reveal::mark_launch();
     tauri::Builder::default()
         .manage(Http::default())
-        .invoke_handler(tauri::generate_handler![snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import, safety, secret_set, secret_remove, safety_switch, hook_set, telemetry_set, verify_trust])
+        .setup(|app| {
+            let handle = app.handle().clone();
+            reveal::round_splash(&handle);
+            let window = WebviewWindowBuilder::new(&handle, "main", WebviewUrl::default())
+                .title("FormMCP")
+                .inner_size(900.0, 780.0)
+                .min_inner_size(560.0, 560.0)
+                .resizable(true)
+                .center()
+                .visible(reveal::BUILD_VISIBLE)
+                .background_color(reveal::BACKGROUND)
+                .build()?;
+            reveal::conceal(&window);
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![reveal::app_ready, snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import, safety, secret_set, secret_remove, safety_switch, hook_set, telemetry_set, verify_trust])
         .run(tauri::generate_context!())
         .expect("formMCP could not start its window");
 }

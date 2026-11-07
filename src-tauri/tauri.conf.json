@@ -14,8 +14,9 @@
       "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
     },
     "windows": [
-      { "label": "main", "title": "FormMCP", "width": 900, "height": 780, "minWidth": 560, "minHeight": 560, "resizable": true, "center": true, "backgroundColor": "#14161b" }
-    ]
+      { "label": "splash", "title": "FormMCP", "url": "splash.html", "width": 360, "height": 200, "resizable": false, "decorations": false, "center": true, "transparent": true, "shadow": false, "visible": false }
+    ],
+    "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,
