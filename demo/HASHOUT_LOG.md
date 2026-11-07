@@ -2,8 +2,28 @@
 
 Living log for the offline demo. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.8.0
-Last updated: 2026-11-07 · the offline demo: the real window on a Tauri shim, and the Lab
+Current build version: v0.8.1
+Last updated: 2026-11-07 · real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
+
+## v0.8.1 · real media {#v0-8-1}
+
+### media.ts · icons and the reel without a flash
+- refers-to: demo/src/media.ts :: decorateCards, buildReel, failsafe
+- kind: decision
+- logged: v0.8.1 · 2026-11-07
+
+main.ts builds every card and removes `booting` in one task. media.ts runs after it, puts `booting` back in the same task (no frame is painted between), adds the icon to each card head and builds the reel, then waits for every image to decode (with a 1.5 s failsafe) before removing `booting` again. The first visible frame therefore already holds the icons and screenshots. Icon slots have fixed width and height, the reel frames a fixed 16 by 10 box, so nothing moves. Pictures are plain relative files: they are only displayed, never read for pixels, so file:// is fine. Apps without an icon under `assets/app-icon` in a sibling repository get a two-letter tile.
+
+### flows.ts · task flows in the Lab
+- refers-to: demo/src/flows.ts :: FLOWS, execute, run, swap
+- kind: decision
+- logged: v0.8.1 · 2026-11-07
+
+Six step rows are made once; a flow change or a run only changes their text and `data-state`. The screenshot is swapped only after the next one has decoded, in a fixed 16 by 10 frame. The first step calls the demo's real `suggest` port; app steps answer from `sampleTools` and a written simulated result, honour the agent's off switches and hidden tools, and pass through the same redaction. Tool names for FormCut, FormWav, FormEncoder and FormVis are the ones those apps publish; arguments and results are invented for the demo and marked simulated. The Authorization shape in the last trailer step is assembled from pieces at run time, as the Redact sample is.
+
+### Not done
+- Twelve apps have no icon in a sibling repository's `assets/app-icon`, so they show a monogram, not artwork.
+- Checked in Chromium over file:// only.
 
 ## v0.8.0 · the offline demo {#v0-8-0}
 
