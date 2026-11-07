@@ -1056,6 +1056,11 @@ html.booting body {
   color: var(--ink-soft);
 }
 
+.ext-save-row {
+  margin: var(--sp-2) 0;
+  padding: 0 var(--sp-3);
+}
+
 .ext-consent-list {
   margin: var(--sp-2) 0;
   padding: 0 var(--sp-3) 0 calc(var(--sp-3) + 1.2em);

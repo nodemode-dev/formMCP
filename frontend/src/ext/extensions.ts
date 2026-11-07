@@ -158,7 +158,7 @@ export function mountExtensions(o: Options): void {
   saveBox.id = "ext-save";
   const saveTitle = el("p", "ext-dialog-title");
   const saveText = el("p", "ext-consent-text");
-  const saveRow = el("div", "profile-form");
+  const saveRow = el("div", "profile-form ext-save-row");
   const saveName = el("input");
   saveName.type = "text";
   saveName.spellcheck = false;
@@ -592,6 +592,7 @@ export function mountExtensions(o: Options): void {
   };
 
   const fetchJson = async (path: string, init?: RequestInit): Promise<unknown> => {
+    if (window.location.protocol === "file:") throw new Error("no extension route in a page opened from a file");
     const reply = await fetch(path, { cache: "no-store", ...init, headers: { "X-FormMCP": "1", ...(init?.headers ?? {}) } });
     if (!reply.ok) throw new Error(`${reply.status}`);
     const type = reply.headers.get("content-type") ?? "";
