@@ -5,6 +5,15 @@ Living log for formMCP's desktop shell. Source files stay comment-free; what the
 Current build version: v0.8.4
 Last updated: 2026-11-07 · v0.8.4 no shell changes (demos 2 and 3 in demos/); v0.8.3 the macos-private-api feature; v0.8.2 the splash, the rounded card and the reveal; v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
 
+## v0.9.0 · the formext protocol and the extension commands {#v0-9-0}
+
+### lib.rs, tauri.conf.json · formext://, window commands, frame-src
+- refers-to: src-tauri/src/lib.rs :: formext_file, run (register_asynchronous_uri_scheme_protocol), extensions_list, extensions_stamp, extension_requests, extension_finish, extension_save, open_portal, settings_mark, settings_restore · src-tauri/tauri.conf.json :: app.security.csp
+- kind: decision
+- logged: v0.9.0 · 2026-11-07
+
+formMCP's window has no HTTP server of its own (the MCP one needs a token a sandboxed frame cannot send), so extension files come from the custom protocol `formext`, registered asynchronously so a large file is read off the main thread. The handler is thin: `extensions::answer` resolves and checks, the shell reads the file and copies the headers; HEAD gets GET's status and headers with no body (section 4 lets both through); any other method, and any file that cannot be read, is a 404 with the safe headers and no body. The window's CSP gains `frame-src formext: http://formext.localhost` (the second is how Tauri addresses custom protocols on Windows); without it `default-src 'self'` would block the frames. Tauri's own initialisation scripts are main-frame only in 2.12 (`for_main_frame_only: true` in its webview manager), so nothing is injected into an extension's frame. The new commands need no permission entries, as before. Not compiled here (no GTK on this machine); the protocol and command signatures were read against tauri 2.12.5's `register_asynchronous_uri_scheme_protocol` and `UriSchemeResponder::respond`, and the logic they call is in core, which was built and tested.
+
 ## v0.8.3 · the macos-private-api feature {#v0-8-3}
 
 ### Cargo.toml · tauri features

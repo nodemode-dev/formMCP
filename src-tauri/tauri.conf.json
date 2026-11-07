@@ -11,7 +11,7 @@
   "app": {
     "withGlobalTauri": true,
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src formext: http://formext.localhost"
     },
     "windows": [
       { "label": "splash", "title": "FormMCP", "url": "splash.html", "width": 360, "height": 200, "resizable": false, "decorations": false, "center": true, "transparent": true, "shadow": false, "visible": false }
