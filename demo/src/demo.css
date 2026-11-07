@@ -20,6 +20,32 @@
   text-overflow: ellipsis;
 }
 
+.demo-links {
+  display: flex;
+  flex: none;
+  gap: var(--sp-3);
+}
+
+.demo-links a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.demo-links a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.demo-links a[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.demo-links a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
 .demo-count {
   flex: none;
   color: var(--ink-soft);

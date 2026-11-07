@@ -109,7 +109,11 @@ All FormMCP builds are compiled and released from [FormCompiler](https://github.
 
 ## Demo
 
-Open [`demo/index.html`](demo/index.html) in a browser (double-click it, no server or install needed) to use the real FormMCP window on the real family list: rank apps for a task with `suggest_app`, run the MCP tools in a console, hide secrets in results, and save, import and export profiles. Nothing is installed or sent anywhere. See [`demo/README.md`](demo/README.md).
+Three demos open in a browser by double-click, with no server or install, and each runs the real FormMCP window on the real family list. Nothing is installed or sent anywhere, and they link to each other.
+
+- [`demo/index.html`](demo/index.html), demo 1: rank apps for a task with `suggest_app`, run the MCP tools in a console, hide secrets in results, and save, import and export profiles. See [`demo/README.md`](demo/README.md).
+- [`demos/connect/index.html`](demos/connect/index.html), demo 2, connecting agents: the config FormMCP writes for Claude Code, Codex and Cursor, HTTP mode with its token and refusals, and what each agent sees under a profile. See [`demos/connect/README.md`](demos/connect/README.md).
+- [`demos/safety/index.html`](demos/safety/index.html), demo 3, safety and activity: secret hiding, hooks, tracing and the file check on a replayable log of agent calls. See [`demos/safety/README.md`](demos/safety/README.md).
 
 ## Run it from source
 
