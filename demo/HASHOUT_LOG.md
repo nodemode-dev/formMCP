@@ -2,8 +2,8 @@
 
 Living log for the offline demo. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.8.3
-Last updated: 2026-11-07 · real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
+Current build version: v0.8.4
+Last updated: 2026-11-07 · the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
 
 ## v0.8.1 · real media {#v0-8-1}
 

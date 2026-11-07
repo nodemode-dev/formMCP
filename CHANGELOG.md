@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8.4 · 2026-11-07
+
+- Two more browser demos beside the first, each running the real FormMCP window and linked from a small row at the top of all three. `demos/connect/` shows how agents are connected: the exact config FormMCP writes for Claude Code, Codex and Cursor from the file as it is on disk, HTTP mode with its token and each refusal, and what each agent sees under a profile. `demos/safety/` shows what FormMCP hides, checks and records: a recorded session replayed against the Safety settings, before-call and after-call hooks, tracing with the OTLP bodies, and the file check on installed apps. Credits are in each demo's `CREDITS.md`. The app itself is unchanged.
+
 ## v0.8.3 · 2026-11-07
 
 - Fixes the 0.8.2 desktop build: the transparent splash needs Tauri's macOS private API, and the crate feature that goes with it was missing. Nothing else in the app changed.

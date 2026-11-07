@@ -2,8 +2,8 @@
 
 Living log for formMCP's desktop shell. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.8.3
-Last updated: 2026-11-07 · v0.8.3 the macos-private-api feature; v0.8.2 the splash, the rounded card and the reveal; v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+Current build version: v0.8.4
+Last updated: 2026-11-07 · v0.8.4 no shell changes (demos 2 and 3 in demos/); v0.8.3 the macos-private-api feature; v0.8.2 the splash, the rounded card and the reveal; v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
 
 ## v0.8.3 · the macos-private-api feature {#v0-8-3}
 

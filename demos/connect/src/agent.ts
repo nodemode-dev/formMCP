@@ -157,7 +157,7 @@ export function toolsCall(client: string, transport: string, name: string, args:
 
 export function initialize(client: string, transport: string, clientName: string, version: string): unknown {
   record("session", { client: clientName, client_version: version, as: client, transport, expose: settings.expose, profile: settings.use_profile[client] ?? null });
-  return { protocolVersion: PROTOCOL, capabilities: { tools: { listChanged: settings.expose.length > 0 && transport === "stdio" } }, serverInfo: { name: "formmcp", title: "formMCP", version: "0.8.3" }, instructions: INSTRUCTIONS };
+  return { protocolVersion: PROTOCOL, capabilities: { tools: { listChanged: settings.expose.length > 0 && transport === "stdio" } }, serverInfo: { name: "formmcp", title: "formMCP", version: "0.8.4" }, instructions: INSTRUCTIONS };
 }
 
 export function answer(client: string, transport: string, msg: Record<string, unknown>): Record<string, unknown> | null {
