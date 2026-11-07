@@ -107,6 +107,8 @@ FormMCP suggests; FormPortal installs. The agent sees one short list and loads o
 
 All FormMCP builds are compiled and released from [FormCompiler](https://github.com/nodemode-dev/formcompiler); this repo holds the source.
 
+**Updates come through FormPortal.** FormMCP does not update itself: install [FormPortal](https://formai.studio/formportal/) and it keeps FormMCP up to date, or download the new version from the links above.
+
 ## Run it from source
 
 Prefer it in your browser, or want to contribute? Run the web UI straight from this repo.
