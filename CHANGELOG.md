@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8.0 · 2026-11-07
+
+- An offline browser demo in `demo/`: open `demo/index.html` (no install, no server) to use the real FormMCP window on the real family list, with a Lab that ranks apps for a task with `suggest_app`, runs the MCP tools in a console and hides secrets in results. Nothing is installed or sent anywhere. The app itself is unchanged.
+
 ## v0.7.8 · 2026-11-04
 
 - README in the Form family template (Mackin's #6), merged with main. Nothing in the app changed.
