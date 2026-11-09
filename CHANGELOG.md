@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.10.0 · 2026-11-09
+
+- The three demos open inside the app. A Demos button at the top right of the window shows a panel with one card per demo (its screenshot, title and what it shows); on macOS the Help menu has an item for each. A demo opens in a window of its own, the same page as the browser demo, in its prepared state: the window and the Lab, connecting agents, or safety and activity. It is a sandboxed copy that has no access to FormMCP's commands, so it never changes your settings, your agents' files, the keychain or any app; close the window to leave it.
+- The demo pages ship in the app's bundle from their committed builds, so nothing new is added and every file stays credited in the demo's `CREDITS.md`.
+- Agents can open a demo with the new MCP tool `demo_open` (`window`, `connect` or `safety`) while FormMCP's window is open.
+- The app's commands are now declared, and only the splash and main windows may call them.
+- The browser demos are rebuilt for the version they show.
+
 ## v0.9.1 · 2026-11-07
 
 - Merges Greg's pull request, docs(readme): updates come through FormPortal. FormMCP has no in-app updater, so the README's Download section now says FormPortal keeps it up to date, with a link, and that a new version can also be downloaded from the links above.

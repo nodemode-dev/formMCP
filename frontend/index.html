@@ -20,6 +20,10 @@
           <p class="sub">One connection from Claude Code, Codex and Cursor to the Form family</p>
         </div>
         <span class="version" id="version" translate="no"></span>
+        <button class="btn btn-small demos-toggle" id="demos-toggle" type="button" aria-expanded="false" aria-controls="demos" data-demos-toggle>
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 3.5v9l7-4.5z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg>
+          <span>Demos</span>
+        </button>
       </header>
       <section class="clients" aria-label="Agent clients">
         <div class="client" data-client="claude">
@@ -116,6 +120,35 @@
           </div>
           <ul class="profile-list safety-list" id="safety-list"></ul>
         </div>
+      </section>
+      <section class="demos" id="demos" aria-label="Demos" hidden data-demos>
+        <p class="profile-note">Demos open in their own window: a sandboxed FormMCP that never reaches your agents, settings, keys or apps. Close it to leave.</p>
+        <ul class="demo-cards">
+          <li class="demo-card">
+            <img class="demo-shot" src="/demo/assets/media/shots/mcp-hero.webp" width="96" height="60" alt="" />
+            <div class="demo-copy">
+              <span class="demo-name">The window and the Lab</span>
+              <span class="demo-line">Every Form app, the per-agent switches, and a Lab that ranks apps for a task and replays three agent flows.</span>
+            </div>
+            <button class="btn btn-small" type="button" data-demo-open="window">Open</button>
+          </li>
+          <li class="demo-card">
+            <img class="demo-shot" src="/demo/assets/media/shots/mcp-agents.webp" width="96" height="60" alt="" />
+            <div class="demo-copy">
+              <span class="demo-name">Connecting agents</span>
+              <span class="demo-line">The config written for Claude Code, Codex and Cursor, HTTP with its token and refusals, and what each agent sees.</span>
+            </div>
+            <button class="btn btn-small" type="button" data-demo-open="connect">Open</button>
+          </li>
+          <li class="demo-card">
+            <img class="demo-shot" src="/demo/assets/media/shots/mcp-safety.webp" width="96" height="60" alt="" />
+            <div class="demo-copy">
+              <span class="demo-name">Safety and activity</span>
+              <span class="demo-line">A recorded session replayed against the Safety settings, hooks, tracing and the file check on installed apps.</span>
+            </div>
+            <button class="btn btn-small" type="button" data-demo-open="safety">Open</button>
+          </li>
+        </ul>
       </section>
       <ul class="apps" id="apps"></ul>
       <section class="log" aria-label="Activity">

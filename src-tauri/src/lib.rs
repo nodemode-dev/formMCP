@@ -3,7 +3,7 @@ mod reveal;
 use std::borrow::Cow;
 use std::sync::Mutex;
 
-use tauri::{WebviewUrl, WebviewWindowBuilder};
+use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 use formmcp_core::clients::{self, Client, Launcher, CLIENTS};
 use formmcp_core::settings::{self, Settings, CLIENT_KEYS};
@@ -358,6 +358,55 @@ fn formext_file(request: &tauri::http::Request<Vec<u8>>) -> tauri::http::Respons
     })
 }
 
+const DEMOS: [(&str, &str, &str); 3] = [
+    ("window", "demo/index.html", "FormMCP demo: the window and the Lab"),
+    ("connect", "demos/connect/index.html", "FormMCP demo: connecting agents"),
+    ("safety", "demos/safety/index.html", "FormMCP demo: safety and activity"),
+];
+
+fn demo_window(app: &tauri::AppHandle, id: &str) -> Result<(), String> {
+    let (id, page, title) = DEMOS.iter().copied().find(|(d, _, _)| *d == id).ok_or_else(|| format!("there is no demo {id:?}; the demos are window, connect and safety"))?;
+    let label = format!("demo-{id}");
+    if let Some(open) = app.get_webview_window(&label) {
+        return open.set_focus().map_err(|e| e.to_string());
+    }
+    WebviewWindowBuilder::new(app, label, WebviewUrl::App(page.into()))
+        .title(title)
+        .inner_size(1100.0, 820.0)
+        .min_inner_size(560.0, 560.0)
+        .resizable(true)
+        .center()
+        .background_color(reveal::BACKGROUND)
+        .build()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn open_demo(app: tauri::AppHandle, id: String) -> Result<(), String> {
+    demo_window(&app, &id)
+}
+
+fn demos_menu(app: &tauri::AppHandle) -> tauri::Result<()> {
+    use tauri::menu::{Menu, MenuItem, MenuItemKind, PredefinedMenuItem, HELP_SUBMENU_ID};
+    let menu = Menu::default(app)?;
+    if let Some(MenuItemKind::Submenu(help)) = menu.get(HELP_SUBMENU_ID) {
+        if !help.items()?.is_empty() {
+            help.append(&PredefinedMenuItem::separator(app)?)?;
+        }
+        for (id, _, title) in DEMOS {
+            help.append(&MenuItem::with_id(app, format!("demo-{id}"), title.replace("FormMCP demo: ", "Demo: "), true, None::<&str>)?)?;
+        }
+    }
+    app.set_menu(menu)?;
+    app.on_menu_event(|app, event| {
+        if let Some(id) = event.id().as_ref().strip_prefix("demo-") {
+            let _ = demo_window(app, id);
+        }
+    });
+    Ok(())
+}
+
 #[tauri::command]
 fn log_tail(from: u64) -> Value {
     let (events, next) = log::tail(from);
@@ -396,9 +445,12 @@ pub fn run() {
                 .background_color(reveal::BACKGROUND)
                 .build()?;
             reveal::conceal(&window);
+            if cfg!(target_os = "macos") {
+                demos_menu(&handle)?;
+            }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![reveal::app_ready, snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import, safety, secret_set, secret_remove, safety_switch, hook_set, telemetry_set, verify_trust, extensions_list, extensions_stamp, extension_requests, extension_finish, extension_save, open_portal, settings_mark, settings_restore])
+        .invoke_handler(tauri::generate_handler![reveal::app_ready, snapshot, set_expose, set_for, tool_list, tool_load, set_tool, http_switch, http_token, http_rotate, connect, log_tail, set_start, profile_use, profile_save, profile_delete, profile_export, profile_import, safety, secret_set, secret_remove, safety_switch, hook_set, telemetry_set, verify_trust, extensions_list, extensions_stamp, extension_requests, extension_finish, extension_save, open_portal, settings_mark, settings_restore, open_demo])
         .run(tauri::generate_context!())
         .expect("formMCP could not start its window");
 }

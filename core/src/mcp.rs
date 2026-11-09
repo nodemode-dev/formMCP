@@ -305,7 +305,12 @@ fn tools() -> Value {
               "id": { "type": "string", "description": "An extension id from extensions_list." },
               "command": { "type": "string", "description": "A command id from that extension's commands." },
               "args": { "type": "object", "description": "Arguments for the command, when it takes any." } }, "required": ["id", "command"] },
-          "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false } }
+          "annotations": { "readOnlyHint": false, "destructiveHint": false, "openWorldHint": false } },
+        { "name": "demo_open", "title": "Open a formMCP demo",
+          "description": "Opens one of formMCP's built-in demos in its own window, beside formMCP's window, which must be open: window (every Form app, the per-agent switches and the Lab), connect (the config written for Claude Code, Codex and Cursor, HTTP and what each agent sees) or safety (a recorded session replayed against the Safety settings, hooks, tracing and the file check). A demo is a sandboxed copy in a prepared state; it never changes formMCP's settings, the agents' files, the keychain or any app.",
+          "inputSchema": { "type": "object", "properties": {
+              "id": { "type": "string", "enum": ["window", "connect", "safety"], "description": "Which demo to open." } }, "required": ["id"] },
+          "annotations": { "readOnlyHint": true, "openWorldHint": false } }
     ])
 }
 
@@ -487,6 +492,13 @@ fn call(gateway: &mut Gateway, name: &str, args: &Value) -> Result<Outcome, Stri
             let (id, command) = (text("id")?, text("command")?);
             let given = args.get("args").cloned().unwrap_or_else(|| json!({}));
             extensions::request(&id, &command, &given, &gateway.client).map(|result| Outcome::Mine(json!({ "id": id, "command": command, "result": result })))
+        }
+        "demo_open" => {
+            let id = args.get("id").and_then(Value::as_str).ok_or("id is required: window, connect or safety")?;
+            if !["window", "connect", "safety"].contains(&id) {
+                return Err(format!("there is no demo {id:?}; the demos are window, connect and safety"));
+            }
+            extensions::window_command("demo.open", &json!({ "id": id }), &gateway.client).map(|result| Outcome::Mine(json!({ "opened": id, "result": result })))
         }
         other => match other.split_once(EXPOSED_SEPARATOR) {
             Some((id, tool)) if gateway.settings.expose.iter().any(|e| e == id) && !gateway.is_off(id) => {

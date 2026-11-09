@@ -76,6 +76,7 @@ export interface Options {
   refresh: () => Promise<void>;
   family: FamilyApp[];
   appVersion: string;
+  own?: (command: string, args: Record<string, unknown>) => Promise<unknown>;
 }
 
 export function mountExtensions(o: Options): void {
@@ -666,6 +667,12 @@ export function mountExtensions(o: Options): void {
       for (const req of asked ?? []) {
         let outcome: { result?: unknown; error?: { code: number; message: string } };
         try {
+          if (req.id === "formmcp" && o.own) {
+            outcome = { result: (await o.own(req.command, (req.args ?? {}) as Record<string, unknown>)) ?? null };
+            if (tauri && o.invoke) await o.invoke("extension_finish", { rid: req.rid, outcome }).catch(() => undefined);
+            else await fetchJson(`/api/extensions/requests/${encodeURIComponent(req.rid)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(outcome) }).catch(() => undefined);
+            continue;
+          }
           let r = records.find((x) => x.id === req.id);
           if (!r) {
             await reload();

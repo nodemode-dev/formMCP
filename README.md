@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.9.1" src="https://img.shields.io/badge/version-0.9.1-eef0f4?style=flat-square">
+  <img alt="version 0.10.0" src="https://img.shields.io/badge/version-0.10.0-eef0f4?style=flat-square">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-B7410E?style=flat-square&logo=rust&logoColor=white">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square">
   <img alt="macOS, Windows, Linux" src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-native-2f7bf5?style=flat-square">
@@ -116,6 +116,8 @@ All FormMCP builds are compiled and released from [FormCompiler](https://github.
 ## Demo
 
 Three demos open in a browser by double-click, with no server or install, and each runs the real FormMCP window on the real family list. Nothing is installed or sent anywhere, and they link to each other.
+
+The app opens the same three demos itself: the Demos button at the top right of the window lists them, and on macOS the Help menu has one item per demo. Each opens in its own window, a sandboxed FormMCP in a prepared state that has no access to the app's commands, so it never changes your settings, your agents' files, the keychain or any app; close the window to leave. Agents can open one with the MCP tool `demo_open` (`window`, `connect` or `safety`) while FormMCP's window is open.
 
 - [`demo/index.html`](demo/index.html), demo 1: rank apps for a task with `suggest_app`, run the MCP tools in a console, hide secrets in results, and save, import and export profiles. See [`demo/README.md`](demo/README.md).
 - [`demos/connect/index.html`](demos/connect/index.html), demo 2, connecting agents: the config FormMCP writes for Claude Code, Codex and Cursor, HTTP mode with its token and refusals, and what each agent sees under a profile. See [`demos/connect/README.md`](demos/connect/README.md).
