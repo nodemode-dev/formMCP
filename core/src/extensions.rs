@@ -564,6 +564,17 @@ pub fn request(id: &str, command: &str, args: &Value, client: &str) -> Result<Va
     if !window_open() {
         return Err(format!("extension commands run in the {APP_NAME} window; open {APP_NAME} and ask again"));
     }
+    ask_window(id, &ext.name, command, args, client)
+}
+
+pub fn window_command(command: &str, args: &Value, client: &str) -> Result<Value, String> {
+    if !window_open() {
+        return Err(format!("this runs in the {APP_NAME} window; open {APP_NAME} and ask again"));
+    }
+    ask_window(PRODUCT, APP_NAME, command, args, client)
+}
+
+fn ask_window(id: &str, name: &str, command: &str, args: &Value, client: &str) -> Result<Value, String> {
     let rid = new_rid();
     write_atomic(&mailbox().join("requests").join(format!("{rid}.json")), &json!({ "rid": rid, "id": id, "command": command, "args": args, "client": client }).to_string())?;
     let result = mailbox().join("results").join(format!("{rid}.json"));
@@ -578,9 +589,9 @@ pub fn request(id: &str, command: &str, args: &Value, client: &str) -> Result<Va
         }
         if started.elapsed() > ALIVE_FOR * 2 && !window_open() {
             let _ = std::fs::remove_file(mailbox().join("requests").join(format!("{rid}.json")));
-            return Err(format!("the {APP_NAME} window closed before {} ran", ext.name));
+            return Err(format!("the {APP_NAME} window closed before {name} ran"));
         }
         std::thread::sleep(Duration::from_millis(150));
     }
-    Err(format!("{} did not finish within {} s", ext.name, WAIT.as_secs()))
+    Err(format!("{name} did not finish within {} s", WAIT.as_secs()))
 }
