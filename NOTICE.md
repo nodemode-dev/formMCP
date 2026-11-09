@@ -28,6 +28,7 @@ Its dependencies are MIT, Apache-2.0 or dual MIT and Apache-2.0, with some BSD-3
 | `demos/connect/assets/media/` (v0.8.4) | demo 2's pictures: the Form family's own app icons from the sibling repositories (the same files as demo 1) and formMCP's own window mark; every file, author, source and licence is listed in `demos/connect/CREDITS.md` |
 | Form Extension Contract kit, Apache-2.0, nodemode (v0.9.0) | the extension host: `frontend/src/ext/host-bridge.ts` is the kit's `host/host-bridge.ts` unchanged; `core/src/extensions.rs` is a line-for-line Rust port of the kit's `host/python/formext_host.py` (resolver and safe file serving) keeping its messages. Apache-2.0 is compatible with GPL-3.0 |
 | `demos/safety/assets/` (v0.8.4) | demo 3's pictures: the Form family's own app icons from the sibling repositories (the same files as demo 1) and formMCP's own window mark; every file, author, source and licence is listed in `demos/safety/CREDITS.md` |
+| The three demos inside the app (v0.10.0) | `frontend/demos-bundle.ts` copies the built demo pages above (`demo/index.html`, `demos/connect/index.html`, `demos/safety/index.html` and each `assets/` folder) unchanged into the window's bundle at `demo/` and `demos/<name>/`; nothing new is added, and every shipped file stays credited in that demo's `CREDITS.md`. The Demos panel's previews are demo 1's `mcp-hero.webp`, `mcp-agents.webp` and `mcp-safety.webp`, formMCP's own screenshots |
 
 Every new dependency, binary, font or data file gets a row here before it is used.
 

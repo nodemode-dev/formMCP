@@ -1,5 +1,6 @@
 import family from "../../core/data/family.json";
 import { mountExtensions, watchInvoke } from "./ext/extensions";
+import { demoCommand, mountDemos } from "./demos";
 
 type App = (typeof family.apps)[number];
 type Filter = "all" | "mcp";
@@ -769,6 +770,7 @@ if (invoke) {
   agentPick.disabled = true;
 }
 
-mountExtensions({ invoke, refresh, family: family.apps, appVersion: __APP_VERSION__ });
+mountDemos(invoke, (text) => setText(status, text));
+mountExtensions({ invoke, refresh, family: family.apps, appVersion: __APP_VERSION__, own: demoCommand });
 document.documentElement.classList.remove("booting");
 if (invoke) requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => void invoke("app_ready").catch(() => undefined))));

@@ -1077,3 +1077,87 @@ html.booting body {
   height: 0;
   overflow: hidden;
 }
+
+.bar:has(.demos-toggle) {
+  grid-template-columns: auto 1fr auto auto;
+}
+
+.demos-toggle {
+  grid-column: 4;
+  grid-row: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.demos-toggle[aria-expanded="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.demos {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--sp-2);
+  flex-shrink: 0;
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-m);
+  background: var(--pane);
+}
+
+.demos[hidden] {
+  display: none;
+}
+
+.demo-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demo-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: start;
+  padding: var(--sp-2);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-s);
+  background: var(--ground);
+}
+
+.demo-shot {
+  grid-row: 1 / span 2;
+  width: 96px;
+  height: 60px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-s);
+  object-fit: cover;
+}
+
+.demo-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.demo-name {
+  font-weight: 600;
+}
+
+.demo-line {
+  color: var(--ink-soft);
+  font-size: var(--fs-s);
+}
+
+.demo-card .btn-small {
+  justify-self: start;
+  grid-column: 2;
+  grid-row: 2;
+}
