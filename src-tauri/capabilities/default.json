@@ -1,7 +1,14 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The formMCP window: read the family list.",
+  "description": "The formMCP window: read the family list and change formMCP's own settings. Demo windows get no capability, so no command reaches them.",
   "windows": ["splash", "main"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "core:default",
+    "allow-app-ready", "allow-snapshot", "allow-set-expose", "allow-set-for", "allow-tool-list", "allow-tool-load", "allow-set-tool", "allow-http-switch",
+    "allow-http-token", "allow-http-rotate", "allow-connect", "allow-log-tail", "allow-set-start", "allow-profile-use", "allow-profile-save",
+    "allow-profile-delete", "allow-profile-export", "allow-profile-import", "allow-safety", "allow-secret-set", "allow-secret-remove", "allow-safety-switch",
+    "allow-hook-set", "allow-telemetry-set", "allow-verify-trust", "allow-extensions-list", "allow-extensions-stamp", "allow-extension-requests",
+    "allow-extension-finish", "allow-extension-save", "allow-open-portal", "allow-settings-mark", "allow-settings-restore", "allow-open-demo"
+  ]
 }
