@@ -135,7 +135,9 @@ html.booting body {
 
 .app {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto 1fr auto auto auto;
+  min-width: 0;
   align-content: start;
   gap: var(--sp-2);
   min-height: 196px;
@@ -170,8 +172,10 @@ html.booting body {
 
 .app-badges {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
+  min-width: 0;
 }
 
 .badge,
@@ -649,6 +653,8 @@ html.booting body {
 }
 
 .app-where {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   color: var(--ink-faint);
   font-size: var(--fs-s);

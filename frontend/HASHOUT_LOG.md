@@ -187,3 +187,10 @@ Copied from FormTray (the family's newest shell, same owner and licence) so form
 - logged: v0.7.2 · 2026-10-25
 
 Family rule from `FAMILY_DEV_PLAN.md` v0.4.x Phase 2b (formai_dev sidecar): every frontend installs with zero `npm audit` findings. Vite 8.3.2 carries a `launch-editor` with two command-injection advisories in the dev server (ledger FB-004); 8.3.5 clears them. Dev dependency only, nothing in the shipped bundle changed. Verified after `npm install`: `npm audit` reports 0 vulnerabilities, `npm run typecheck` passes, `vite build` succeeds (outDir outside the repo), and the dev server answers 200 on `http://localhost:5620/` with no Network address printed.
+
+### Rows keep their content inside the card
+- refers-to: src/styles/app.css :: .app, .app-badges, .app-where
+- kind: fix
+- logged: v0.10.1 · 2026-11-09
+
+Owner report: on the cards with "On for Claude Code" (FormCut, FormEncoder), the Tools button and the Live pill spilled past the card's edge. `.app` is a grid with no column template, so its one column grew to the longest line that cannot wrap, the installed line (`app-where`, nowrap) plus the Tools button, and every child overflowed the card by the same amount. Measured in Chromium with an installed, reachable line in every MCP row: 34 px at a 760 px window, 82 px at 1100 and 1440, on every MCP card in both themes. The column is now `minmax(0, 1fr)` with `min-width: 0` on the card, the installed line takes the free space and shrinks to its ellipsis, and the badge line wraps. Re-measured at 600, 760, 900, 1100, 1440 and 1920 px in dark and light: nothing outside any card, client card or header.
