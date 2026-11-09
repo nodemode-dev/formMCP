@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.10.1 · 2026-11-09
+
+- Each app card keeps its content inside its edge. With an app installed, the Tools button and the state pill (Live, Public, Coming) no longer spill past the card; a long installed line now ends in an ellipsis and the badge line wraps on a narrow card.
+
 ## v0.10.0 · 2026-11-09
 
 - The three demos open inside the app. A Demos button at the top right of the window shows a panel with one card per demo (its screenshot, title and what it shows); on macOS the Help menu has an item for each. A demo opens in a window of its own, the same page as the browser demo, in its prepared state: the window and the Lab, connecting agents, or safety and activity. It is a sandboxed copy that has no access to FormMCP's commands, so it never changes your settings, your agents' files, the keychain or any app; close the window to leave it.
