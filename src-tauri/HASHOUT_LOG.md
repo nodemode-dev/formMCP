@@ -5,6 +5,22 @@ Living log for formMCP's desktop shell. Source files stay comment-free; what the
 Current build version: v0.9.1
 Last updated: 2026-11-07 · v0.9.1 no shell changes (Greg's README note on FormPortal updates); v0.9.0 the formext protocol and the extension commands; v0.8.4 no shell changes (demos 2 and 3 in demos/); v0.8.3 the macos-private-api feature; v0.8.2 the splash, the rounded card and the reveal; v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
 
+## v0.10.0 · demo windows, the Help menu and the command list {#v0-10-0}
+
+### lib.rs · open_demo, demo_window, demos_menu
+- refers-to: src-tauri/src/lib.rs :: DEMOS, demo_window, open_demo, demos_menu, run (setup, generate_handler)
+- kind: decision
+- logged: v0.10.0 · 2026-11-09
+
+A demo opens in a window of its own (`demo-window`, `demo-connect`, `demo-safety`; a second Open focuses the one already there) on the bundled page, titled "FormMCP demo: ...", so the person's FormMCP window is never replaced and closing the demo window is the way out. On macOS the shell sets Tauri's default menu with three items appended to its Help submenu ("Demo: the window and the Lab" and the rest), which call the same `demo_window`; on Windows and Linux the window has no menu bar today and none is added, so the Demos button is the way there.
+
+### build.rs, capabilities/default.json · the app's commands only for the splash and main windows
+- refers-to: src-tauri/build.rs :: COMMANDS, main · src-tauri/capabilities/default.json :: permissions
+- kind: decision
+- logged: v0.10.0 · 2026-11-09
+
+The demo pages replace `window.__TAURI__` with their shim before the window code runs, so they never call the app; but Tauri lets every window call every app command unless the app declares them. build.rs now declares the commands through `AppManifest::commands`, and the default capability grants `allow-<command>` for each to `splash` and `main` only. A demo window matches no capability, so even a page that reached `__TAURI_INTERNALS__` directly could not read or change formMCP's settings, the agents' files, the keychain or HTTP. A new command must now be added to `COMMANDS` and to the capability, or the window is refused it. Not compiled in this round (the shared machine ran out of disk during `cargo check`); the menu and window calls were read against tauri 2.12.5 (`Menu::default`, `HELP_SUBMENU_ID`, `Submenu::items` and `append`, `MenuItem::with_id`, `on_menu_event`) and tauri-build 2.7.4 (`AppManifest::commands`, which names permissions `allow-` plus the command with hyphens). The lead compiles it before release.
+
 ## v0.9.0 · the formext protocol and the extension commands {#v0-9-0}
 
 ### lib.rs, tauri.conf.json · formext://, window commands, frame-src

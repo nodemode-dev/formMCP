@@ -5,6 +5,15 @@ Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files
 Current build version: v0.7.5
 Last updated: 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
 
+## v0.10.0 · demo_open {#v0-10-0}
+
+### mcp.rs, extensions.rs · the demo_open tool through the window's mailbox
+- refers-to: core/src/mcp.rs :: tool list (demo_open), call ("demo_open") · core/src/extensions.rs :: request, window_command, ask_window · cli/tests/mcp_stdio_and_http.rs :: TOOLS
+- kind: decision
+- logged: v0.10.0 · 2026-11-09
+
+Agents open one of formMCP's three demos with `demo_open {id}` (`window`, `connect`, `safety`). Opening a window is the shell's job and the MCP server runs in its own process, so the tool uses the mailbox extension commands already use: the waiting half of `request` became `ask_window`, and `window_command` sends a request with the id `formmcp` (the product id, which no extension can have) after the same open-window check. The tool is read-only in its annotations: a demo changes nothing. Unknown ids are refused before anything is written. The test's tool list gains the name. Not compiled or tested in this round (the shared machine ran out of disk); `cargo test --locked -p formmcp-core -p formmcp-cli` is the check before release.
+
 ## v0.9.0 · the extension host {#v0-9-0}
 
 ### extensions.rs · the resolver, ported line for line

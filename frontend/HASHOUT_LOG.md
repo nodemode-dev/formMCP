@@ -5,6 +5,22 @@ Living log for formMCP's window. Source files stay comment-free; what they would
 Current build version: v0.9.1
 Last updated: 2026-11-07 · v0.9.1 no window changes (Greg's README note on FormPortal updates); v0.9.0 the extension host; v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
 
+## v0.10.0 · the demos inside the app {#v0-10-0}
+
+### demos-bundle.ts, vite.config.ts · the built demo pages ship in the window's bundle
+- refers-to: frontend/demos-bundle.ts :: DEMO_FOLDERS, shipped, served, demosBundle · frontend/vite.config.ts :: plugins · frontend/tsconfig.json :: include
+- kind: decision
+- logged: v0.10.0 · 2026-11-09
+
+The family rule is that every app opens all of its demos from inside the app. formMCP's three demos are not documents: each is the real window run on a shim for Tauri's `invoke`, in a prepared state (demo 1 on the family list with the Lab, demo 2 with a virtual home folder and two connected agents, demo 3 with a recorded session and nine simulated installs). The faithful and safe way to show that state in the app is to run the same pages, so the plugin copies each demo's committed build (`index.html` and `assets/`, never `src/`, README or CREDITS) into the bundle at the same relative places (`demo/`, `demos/connect/`, `demos/safety/`), which keeps the strip's links between the three working. In `vite` dev the same files are served by a middleware that answers only those paths. Nothing is duplicated in the tree, and the demos stay one build: the release commit rebuilds them as before, and the app ships what the browser demos show. The bundle grows by about 1.5 MB.
+
+### index.html, demos.ts, main.ts, ext/extensions.ts, app.css · the Demos button and panel, and demo.open for agents
+- refers-to: frontend/index.html :: #demos-toggle, #demos · frontend/src/demos.ts :: DEMOS, demoCommand, mountDemos · frontend/src/main.ts :: the mountDemos call · frontend/src/ext/extensions.ts :: Options.own, serveAgents · frontend/src/styles/app.css :: .bar:has(.demos-toggle), .demos-toggle, .demos, .demo-cards, .demo-card, .demo-shot
+- kind: decision
+- logged: v0.10.0 · 2026-11-09
+
+formMCP has no Start page and no menu bar in the window, so the Demos section is a fixed panel like Profiles and Safety, opened by a Demos button at the right of the title bar (a fourth grid column only when the button is there, so the demo pages' copy of the header is unchanged). Both are in index.html from the first frame; opening toggles `hidden`, nothing is built later, and the previews have fixed sizes. Opening Demos closes Profiles, Safety and the Extensions panel; opening any of them closes Demos (the Extensions panel is watched for its `hidden` attribute, since extensions.ts opens it from its menu). Each card is the demo's own screenshot from demo 1's media (formMCP's own art, already credited), a title, one line and Open, found by `data-demo-open`; the panel says plainly that a demo is a sandboxed copy that never reaches the agents, settings, keys or apps. Open calls the shell's `open_demo`; in a browser preview it opens the page in a new tab. `mountDemos` returns at once where the panel is absent, so the demo pages, which import main.ts, are unaffected. Agents reach the same code: the engine's `demo_open` posts `demo.open` to the window's mailbox with the id `formmcp`, and `serveAgents` hands such requests to `own` (demos.ts's `demoCommand`) instead of looking for an extension.
+
 ## v0.9.0 · the extension host {#v0-9-0}
 
 ### src/ext/host-bridge.ts · the kit, unchanged
