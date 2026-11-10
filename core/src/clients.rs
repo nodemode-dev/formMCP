@@ -109,7 +109,7 @@ fn quote(text: &str) -> String {
 }
 
 fn ours(text: &str) -> bool {
-    text.contains("formmcp") || text.contains("formMCP")
+    text.to_lowercase().contains("formmcp")
 }
 
 fn toml_section(text: &str, name: &str) -> Option<(usize, usize)> {

@@ -14,6 +14,13 @@ Last updated: 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from 
 
 `ours` asks whether a text contains `formmcp`, and both texts it was given began with the server's own name: `toml_section` returns a range that starts at the `[mcp_servers.formmcp]` line, and `claude mcp get formmcp` prints `formmcp:` first. So any server called formmcp read as formMCP's own, a foreign Codex or Claude Code entry was reported Connected instead of Taken, and `connect` (which writes on Connected and leaves Taken alone) replaced it. `state` now skips the first line of both texts and tests the rest (the command and args). Cursor already tested only the entry's value. `connect` and `remove` need no change, since they act on what `state` reports. Checked with the two functions run standalone: a foreign Codex section and a foreign `claude mcp get` body read as not ours, formMCP's own read as ours. The crate was not built here (libdbus is missing on the machine).
 
+### clients.rs · ours matches formmcp in any case
+- refers-to: core/src/clients.rs :: ours, state
+- kind: bugfix
+- logged: v0.10.2 · 2026-11-10
+
+With the name line no longer tested, formMCP's own entry is recognised only by its command, and a packaged build's path (`/Applications/FormMCP.app/Contents/MacOS/FormMCP`) held neither `formmcp` nor `formMCP`, so it would have read as Taken and `connect` would never have refreshed or removed it. `ours` now lowercases the text once and tests `formmcp`. Checked with the functions run standalone on four cases: a foreign Codex section and a foreign `claude mcp get` body read as not ours; an own Codex section and an own Claude body with a `FormMCP.app` path read as ours. The crate was not built here (libdbus is missing).
+
 ### formmcp.bat · the cli, family and mcp branches run outside any parenthesised block
 - refers-to: formmcp.bat :: :mcp, :cli, :family, the main flow's closing exit
 - kind: bugfix
