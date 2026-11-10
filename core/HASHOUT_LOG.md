@@ -14,6 +14,13 @@ Last updated: 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from 
 
 `ours` asks whether a text contains `formmcp`, and both texts it was given began with the server's own name: `toml_section` returns a range that starts at the `[mcp_servers.formmcp]` line, and `claude mcp get formmcp` prints `formmcp:` first. So any server called formmcp read as formMCP's own, a foreign Codex or Claude Code entry was reported Connected instead of Taken, and `connect` (which writes on Connected and leaves Taken alone) replaced it. `state` now skips the first line of both texts and tests the rest (the command and args). Cursor already tested only the entry's value. `connect` and `remove` need no change, since they act on what `state` reports. Checked with the two functions run standalone: a foreign Codex section and a foreign `claude mcp get` body read as not ours, formMCP's own read as ours. The crate was not built here (libdbus is missing on the machine).
 
+### formmcp.bat · the cli, family and mcp branches run outside any parenthesised block
+- refers-to: formmcp.bat :: :mcp, :cli, :family, the main flow's closing exit
+- kind: bugfix
+- logged: v0.10.2 · 2026-11-10
+
+cmd expands `%1`..`%9` and `%errorlevel%` when it parses a whole parenthesised block, before any line in it runs. The `cli` and `family` blocks called `shift` and then used `%1`..`%9`, so `formmcp.bat cli list` handed `cli list` to the program, and every block's `exit /b %errorlevel%` (the `mcp` block too) returned the errorlevel from before the block ran, so a failed run exited 0. The three `if` lines now `goto` labels (`:mcp`, `:cli`, `:family`) placed below the main flow, whose lines run one at a time, so `shift` and `%errorlevel%` act at run time. The main flow ends with `exit /b %errorlevel%` after `cargo run` so it cannot fall into the labels. CRLF endings kept. Traced from cmd's parse rules; not run, there is no Windows host here.
+
 ## v0.10.0 · demo_open {#v0-10-0}
 
 ### mcp.rs, extensions.rs · the demo_open tool through the window's mailbox
