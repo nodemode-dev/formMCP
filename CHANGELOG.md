@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.10.2 · 2026-11-10
+
+- Another agent's server named `formmcp` is left alone. Connecting Codex or Claude Code used to read any entry called `formmcp` as FormMCP's own and overwrite it; the check now ignores the line that names the server and looks at the rest of the entry (for Claude Code everything `claude mcp get` prints after its first line, for Codex the section body), and it matches `formmcp` in any case so an installed app's own path (`FormMCP.app`) still counts as FormMCP's. A foreign entry shows as taken.
+- `formmcp.bat cli ...` and `formmcp.bat family ...` on Windows pass the right arguments (the command word was passed along before) and return the program's real exit code, as `formmcp.bat mcp` now does too.
+
 ## v0.10.1 · 2026-11-09
 
 - Each app card keeps its content inside its edge. With an app installed, the Tools button and the state pill (Live, Public, Coming) no longer spill past the card; a long installed line now ends in an ellipsis and the badge line wraps on a narrow card.

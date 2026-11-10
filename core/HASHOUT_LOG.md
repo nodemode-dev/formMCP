@@ -2,8 +2,8 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.10.0
-Last updated: 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.10.2
+Last updated: 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
 
 ## v0.10.2 · the agent check no longer matches its own header {#v0-10-2}
 

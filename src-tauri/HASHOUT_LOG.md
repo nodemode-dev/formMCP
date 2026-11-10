@@ -2,8 +2,8 @@
 
 Living log for formMCP's desktop shell. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.10.0
-Last updated: 2026-11-09 · v0.10.0 demo windows, the Help menu and the command list; 2026-11-07 · v0.9.1 no shell changes (Greg's README note on FormPortal updates); v0.9.0 the formext protocol and the extension commands; v0.8.4 no shell changes (demos 2 and 3 in demos/); v0.8.3 the macos-private-api feature; v0.8.2 the splash, the rounded card and the reveal; v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+Current build version: v0.10.2
+Last updated: 2026-11-10 · v0.10.2 no shell changes; 2026-11-09 · v0.10.0 demo windows, the Help menu and the command list; 2026-11-07 · v0.9.1 no shell changes (Greg's README note on FormPortal updates); v0.9.0 the formext protocol and the extension commands; v0.8.4 no shell changes (demos 2 and 3 in demos/); v0.8.3 the macos-private-api feature; v0.8.2 the splash, the rounded card and the reveal; v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
 
 ## v0.10.0 · demo windows, the Help menu and the command list {#v0-10-0}
 
