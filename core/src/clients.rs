@@ -142,7 +142,8 @@ pub fn state(client: Client) -> ClientState {
             None => ClientState { client, label, state: Link::NoClient, config: None, note: Some("the claude command is not installed on this computer".into()) },
             Some(claude) => match Command::new(claude).args(["mcp", "get", SERVER_NAME]).current_dir(home()).output() {
                 Ok(out) if out.status.success() && String::from_utf8_lossy(&out.stdout).contains("Scope: User") => {
-                    let s = if ours(&String::from_utf8_lossy(&out.stdout)) { Link::Connected } else { Link::Taken };
+                    let shown = String::from_utf8_lossy(&out.stdout);
+                    let s = if ours(shown.split_once('\n').map_or("", |(_, body)| body)) { Link::Connected } else { Link::Taken };
                     ClientState { client, label, state: s, config: None, note: taken(s) }
                 }
                 _ => ClientState { client, label, state: Link::NotConnected, config: None, note: None },
@@ -152,7 +153,7 @@ pub fn state(client: Client) -> ClientState {
             let path = codex_config();
             let text = fs::read_to_string(&path).unwrap_or_default();
             let s = match toml_section(&text, SERVER_NAME) {
-                Some((a, b)) if ours(&text[a..b]) => Link::Connected,
+                Some((a, b)) if ours(text[a..b].split_once('\n').map_or("", |(_, body)| body)) => Link::Connected,
                 Some(_) => Link::Taken,
                 None => Link::NotConnected,
             };

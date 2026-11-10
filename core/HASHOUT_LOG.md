@@ -5,6 +5,15 @@ Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files
 Current build version: v0.10.0
 Last updated: 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
 
+## v0.10.2 · the agent check no longer matches its own header {#v0-10-2}
+
+### clients.rs · state tests the body of a Codex section and of `claude mcp get`, not the line that names the server
+- refers-to: core/src/clients.rs :: state, ours, toml_section, connect
+- kind: bugfix
+- logged: v0.10.2 · 2026-11-10
+
+`ours` asks whether a text contains `formmcp`, and both texts it was given began with the server's own name: `toml_section` returns a range that starts at the `[mcp_servers.formmcp]` line, and `claude mcp get formmcp` prints `formmcp:` first. So any server called formmcp read as formMCP's own, a foreign Codex or Claude Code entry was reported Connected instead of Taken, and `connect` (which writes on Connected and leaves Taken alone) replaced it. `state` now skips the first line of both texts and tests the rest (the command and args). Cursor already tested only the entry's value. `connect` and `remove` need no change, since they act on what `state` reports. Checked with the two functions run standalone: a foreign Codex section and a foreign `claude mcp get` body read as not ours, formMCP's own read as ours. The crate was not built here (libdbus is missing on the machine).
+
 ## v0.10.0 · demo_open {#v0-10-0}
 
 ### mcp.rs, extensions.rs · the demo_open tool through the window's mailbox
