@@ -160,18 +160,23 @@ fn toml_section(text: &str, name: &str) -> Option<(usize, usize)> {
     let sub = format!("{key}.");
     let mut offset = 0;
     let mut start = None;
+    let mut end = 0;
     for line in text.split_inclusive('\n') {
         let header = toml_header(line);
         if let Some(s) = start {
             if header.as_ref().is_some_and(|h| !h.starts_with(&sub)) {
-                return Some((s, offset));
+                return Some((s, end));
+            }
+            if !toml_line(line).is_empty() {
+                end = offset + line.len();
             }
         } else if header.as_deref() == Some(key.as_str()) {
             start = Some(offset);
+            end = offset + line.len();
         }
         offset += line.len();
     }
-    start.map(|s| (s, text.len()))
+    start.map(|s| (s, end))
 }
 
 fn toml_string(value: &str) -> Option<String> {
@@ -302,7 +307,11 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
             let env_line = if env.is_empty() { String::new() } else { format!("env = {{ {} }}\n", env.iter().map(|(k, v)| format!("{k} = {}", quote(v))).collect::<Vec<_>>().join(", ")) };
             let block = format!("[mcp_servers.{SERVER_NAME}]\ncommand = {}\nargs = [{list}]\n{env_line}startup_timeout_sec = 600\ntool_timeout_sec = 900\n", quote(&exe));
             let next = match toml_section(&text, SERVER_NAME) {
-                Some((a, b)) => format!("{}{block}\n{}", &text[..a], &text[b..]),
+                Some((a, b)) => {
+                    let rest = &text[b..];
+                    let gap = if rest.is_empty() || rest.starts_with('\n') || rest.starts_with("\r\n") { "" } else { "\n" };
+                    format!("{}{block}{gap}{rest}", &text[..a])
+                }
                 None if toml_declares(&text, SERVER_NAME) => return Err(format!("{} declares mcp_servers.{SERVER_NAME} in a form formMCP does not edit; not changed", path.display())),
                 None if text.trim().is_empty() => block,
                 None => format!("{}\n\n{block}", text.trim_end()),
