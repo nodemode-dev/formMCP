@@ -3,7 +3,16 @@
 Living log for formMCP's desktop shell. Source files stay comment-free; what they would have said lives here.
 
 Current build version: v0.10.2
-Last updated: 2026-11-10 · v0.10.2 no shell changes; 2026-11-09 · v0.10.0 demo windows, the Help menu and the command list; 2026-11-07 · v0.9.1 no shell changes (Greg's README note on FormPortal updates); v0.9.0 the formext protocol and the extension commands; v0.8.4 no shell changes (demos 2 and 3 in demos/); v0.8.3 the macos-private-api feature; v0.8.2 the splash, the rounded card and the reveal; v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+Last updated: 2026-11-10 · v0.10.3 profile_import stores app ids; 2026-11-10 · v0.10.2 no shell changes; 2026-11-09 · v0.10.0 demo windows, the Help menu and the command list; 2026-11-07 · v0.9.1 no shell changes (Greg's README note on FormPortal updates); v0.9.0 the formext protocol and the extension commands; v0.8.4 no shell changes (demos 2 and 3 in demos/); v0.8.3 the macos-private-api feature; v0.8.2 the splash, the rounded card and the reveal; v0.8.1 no shell changes (real media in the demo); v0.8.0 no shell changes (the browser demo in demo/); 2026-11-04 · v0.7.8 no shell changes (README in the Form family template, Mackin's #6, merged with main); v0.7.7 no shell changes (README only); 2026-11-03 · v0.7.6 the bundle names the publisher and the licence; 2026-10-25 · the safety commands; profiles and start policies; HTTP inside the window, agents and tool switches; the window's commands; the shell, and `formmcp mcp` without a window
+
+## v0.10.3 · profile_import stores app ids {#v0-10-3}
+
+### lib.rs · profile_import passes the app's id to read_profile
+- refers-to: src-tauri/src/lib.rs :: profile_import · core/src/settings.rs :: read_profile
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+`settings::read_profile` now asks for the app's id instead of a yes or no, so an imported profile that names an app by display name or another casing is stored under the id that the switches compare (see the core log, v0.10.3). The window's import passes `family.get(id).map(|a| a.id.clone())`, the same closure as the CLI. Not compiled here (the shell needs WebKitGTK, which is not installed); the CLI's identical call compiles and was run.
 
 ## v0.10.0 · demo windows, the Help menu and the command list {#v0-10-0}
 

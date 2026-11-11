@@ -109,7 +109,7 @@ fn profile_export(name: String) -> Result<String, String> {
 #[tauri::command]
 fn profile_import(text: String) -> Result<Value, String> {
     let family = Family::bundled()?;
-    let (name, profile, dropped) = settings::read_profile(&text, &|id| family.get(id).is_some())?;
+    let (name, profile, dropped) = settings::read_profile(&text, &|id| family.get(id).map(|a| a.id.clone()))?;
     let mut saved = Settings::saved();
     let replaced = saved.profiles.insert(name.clone(), profile).is_some();
     saved.save()?;
