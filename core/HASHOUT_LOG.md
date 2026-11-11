@@ -3,7 +3,7 @@
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
 Current build version: v0.10.2
-Last updated: 2026-11-10 · v0.10.3 programs found by Windows extensions, ownership from the entry's command, Codex entries in any TOML form; 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Last updated: 2026-11-10 · v0.10.3 an unreadable host file is refused, programs found by Windows extensions, ownership from the entry's command, Codex entries in any TOML form; 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
 
 ## v0.10.3 · other tools' config files are left intact {#v0-10-3}
 
@@ -27,6 +27,13 @@ v0.10.2 stopped testing the line that names the server but still asked whether t
 - logged: v0.10.3 · 2026-11-10
 
 Both `which` functions tried the bare name first on every platform. An npm-installed Claude Code on Windows leaves an extensionless sh shim `claude` beside `claude.cmd` in `%APPDATA%\npm`; the shim was returned, `Command::new` on it fails with OS error 193, so the state read Not connected and Connect always failed. On Windows `clients::which` now tries `.exe`, `.cmd`, `.bat` (Rust runs batch files with its own argument escaping) and `reach::which` tries `.exe`; elsewhere both try the bare name only. The choice is a `cfg!(windows)` expression, so the Linux build type-checks both branches; a Windows-target check could not finish here (ring needs a mingw C compiler, which is not installed), and nothing was run on Windows.
+
+### clients.rs · a Codex or Cursor file that cannot be read is refused, not replaced
+- refers-to: core/src/clients.rs :: read_host, state, write
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+`write` read config.toml with `unwrap_or_default()` and mcp.json with a `_ => json!({})` fallback, so every read error counted as "no file yet". A Cursor file saved as Windows-1252 (an accented user name in a path; Cursor still reads it, Rust's `read_to_string` returns InvalidData) or a file the process may not read was replaced by one holding only formmcp, and every other server in it was gone, with only the `.bak-` copy left. `read_host` now returns an empty text only for NotFound and otherwise "<path>: could not be read (<error>); not changed"; `write` returns that error for Codex and Cursor, and `state` shows it as the note (the window's button title) with Not connected, so the person sees why Connect fails. `remove` was left as it was: it acts only on Connected, which needs a readable file, and writes nothing when the read fails. Checked with `formmcp-cli` built from these sources in a scratch HOME: a Cursor mcp.json holding a Latin-1 byte, and a config.toml that is a directory, both read Not connected with the note, `agents install` exited 1 with the message, the Cursor file was unchanged (sha1) and no backup was made; with the directory gone, Codex connected.
 
 ## v0.10.2 · the agent check no longer matches its own header {#v0-10-2}
 

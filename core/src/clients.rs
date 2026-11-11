@@ -105,6 +105,14 @@ fn backup(path: &Path) -> Result<(), String> {
     Ok(())
 }
 
+fn read_host(path: &Path) -> Result<String, String> {
+    match fs::read_to_string(path) {
+        Ok(text) => Ok(text),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
+        Err(e) => Err(format!("{}: could not be read ({e}); not changed", path.display())),
+    }
+}
+
 fn quote(text: &str) -> String {
     format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\""))
 }
@@ -240,24 +248,31 @@ pub fn state(client: Client) -> ClientState {
         },
         Client::Codex => {
             let path = codex_config();
-            let text = fs::read_to_string(&path).unwrap_or_default();
+            let (text, unread) = match read_host(&path) {
+                Ok(text) => (text, None),
+                Err(e) => (String::new(), Some(e)),
+            };
             let s = match toml_section(&text, SERVER_NAME) {
                 Some((a, b)) if toml_command(&text[a..b]).is_some_and(|c| ours(&c)) => Link::Connected,
                 Some(_) => Link::Taken,
                 None if toml_declares(&text, SERVER_NAME) => Link::Taken,
                 None => Link::NotConnected,
             };
-            ClientState { client, label, state: s, config: Some(path), note: taken(s) }
+            ClientState { client, label, state: s, config: Some(path), note: unread.or(taken(s)) }
         }
         Client::Cursor => {
             let path = cursor_config();
-            let data: Value = fs::read_to_string(&path).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
+            let (text, unread) = match read_host(&path) {
+                Ok(text) => (text, None),
+                Err(e) => (String::new(), Some(e)),
+            };
+            let data: Value = serde_json::from_str(&text).unwrap_or_default();
             let s = match data.get("mcpServers").and_then(|m| m.get(SERVER_NAME)) {
                 Some(entry) if entry.get("command").and_then(Value::as_str).is_some_and(ours) => Link::Connected,
                 Some(_) => Link::Taken,
                 None => Link::NotConnected,
             };
-            ClientState { client, label, state: s, config: Some(path), note: taken(s) }
+            ClientState { client, label, state: s, config: Some(path), note: unread.or(taken(s)) }
         }
     }
 }
@@ -282,8 +297,8 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
         }
         Client::Codex => {
             let path = codex_config();
-            let text = fs::read_to_string(&path).unwrap_or_default();
-            let list = launcher.args.iter().map(|a| quote(a)).collect::<Vec<_>>().join(", ");
+            let text = read_host(&path)?;
+            let list =launcher.args.iter().map(|a| quote(a)).collect::<Vec<_>>().join(", ");
             let env_line = if env.is_empty() { String::new() } else { format!("env = {{ {} }}\n", env.iter().map(|(k, v)| format!("{k} = {}", quote(v))).collect::<Vec<_>>().join(", ")) };
             let block = format!("[mcp_servers.{SERVER_NAME}]\ncommand = {}\nargs = [{list}]\n{env_line}startup_timeout_sec = 600\ntool_timeout_sec = 900\n", quote(&exe));
             let next = match toml_section(&text, SERVER_NAME) {
@@ -300,8 +315,8 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
         }
         Client::Cursor => {
             let path = cursor_config();
-            let mut data: Value = match fs::read_to_string(&path) {
-                Ok(text) if !text.trim().is_empty() => serde_json::from_str(&text).map_err(|e| format!("{} is not valid JSON ({e}); not changed", path.display()))?,
+            let mut data: Value = match read_host(&path)? {
+                text if !text.trim().is_empty() => serde_json::from_str(&text).map_err(|e| format!("{} is not valid JSON ({e}); not changed", path.display()))?,
                 _ => json!({}),
             };
             let servers = data.as_object_mut().ok_or_else(|| format!("{} is not a JSON object; not changed", path.display()))?.entry("mcpServers").or_insert_with(|| json!({}));
