@@ -85,7 +85,8 @@ fn cursor_config() -> PathBuf {
 fn which(program: &str) -> Option<PathBuf> {
     let paths = std::env::var_os("PATH")?;
     for dir in std::env::split_paths(&paths) {
-        for name in [program.to_string(), format!("{program}.exe"), format!("{program}.cmd")] {
+        let names: Vec<String> = if cfg!(windows) { [".exe", ".cmd", ".bat"].iter().map(|e| format!("{program}{e}")).collect() } else { vec![program.to_string()] };
+        for name in names {
             let candidate = dir.join(&name);
             if candidate.is_file() {
                 return Some(candidate);
@@ -97,37 +98,165 @@ fn which(program: &str) -> Option<PathBuf> {
 
 fn backup(path: &Path) -> Result<(), String> {
     if path.exists() {
-        let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+        let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0);
         let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
-        fs::copy(path, path.with_file_name(format!("{name}.bak-{stamp}"))).map_err(|e| format!("{}: {e}", path.display()))?;
+        let mut target = path.with_file_name(format!("{name}.bak-{stamp}"));
+        let mut n = 0;
+        while target.exists() {
+            n += 1;
+            target = path.with_file_name(format!("{name}.bak-{stamp}-{n}"));
+        }
+        fs::copy(path, target).map_err(|e| format!("{}: {e}", path.display()))?;
     }
     Ok(())
+}
+
+fn save(path: &Path, text: &str) -> Result<(), String> {
+    let real = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    if let Some(dir) = real.parent() {
+        fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+    }
+    static WRITES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let name = real.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let part = real.with_file_name(format!("{name}.part-{}-{}", std::process::id(), WRITES.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
+    let written = fs::write(&part, text)
+        .and_then(|()| match fs::metadata(&real) {
+            Ok(meta) if cfg!(unix) => fs::set_permissions(&part, meta.permissions()),
+            _ => Ok(()),
+        })
+        .and_then(|()| fs::rename(&part, &real));
+    if let Err(e) = written {
+        let _ = fs::remove_file(&part);
+        return Err(format!("{}: {e}", path.display()));
+    }
+    Ok(())
+}
+
+fn read_host(path: &Path) -> Result<String, String> {
+    match fs::read_to_string(path) {
+        Ok(text) => Ok(text),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
+        Err(e) => Err(format!("{}: could not be read ({e}); not changed", path.display())),
+    }
 }
 
 fn quote(text: &str) -> String {
     format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\""))
 }
 
-fn ours(text: &str) -> bool {
-    text.contains("formmcp") || text.contains("formMCP")
+fn ours(command: &str) -> bool {
+    let path = Path::new(command);
+    let stem = path.file_stem().map(|s| s.to_string_lossy().to_lowercase());
+    matches!(stem.as_deref(), Some("formmcp" | "formmcp-cli")) || Launcher::current().is_ok_and(|l| l.program == path)
+}
+
+fn toml_line(line: &str) -> &str {
+    let line = line.trim_start_matches('\u{feff}');
+    let mut quote = None;
+    let mut escaped = false;
+    for (i, c) in line.char_indices() {
+        match quote {
+            Some(q) => {
+                if escaped {
+                    escaped = false;
+                } else if c == '\\' && q == '"' {
+                    escaped = true;
+                } else if c == q {
+                    quote = None;
+                }
+            }
+            None if c == '"' || c == '\'' => quote = Some(c),
+            None if c == '#' => return line[..i].trim(),
+            None => {}
+        }
+    }
+    line.trim()
+}
+
+fn toml_key(text: &str) -> String {
+    text.chars().filter(|c| !c.is_whitespace() && *c != '"' && *c != '\'').collect()
+}
+
+fn toml_header(line: &str) -> Option<String> {
+    let line = toml_line(line);
+    line.starts_with('[').then(|| toml_key(line.trim_start_matches('[').trim_end_matches(']')))
 }
 
 fn toml_section(text: &str, name: &str) -> Option<(usize, usize)> {
-    let header = format!("[mcp_servers.{name}]");
+    let key = format!("mcp_servers.{name}");
+    let sub = format!("{key}.");
     let mut offset = 0;
     let mut start = None;
+    let mut end = 0;
     for line in text.split_inclusive('\n') {
-        let trimmed = line.trim();
+        let header = toml_header(line);
         if let Some(s) = start {
-            if trimmed.starts_with('[') && !trimmed.starts_with(&format!("[mcp_servers.{name}.")) {
-                return Some((s, offset));
+            if header.as_ref().is_some_and(|h| !h.starts_with(&sub)) {
+                return Some((s, end));
             }
-        } else if trimmed == header {
+            if !toml_line(line).is_empty() {
+                end = offset + line.len();
+            }
+        } else if header.as_deref() == Some(key.as_str()) {
             start = Some(offset);
+            end = offset + line.len();
         }
         offset += line.len();
     }
-    start.map(|s| (s, text.len()))
+    start.map(|s| (s, end))
+}
+
+fn toml_string(value: &str) -> Option<String> {
+    if let Some(rest) = value.strip_prefix('\'') {
+        return rest.split_once('\'').map(|(s, _)| s.to_string());
+    }
+    let mut out = String::new();
+    let mut chars = value.strip_prefix('"')?.chars();
+    while let Some(c) = chars.next() {
+        match c {
+            '"' => return Some(out),
+            '\\' => out.push(chars.next()?),
+            _ => out.push(c),
+        }
+    }
+    None
+}
+
+fn toml_command(section: &str) -> Option<String> {
+    for line in section.split_inclusive('\n').skip(1) {
+        if toml_header(line).is_some() {
+            break;
+        }
+        if let Some((k, v)) = toml_line(line).split_once('=') {
+            if toml_key(k) == "command" {
+                return toml_string(v.trim());
+            }
+        }
+    }
+    None
+}
+
+fn toml_declares(text: &str, name: &str) -> bool {
+    let key = format!("mcp_servers.{name}");
+    let sub = format!("{key}.");
+    let mut table = String::new();
+    for line in text.split_inclusive('\n') {
+        let path = match toml_header(line) {
+            Some(header) => {
+                table = header;
+                table.clone()
+            }
+            None => match toml_line(line).split_once('=') {
+                Some((k, _)) if table.is_empty() => toml_key(k),
+                Some((k, _)) => format!("{table}.{}", toml_key(k)),
+                None => continue,
+            },
+        };
+        if path == key || path.starts_with(&sub) {
+            return true;
+        }
+    }
+    false
 }
 
 fn passed_env() -> Vec<(String, String)> {
@@ -142,7 +271,8 @@ pub fn state(client: Client) -> ClientState {
             None => ClientState { client, label, state: Link::NoClient, config: None, note: Some("the claude command is not installed on this computer".into()) },
             Some(claude) => match Command::new(claude).args(["mcp", "get", SERVER_NAME]).current_dir(home()).output() {
                 Ok(out) if out.status.success() && String::from_utf8_lossy(&out.stdout).contains("Scope: User") => {
-                    let s = if ours(&String::from_utf8_lossy(&out.stdout)) { Link::Connected } else { Link::Taken };
+                    let shown = String::from_utf8_lossy(&out.stdout);
+                    let s = if shown.lines().find_map(|l| l.trim().strip_prefix("Command:")).is_some_and(|c| ours(c.trim())) { Link::Connected } else { Link::Taken };
                     ClientState { client, label, state: s, config: None, note: taken(s) }
                 }
                 _ => ClientState { client, label, state: Link::NotConnected, config: None, note: None },
@@ -150,23 +280,31 @@ pub fn state(client: Client) -> ClientState {
         },
         Client::Codex => {
             let path = codex_config();
-            let text = fs::read_to_string(&path).unwrap_or_default();
+            let (text, unread) = match read_host(&path) {
+                Ok(text) => (text, None),
+                Err(e) => (String::new(), Some(e)),
+            };
             let s = match toml_section(&text, SERVER_NAME) {
-                Some((a, b)) if ours(&text[a..b]) => Link::Connected,
+                Some((a, b)) if toml_command(&text[a..b]).is_some_and(|c| ours(&c)) => Link::Connected,
                 Some(_) => Link::Taken,
+                None if toml_declares(&text, SERVER_NAME) => Link::Taken,
                 None => Link::NotConnected,
             };
-            ClientState { client, label, state: s, config: Some(path), note: taken(s) }
+            ClientState { client, label, state: s, config: Some(path), note: unread.or(taken(s)) }
         }
         Client::Cursor => {
             let path = cursor_config();
-            let data: Value = fs::read_to_string(&path).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
+            let (text, unread) = match read_host(&path) {
+                Ok(text) => (text, None),
+                Err(e) => (String::new(), Some(e)),
+            };
+            let data: Value = serde_json::from_str(text.strip_prefix('\u{feff}').unwrap_or(&text)).unwrap_or_default();
             let s = match data.get("mcpServers").and_then(|m| m.get(SERVER_NAME)) {
-                Some(entry) if ours(&entry.to_string()) => Link::Connected,
+                Some(entry) if entry.get("command").and_then(Value::as_str).is_some_and(ours) => Link::Connected,
                 Some(_) => Link::Taken,
                 None => Link::NotConnected,
             };
-            ClientState { client, label, state: s, config: Some(path), note: taken(s) }
+            ClientState { client, label, state: s, config: Some(path), note: unread.or(taken(s)) }
         }
     }
 }
@@ -191,25 +329,31 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
         }
         Client::Codex => {
             let path = codex_config();
-            let text = fs::read_to_string(&path).unwrap_or_default();
+            let text = read_host(&path)?;
             let list = launcher.args.iter().map(|a| quote(a)).collect::<Vec<_>>().join(", ");
             let env_line = if env.is_empty() { String::new() } else { format!("env = {{ {} }}\n", env.iter().map(|(k, v)| format!("{k} = {}", quote(v))).collect::<Vec<_>>().join(", ")) };
             let block = format!("[mcp_servers.{SERVER_NAME}]\ncommand = {}\nargs = [{list}]\n{env_line}startup_timeout_sec = 600\ntool_timeout_sec = 900\n", quote(&exe));
             let next = match toml_section(&text, SERVER_NAME) {
-                Some((a, b)) => format!("{}{block}\n{}", &text[..a], &text[b..]),
+                Some((a, b)) => {
+                    let rest = &text[b..];
+                    let gap = if rest.is_empty() || rest.starts_with('\n') || rest.starts_with("\r\n") { "" } else { "\n" };
+                    format!("{}{block}{gap}{rest}", &text[..a])
+                }
+                None if toml_declares(&text, SERVER_NAME) => return Err(format!("{} declares mcp_servers.{SERVER_NAME} in a form formMCP does not edit; not changed", path.display())),
                 None if text.trim().is_empty() => block,
                 None => format!("{}\n\n{block}", text.trim_end()),
             };
-            backup(&path)?;
-            if let Some(dir) = path.parent() {
-                fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+            if next == text {
+                return Ok(());
             }
-            fs::write(&path, next).map_err(|e| format!("{}: {e}", path.display()))?;
+            backup(&path)?;
+            save(&path, &next)?;
         }
         Client::Cursor => {
             let path = cursor_config();
-            let mut data: Value = match fs::read_to_string(&path) {
-                Ok(text) if !text.trim().is_empty() => serde_json::from_str(&text).map_err(|e| format!("{} is not valid JSON ({e}); not changed", path.display()))?,
+            let text = read_host(&path)?;
+            let mut data: Value = match text.as_str() {
+                text if !text.trim().is_empty() => serde_json::from_str(text.strip_prefix('\u{feff}').unwrap_or(text)).map_err(|e| format!("{} is not valid JSON ({e}; comments are not supported); not changed", path.display()))?,
                 _ => json!({}),
             };
             let servers = data.as_object_mut().ok_or_else(|| format!("{} is not a JSON object; not changed", path.display()))?.entry("mcpServers").or_insert_with(|| json!({}));
@@ -218,11 +362,12 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
                 entry["env"] = Value::Object(env.into_iter().map(|(k, v)| (k, Value::String(v))).collect());
             }
             servers.as_object_mut().ok_or_else(|| format!("mcpServers in {} is not an object; not changed", path.display()))?.insert(SERVER_NAME.to_string(), entry);
-            backup(&path)?;
-            if let Some(dir) = path.parent() {
-                fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+            let next = serde_json::to_string_pretty(&data).map_err(|e| e.to_string())? + "\n";
+            if next == text {
+                return Ok(());
             }
-            fs::write(&path, serde_json::to_string_pretty(&data).map_err(|e| e.to_string())? + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
+            backup(&path)?;
+            save(&path, &next)?;
         }
     }
     Ok(())
@@ -240,17 +385,17 @@ fn remove(client: Client) -> Result<(), String> {
             let text = fs::read_to_string(&path).unwrap_or_default();
             if let Some((a, b)) = toml_section(&text, SERVER_NAME) {
                 backup(&path)?;
-                fs::write(&path, format!("{}{}", &text[..a], &text[b..])).map_err(|e| format!("{}: {e}", path.display()))?;
+                save(&path, &format!("{}{}", &text[..a], &text[b..]))?;
             }
         }
         Client::Cursor => {
             let path = cursor_config();
             if let Ok(text) = fs::read_to_string(&path) {
-                if let Ok(mut data) = serde_json::from_str::<Value>(&text) {
+                if let Ok(mut data) = serde_json::from_str::<Value>(text.strip_prefix('\u{feff}').unwrap_or(&text)) {
                     if let Some(servers) = data.get_mut("mcpServers").and_then(|m| m.as_object_mut()) {
                         if servers.remove(SERVER_NAME).is_some() {
                             backup(&path)?;
-                            fs::write(&path, serde_json::to_string_pretty(&data).map_err(|e| e.to_string())? + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
+                            save(&path, &(serde_json::to_string_pretty(&data).map_err(|e| e.to_string())? + "\n"))?;
                         }
                     }
                 }

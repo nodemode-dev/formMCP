@@ -402,7 +402,7 @@ fn main() -> ExitCode {
                     Some(p) => settings::export_profile(name, p, flag("--to").as_deref().map(std::path::Path::new)).map(|path| json!({ "exported": name, "file": path })),
                     None => Err(format!("there is no profile {name:?}")),
                 },
-                ("import", Some(file), _) => std::fs::read_to_string(file).map_err(|e| format!("{file}: {e}")).and_then(|text| settings::read_profile(&text, &|id| family.get(id).is_some())).and_then(|(name, profile, dropped)| {
+                ("import", Some(file), _) => std::fs::read_to_string(file).map_err(|e| format!("{file}: {e}")).and_then(|text| settings::read_profile(&text, &|id| family.get(id).map(|a| a.id.clone()))).and_then(|(name, profile, dropped)| {
                     let replaced = saved.profiles.insert(name.clone(), profile).is_some();
                     saved.save().map(|_| json!({ "imported": name, "replaced": replaced, "dropped": dropped }))
                 }),

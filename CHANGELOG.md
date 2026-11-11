@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.10.3 · 2026-11-10
+
+- Connecting Codex no longer breaks its config.toml. A `formmcp` entry written another valid way (a comment after the header, spaces or quotes in it, a byte order mark, or `formmcp = { ... }` under `[mcp_servers]`) used to read as not connected, and Connect added a second `[mcp_servers.formmcp]` table that Codex could not load. FormMCP now finds its section in any of those forms, and one it cannot edit shows as taken and is left alone.
+- Another agent's server named `formmcp` is now really left alone. An entry counts as FormMCP's only when its command is FormMCP (the `formmcp` launcher, `formmcp-cli`, or the installed app); before, a foreign entry whose text mentioned formmcp anywhere (an env subtable, a package name such as `formmcp-server`, or Claude Code's own "claude mcp remove formmcp" hint) still read as connected and was replaced.
+- On Windows, Claude Code installed with npm is found and can be connected. FormMCP picked the extensionless shim in the npm folder, which Windows cannot run, instead of `claude.cmd`.
+- A Codex or Cursor config that cannot be read (for example a Cursor file saved in a Windows code page, or one without read permission) is no longer replaced by a file holding only FormMCP. Connect refuses it with the reason, and the client's status shows the reason too.
+- Before and after hook commands keep Windows paths: `C:\Tools\check.exe` used to lose its backslashes, so a before hook refused every call. A backslash now escapes only a quote or another backslash.
+- A Cursor mcp.json saved with a byte order mark is read: it used to show as not connected and Connect refused it. The refusal for an mcp.json that is not valid JSON now also says that comments are not supported.
+- Reconnecting or removing Codex keeps comments and blank lines that sit above the next server's section.
+- Codex and Cursor configs are written to a temporary file and renamed into place, so an interrupted write cannot leave them empty; a symlinked config stays a link. Backups made in the same second no longer overwrite each other, and Connect on a client that is already connected with the same entry writes nothing and makes no backup.
+- `./formmcp mcp --client codex` passes `--client` on, as the wiki describes, and `formmcp.bat cli` and `formmcp.bat family` pass more than nine arguments.
+- An imported profile that names an app by its display name or in another casing (`FormVis`) now takes effect: it is stored under the app's id.
+
+## v0.10.2 · 2026-11-10
+
+- Another agent's server named `formmcp` is left alone. Connecting Codex or Claude Code used to read any entry called `formmcp` as FormMCP's own and overwrite it; the check now ignores the line that names the server and looks at the rest of the entry (for Claude Code everything `claude mcp get` prints after its first line, for Codex the section body), and it matches `formmcp` in any case so an installed app's own path (`FormMCP.app`) still counts as FormMCP's. A foreign entry shows as taken.
+- `formmcp.bat cli ...` and `formmcp.bat family ...` on Windows pass the right arguments (the command word was passed along before) and return the program's real exit code, as `formmcp.bat mcp` now does too.
+
 ## v0.10.1 · 2026-11-09
 
 - Each app card keeps its content inside its edge. With an app installed, the Tools button and the state pill (Live, Public, Coming) no longer spill past the card; a long installed line now ends in an ellipsis and the badge line wraps on a narrow card.

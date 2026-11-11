@@ -15,7 +15,7 @@ cli() {
 
 case "${1:-}" in
   cli) shift; cli "$@" ;;
-  mcp) cli mcp ;;
+  mcp) shift; cli mcp "$@" ;;
   family) shift; exec python3 setup/family.py "$@" ;;
 esac
 

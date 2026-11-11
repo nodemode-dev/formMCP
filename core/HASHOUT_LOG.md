@@ -2,8 +2,103 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.10.0
-Last updated: 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Current build version: v0.10.3
+Last updated: 2026-11-10 · v0.10.3 imported profiles keyed by app id, launchers pass every argument, host files written whole with unique backups, comments after the Codex section kept, Cursor files with a byte order mark, hook commands keep Windows backslashes, an unreadable host file is refused, programs found by Windows extensions, ownership from the entry's command, Codex entries in any TOML form; 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.10.3 · other tools' config files are left intact {#v0-10-3}
+
+### clients.rs · a Codex entry for formmcp is found in any TOML form, and one formMCP cannot edit is Taken
+- refers-to: core/src/clients.rs :: toml_line, toml_key, toml_header, toml_section, toml_declares, state, write
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+`toml_section` found formMCP's Codex section only when a trimmed line was exactly `[mcp_servers.formmcp]`. A header with a trailing comment, spaces inside the brackets, a quoted key, a UTF-8 byte order mark, or an entry written as `formmcp = { ... }` under `[mcp_servers]` or as a dotted key, read as Not connected, and Connect appended a second `[mcp_servers.formmcp]` table, after which Codex could not load its config.toml at all. Each line is now read through `toml_line` (byte order mark dropped, cut at an unquoted `#`, trimmed) and a header's key through `toml_key` (spaces and quotes removed) before it is compared, for the start and the end of the section. When no section header matches, `toml_declares` walks the file's keys with their table and reports any key that is `mcp_servers.formmcp` or below it; `state` then reports Taken and `write` refuses with "declares mcp_servers.formmcp in a form formMCP does not edit; not changed". Checked with `formmcp-cli` built from these sources (outside the repo, without the keychain's D-Bus backend, which is not installed here) on twelve sample files in a scratch `CODEX_HOME`: the commented, quoted, spaced, inline, dotted, top-level, byte order mark and subtable-only forms all read Taken and were left byte for byte, an own entry with a commented header read Connected and was rewritten as one table, and Python's tomllib parsed every result that had no byte order mark.
+
+### clients.rs · an entry is formMCP's only when its command is formMCP
+- refers-to: core/src/clients.rs :: ours, toml_string, toml_command, state
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+v0.10.2 stopped testing the line that names the server but still asked whether the rest of the entry contained `formmcp` in any case. `claude mcp get` ends with "To remove this server, run: claude mcp remove formmcp -s user", a Codex section's `[mcp_servers.formmcp.env]` subtable header sits in its body, and a foreign command such as `npx -y formmcp-server` or `/opt/FormMCP-proxy` contains the word, so a foreign entry still read Connected and Connect replaced it (Disconnect removed it). `ours` now takes only the command: its file stem, lowercased, must be `formmcp` or `formmcp-cli` (the `./formmcp` launcher, `formmcp.bat`, the CLI, a packaged `FormMCP.app/.../FormMCP` or `FormMCP.exe`), or it must equal the launcher formMCP would write. The command is read from the `Command:` line of `claude mcp get`, from the `command = "..."` key of the Codex section before any subtable (`toml_command`, `toml_string` for basic and literal strings), and from `command` in the Cursor entry. Checked with `formmcp-cli` built from these sources and Claude Code in an isolated scratch HOME (`env -i`): a user-scope `formmcp` running `npx -y formmcp-server` read Taken and survived `agents install claude`; formMCP's own entry with a `/opt/My Stuff/FormMCP.app/Contents/MacOS/FormMCP` launcher read Connected; a Codex section with an env subtable naming formmcp read Taken; a literal-string `formmcp-cli` command read Connected; a Cursor entry running `/opt/FormMCP-proxy` read Taken and one running `/x/formmcp` Connected.
+
+### clients.rs, reach.rs · on Windows only runnable names are looked up on PATH
+- refers-to: core/src/clients.rs :: which · core/src/reach.rs :: which
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+Both `which` functions tried the bare name first on every platform. An npm-installed Claude Code on Windows leaves an extensionless sh shim `claude` beside `claude.cmd` in `%APPDATA%\npm`; the shim was returned, `Command::new` on it fails with OS error 193, so the state read Not connected and Connect always failed. On Windows `clients::which` now tries `.exe`, `.cmd`, `.bat` (Rust runs batch files with its own argument escaping) and `reach::which` tries `.exe`; elsewhere both try the bare name only. The choice is a `cfg!(windows)` expression, so the Linux build type-checks both branches; a Windows-target check could not finish here (ring needs a mingw C compiler, which is not installed), and nothing was run on Windows.
+
+### clients.rs · a Codex or Cursor file that cannot be read is refused, not replaced
+- refers-to: core/src/clients.rs :: read_host, state, write
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+`write` read config.toml with `unwrap_or_default()` and mcp.json with a `_ => json!({})` fallback, so every read error counted as "no file yet". A Cursor file saved as Windows-1252 (an accented user name in a path; Cursor still reads it, Rust's `read_to_string` returns InvalidData) or a file the process may not read was replaced by one holding only formmcp, and every other server in it was gone, with only the `.bak-` copy left. `read_host` now returns an empty text only for NotFound and otherwise "<path>: could not be read (<error>); not changed"; `write` returns that error for Codex and Cursor, and `state` shows it as the note (the window's button title) with Not connected, so the person sees why Connect fails. `remove` was left as it was: it acts only on Connected, which needs a readable file, and writes nothing when the read fails. Checked with `formmcp-cli` built from these sources in a scratch HOME: a Cursor mcp.json holding a Latin-1 byte, and a config.toml that is a directory, both read Not connected with the note, `agents install` exited 1 with the message, the Cursor file was unchanged (sha1) and no backup was made; with the directory gone, Codex connected.
+
+### hooks.rs · a backslash escapes only a quote or another backslash
+- refers-to: core/src/hooks.rs :: split
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+`split` treated every backslash as a POSIX escape, so a before or after hook set to `C:\Tools\check.exe` or `"C:\Program Files\Hook\check.exe"` became `C:Toolscheck.exe`; `hook_set` accepted it, the spawn then failed, and a failing before hook refuses every `call_app`. A backslash outside single quotes now escapes only a following `"`, `'` or `\` and is otherwise kept as written; a trailing backslash is kept instead of being an error, and a word that starts with a backslash now counts as a word (it was dropped before when nothing else followed it). Single quotes still keep everything literally. A UNC path still needs its leading `\\` written as `\\\\` or put in single quotes. `formmcp cli hook before <words...>` still joins its arguments with spaces, so a path with a space is passed as one quoted argument (`hook before '"C:\Program Files\x.exe" --flag'`). Checked with `formmcp-cli hook before` built from these sources in a scratch HOME: `C:\Tools\check.exe --x` gives `C:\Tools\check.exe`, `--x`; the quoted Program Files path keeps its backslashes and space; `a\"b` gives `a"b`; `x\\y` gives `x\y`; `trail\` gives `trail\`; an unclosed quote is still refused.
+
+### clients.rs · Cursor's mcp.json may start with a byte order mark
+- refers-to: core/src/clients.rs :: state, write, remove
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+Windows editors and PowerShell 5.1's `Out-File -Encoding utf8` save mcp.json with a UTF-8 byte order mark, which serde_json does not skip. `state` read Not connected even with formMCP's entry present (so Disconnect was never offered) and Connect refused the file as invalid JSON. `state`, `write` and `remove` now parse the text after a leading U+FEFF; the file is written back without it, which Cursor reads the same. The invalid-JSON refusal now also says comments are not supported, since JSON with comments is the other common reason. Checked with `formmcp-cli` built from these sources in a scratch HOME: a mcp.json with a byte order mark and another server read Not connected, then connected with the other server kept; one with formMCP's entry read Connected and `agents remove` left only the other server; a file with a `//` comment was refused with the new message.
+
+### clients.rs · the Codex section ends at its last line of content
+- refers-to: core/src/clients.rs :: toml_section, write
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+The section's range ran to the next table header, so the blank lines and comments just above that header (`# Context7: docs lookup` over `[mcp_servers.context7]`) counted as formMCP's, and every Connect on a connected Codex (which rewrites the section) and every Disconnect deleted them. `toml_section` now ends the range just after the last line since the header that is not blank or a comment (subtables of the section count as content), at the next header and at the end of the file. `write` puts a blank line after the new block only when what follows does not already start with one, so repeated Connects do not add blank lines. Checked with `formmcp-cli` built from these sources in a scratch `CODEX_HOME`: a file with formMCP's section and an env subtable, a blank line, the Context7 comment and its section was connected three times (identical file after the first, one formmcp table, tomllib parses it) and then disconnected, and the comment and the other section survived each step; a trailing comment at the end of the file also survived two Connects. The twelve sample files of the TOML-form fix above gave the same results as before.
+
+### clients.rs · Codex and Cursor files are written whole, backups never overwrite each other, an unchanged file is left alone
+- refers-to: core/src/clients.rs :: backup, save, write, remove
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+`write` and `remove` used `fs::write`, which truncates the live config.toml or mcp.json first, so a killed process, a full disk or a power cut could leave another tool's config empty or cut short. Backups were named `<name>.bak-<seconds>`, so two edits in the same second (install then remove, a double click) overwrote the first backup with already-changed content, and every Connect on a connected client made a new backup even when nothing changed. `save` now writes a sibling `<name>.part-<pid>-<n>` and renames it over the file, the same pattern as `settings::write_private` but keeping the old file's permissions on Unix instead of 0600; it resolves a symlinked config first so a dotfiles link stays a link. `backup` names the copy with milliseconds and adds `-1`, `-2` while a name is taken. `write` returns before the backup when the new text equals the old. Checked with `formmcp-cli` built from these sources in a scratch HOME: install then remove on a 0600 mcp.json made two distinct backups, the first holding the original, and the file stayed 0600; a second install on a connected client added no file; a config.toml that is a symlink stayed a symlink with the change in its target; no `.part-` file was left. A same-millisecond collision was not forced; the loop is read, not run.
+
+### formmcp, formmcp.bat · `mcp` passes its arguments, and `cli` and `family` pass more than nine
+- refers-to: formmcp :: case mcp · formmcp.bat :: :mcp, :cli, :family
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+Both launchers ran `formmcp-cli mcp` with no further arguments, so `./formmcp mcp --client codex` (the wiki's way to name the agent) served the session under the name from clientInfo, and per-agent switches and profiles applied to the wrong agent. cmd also exposes only `%1`..`%9`, so `formmcp.bat cli suggest ...` with more than nine words dropped the rest without a word. The bash `mcp` branch now shifts and passes `"$@"`. The bat's `:mcp` shifts and passes `%1`..`%9` (its options are short), and `:cli` and `:family` gather every remaining argument into `REST` with a `shift` loop that ends at the first empty argument, then run the program with `%REST%`; the loop runs outside any parenthesised block, so each `%1` is read at run time. CRLF endings kept (all 48 lines). The bash dispatch was run from a copy with a stub `formmcp-cli` that prints its arguments: `mcp --client codex` arrived as `mcp --client codex`, and an eleven-word `cli suggest` line arrived whole; `bash -n formmcp` passes. The bat was traced from cmd's parse rules and not run, there is no Windows host here; an argument that is itself `""` ends the loop early.
+
+### settings.rs, cli · an imported profile stores each app under its id
+- refers-to: core/src/settings.rs :: read_profile · cli/src/main.rs :: profile import · src-tauri/src/lib.rs :: profile_import
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+`read_profile` checked each app with `known_app`, which callers answered with `Family::get`, and that matches the id, the app name or the display name in any case; but it kept the spelling from the file, while `is_off` and `hides_tool` compare exactly with the id. A profile with `"apps_off": ["FormVis"]` or `"hidden_tools": {"formVis": [...]}` was reported imported with nothing dropped and then did nothing. `known_app` now returns the app's id (`Option<String>`), and `apps_off`, `hidden_tools` and `start` are rebuilt keyed by that id; two spellings of one app in `hidden_tools` are merged. Both callers pass `|id| family.get(id).map(|a| a.id.clone())`. Checked with `formmcp-cli profile import` built from these sources in a scratch HOME: `apps_off` `["FormCel", "formcel", "Nope"]` became `["formcel"]` with Nope dropped; `hidden_tools` `FormPortal: [a]` and `formai: [b]` became `formai: [a, b]`; `start` `FormCel: keep` became `formcel: keep` and `FormVis` in `apps_off` became `formvis`; unknown apps and bad policies are still listed as dropped.
+
+## v0.10.2 · the agent check no longer matches its own header {#v0-10-2}
+
+### clients.rs · state tests the body of a Codex section and of `claude mcp get`, not the line that names the server
+- refers-to: core/src/clients.rs :: state, ours, toml_section, connect
+- kind: bugfix
+- logged: v0.10.2 · 2026-11-10
+
+`ours` asks whether a text contains `formmcp`, and both texts it was given began with the server's own name: `toml_section` returns a range that starts at the `[mcp_servers.formmcp]` line, and `claude mcp get formmcp` prints `formmcp:` first. So any server called formmcp read as formMCP's own, a foreign Codex or Claude Code entry was reported Connected instead of Taken, and `connect` (which writes on Connected and leaves Taken alone) replaced it. `state` now skips the first line of both texts and tests the rest (the command and args). Cursor already tested only the entry's value. `connect` and `remove` need no change, since they act on what `state` reports. Checked with the two functions run standalone: a foreign Codex section and a foreign `claude mcp get` body read as not ours, formMCP's own read as ours. The crate was not built here (libdbus is missing on the machine).
+
+### clients.rs · ours matches formmcp in any case
+- refers-to: core/src/clients.rs :: ours, state
+- kind: bugfix
+- logged: v0.10.2 · 2026-11-10
+
+With the name line no longer tested, formMCP's own entry is recognised only by its command, and a packaged build's path (`/Applications/FormMCP.app/Contents/MacOS/FormMCP`) held neither `formmcp` nor `formMCP`, so it would have read as Taken and `connect` would never have refreshed or removed it. `ours` now lowercases the text once and tests `formmcp`. Checked with the functions run standalone on four cases: a foreign Codex section and a foreign `claude mcp get` body read as not ours; an own Codex section and an own Claude body with a `FormMCP.app` path read as ours. The crate was not built here (libdbus is missing).
+
+### formmcp.bat · the cli, family and mcp branches run outside any parenthesised block
+- refers-to: formmcp.bat :: :mcp, :cli, :family, the main flow's closing exit
+- kind: bugfix
+- logged: v0.10.2 · 2026-11-10
+
+cmd expands `%1`..`%9` and `%errorlevel%` when it parses a whole parenthesised block, before any line in it runs. The `cli` and `family` blocks called `shift` and then used `%1`..`%9`, so `formmcp.bat cli list` handed `cli list` to the program, and every block's `exit /b %errorlevel%` (the `mcp` block too) returned the errorlevel from before the block ran, so a failed run exited 0. The three `if` lines now `goto` labels (`:mcp`, `:cli`, `:family`) placed below the main flow, whose lines run one at a time, so `shift` and `%errorlevel%` act at run time. The main flow ends with `exit /b %errorlevel%` after `cargo run` so it cannot fall into the labels. CRLF endings kept. Traced from cmd's parse rules; not run, there is no Windows host here.
 
 ## v0.10.0 · demo_open {#v0-10-0}
 

@@ -21,15 +21,18 @@ pub fn split(line: &str) -> Result<Vec<String>, String> {
     let mut word = String::new();
     let mut in_word = false;
     let mut quote: Option<char> = None;
-    let mut chars = line.chars();
+    let mut chars = line.chars().peekable();
     while let Some(c) = chars.next() {
         match (quote, c) {
             (Some(q), c) if c == q => quote = None,
             (Some('\''), c) => word.push(c),
-            (Some(_), '\\') | (None, '\\') => match chars.next() {
-                Some(next) => word.push(next),
-                None => return Err("the hook command ends with a backslash".into()),
-            },
+            (Some(_), '\\') | (None, '\\') => {
+                match chars.next_if(|next| matches!(next, '"' | '\'' | '\\')) {
+                    Some(next) => word.push(next),
+                    None => word.push('\\'),
+                }
+                in_word = true;
+            }
             (Some(_), c) => word.push(c),
             (None, '"') | (None, '\'') => {
                 quote = Some(c);

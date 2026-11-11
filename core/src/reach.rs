@@ -67,7 +67,7 @@ pub fn portal_root() -> PathBuf {
 fn which(program: &str) -> Option<PathBuf> {
     let paths = std::env::var_os("PATH")?;
     for dir in std::env::split_paths(&paths) {
-        for name in [program.to_string(), format!("{program}.exe")] {
+        for name in [if cfg!(windows) { format!("{program}.exe") } else { program.to_string() }] {
             let candidate = dir.join(name);
             if candidate.is_file() {
                 return Some(candidate);

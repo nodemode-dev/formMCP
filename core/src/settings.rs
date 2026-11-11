@@ -80,7 +80,7 @@ pub fn profile_name_ok(name: &str) -> bool {
     (1..=40).contains(&n) && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == ' ') && !name.starts_with(' ') && !name.ends_with(' ')
 }
 
-pub fn read_profile(text: &str, known_app: &dyn Fn(&str) -> bool) -> Result<(String, Profile, Vec<String>), String> {
+pub fn read_profile(text: &str, known_app: &dyn Fn(&str) -> Option<String>) -> Result<(String, Profile, Vec<String>), String> {
     if text.len() > PROFILE_LIMIT {
         return Err(format!("a profile file is at most {PROFILE_LIMIT} bytes"));
     }
@@ -93,21 +93,29 @@ pub fn read_profile(text: &str, known_app: &dyn Fn(&str) -> bool) -> Result<(Str
     }
     let mut dropped = Vec::new();
     let mut profile = file.profile;
-    profile.apps_off.retain(|a| known_app(a) || {
-        dropped.push(a.clone());
-        false
-    });
-    profile.hidden_tools.retain(|a, tools| {
+    profile.apps_off = std::mem::take(&mut profile.apps_off).into_iter().filter_map(|a| known_app(&a).or_else(|| {
+        dropped.push(a);
+        None
+    })).collect();
+    let mut hidden: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (a, mut tools) in std::mem::take(&mut profile.hidden_tools) {
         tools.retain(|t| !t.is_empty() && t.len() <= 128);
-        known_app(a) && !tools.is_empty() || {
-            dropped.push(a.clone());
-            false
+        match known_app(&a) {
+            Some(id) if !tools.is_empty() => hidden.entry(id).or_default().extend(tools),
+            _ => dropped.push(a),
         }
-    });
-    profile.start.retain(|a, policy| known_app(a) && START_POLICIES.contains(&policy.as_str()) || {
-        dropped.push(format!("{a} ({policy})"));
-        false
-    });
+    }
+    profile.hidden_tools = hidden;
+    let mut start = BTreeMap::new();
+    for (a, policy) in std::mem::take(&mut profile.start) {
+        match known_app(&a) {
+            Some(id) if START_POLICIES.contains(&policy.as_str()) => {
+                start.insert(id, policy);
+            }
+            _ => dropped.push(format!("{a} ({policy})")),
+        }
+    }
+    profile.start = start;
     profile.apps_off.sort();
     profile.apps_off.dedup();
     Ok((file.name, profile, dropped))
