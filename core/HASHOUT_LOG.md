@@ -3,7 +3,7 @@
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
 Current build version: v0.10.2
-Last updated: 2026-11-10 · v0.10.3 ownership from the entry's command, Codex entries in any TOML form; 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Last updated: 2026-11-10 · v0.10.3 programs found by Windows extensions, ownership from the entry's command, Codex entries in any TOML form; 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
 
 ## v0.10.3 · other tools' config files are left intact {#v0-10-3}
 
@@ -20,6 +20,13 @@ Last updated: 2026-11-10 · v0.10.3 ownership from the entry's command, Codex en
 - logged: v0.10.3 · 2026-11-10
 
 v0.10.2 stopped testing the line that names the server but still asked whether the rest of the entry contained `formmcp` in any case. `claude mcp get` ends with "To remove this server, run: claude mcp remove formmcp -s user", a Codex section's `[mcp_servers.formmcp.env]` subtable header sits in its body, and a foreign command such as `npx -y formmcp-server` or `/opt/FormMCP-proxy` contains the word, so a foreign entry still read Connected and Connect replaced it (Disconnect removed it). `ours` now takes only the command: its file stem, lowercased, must be `formmcp` or `formmcp-cli` (the `./formmcp` launcher, `formmcp.bat`, the CLI, a packaged `FormMCP.app/.../FormMCP` or `FormMCP.exe`), or it must equal the launcher formMCP would write. The command is read from the `Command:` line of `claude mcp get`, from the `command = "..."` key of the Codex section before any subtable (`toml_command`, `toml_string` for basic and literal strings), and from `command` in the Cursor entry. Checked with `formmcp-cli` built from these sources and Claude Code in an isolated scratch HOME (`env -i`): a user-scope `formmcp` running `npx -y formmcp-server` read Taken and survived `agents install claude`; formMCP's own entry with a `/opt/My Stuff/FormMCP.app/Contents/MacOS/FormMCP` launcher read Connected; a Codex section with an env subtable naming formmcp read Taken; a literal-string `formmcp-cli` command read Connected; a Cursor entry running `/opt/FormMCP-proxy` read Taken and one running `/x/formmcp` Connected.
+
+### clients.rs, reach.rs · on Windows only runnable names are looked up on PATH
+- refers-to: core/src/clients.rs :: which · core/src/reach.rs :: which
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+Both `which` functions tried the bare name first on every platform. An npm-installed Claude Code on Windows leaves an extensionless sh shim `claude` beside `claude.cmd` in `%APPDATA%\npm`; the shim was returned, `Command::new` on it fails with OS error 193, so the state read Not connected and Connect always failed. On Windows `clients::which` now tries `.exe`, `.cmd`, `.bat` (Rust runs batch files with its own argument escaping) and `reach::which` tries `.exe`; elsewhere both try the bare name only. The choice is a `cfg!(windows)` expression, so the Linux build type-checks both branches; a Windows-target check could not finish here (ring needs a mingw C compiler, which is not installed), and nothing was run on Windows.
 
 ## v0.10.2 · the agent check no longer matches its own header {#v0-10-2}
 
