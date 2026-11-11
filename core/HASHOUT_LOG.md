@@ -3,7 +3,16 @@
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
 Current build version: v0.10.2
-Last updated: 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Last updated: 2026-11-10 · v0.10.3 Codex entries in any TOML form; 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+
+## v0.10.3 · other tools' config files are left intact {#v0-10-3}
+
+### clients.rs · a Codex entry for formmcp is found in any TOML form, and one formMCP cannot edit is Taken
+- refers-to: core/src/clients.rs :: toml_line, toml_key, toml_header, toml_section, toml_declares, state, write
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+`toml_section` found formMCP's Codex section only when a trimmed line was exactly `[mcp_servers.formmcp]`. A header with a trailing comment, spaces inside the brackets, a quoted key, a UTF-8 byte order mark, or an entry written as `formmcp = { ... }` under `[mcp_servers]` or as a dotted key, read as Not connected, and Connect appended a second `[mcp_servers.formmcp]` table, after which Codex could not load its config.toml at all. Each line is now read through `toml_line` (byte order mark dropped, cut at an unquoted `#`, trimmed) and a header's key through `toml_key` (spaces and quotes removed) before it is compared, for the start and the end of the section. When no section header matches, `toml_declares` walks the file's keys with their table and reports any key that is `mcp_servers.formmcp` or below it; `state` then reports Taken and `write` refuses with "declares mcp_servers.formmcp in a form formMCP does not edit; not changed". Checked with `formmcp-cli` built from these sources (outside the repo, without the keychain's D-Bus backend, which is not installed here) on twelve sample files in a scratch `CODEX_HOME`: the commented, quoted, spaced, inline, dotted, top-level, byte order mark and subtable-only forms all read Taken and were left byte for byte, an own entry with a commented header read Connected and was rewritten as one table, and Python's tomllib parsed every result that had no byte order mark.
 
 ## v0.10.2 · the agent check no longer matches its own header {#v0-10-2}
 

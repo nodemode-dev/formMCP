@@ -112,22 +112,78 @@ fn ours(text: &str) -> bool {
     text.to_lowercase().contains("formmcp")
 }
 
+fn toml_line(line: &str) -> &str {
+    let line = line.trim_start_matches('\u{feff}');
+    let mut quote = None;
+    let mut escaped = false;
+    for (i, c) in line.char_indices() {
+        match quote {
+            Some(q) => {
+                if escaped {
+                    escaped = false;
+                } else if c == '\\' && q == '"' {
+                    escaped = true;
+                } else if c == q {
+                    quote = None;
+                }
+            }
+            None if c == '"' || c == '\'' => quote = Some(c),
+            None if c == '#' => return line[..i].trim(),
+            None => {}
+        }
+    }
+    line.trim()
+}
+
+fn toml_key(text: &str) -> String {
+    text.chars().filter(|c| !c.is_whitespace() && *c != '"' && *c != '\'').collect()
+}
+
+fn toml_header(line: &str) -> Option<String> {
+    let line = toml_line(line);
+    line.starts_with('[').then(|| toml_key(line.trim_start_matches('[').trim_end_matches(']')))
+}
+
 fn toml_section(text: &str, name: &str) -> Option<(usize, usize)> {
-    let header = format!("[mcp_servers.{name}]");
+    let key = format!("mcp_servers.{name}");
+    let sub = format!("{key}.");
     let mut offset = 0;
     let mut start = None;
     for line in text.split_inclusive('\n') {
-        let trimmed = line.trim();
+        let header = toml_header(line);
         if let Some(s) = start {
-            if trimmed.starts_with('[') && !trimmed.starts_with(&format!("[mcp_servers.{name}.")) {
+            if header.as_ref().is_some_and(|h| !h.starts_with(&sub)) {
                 return Some((s, offset));
             }
-        } else if trimmed == header {
+        } else if header.as_deref() == Some(key.as_str()) {
             start = Some(offset);
         }
         offset += line.len();
     }
     start.map(|s| (s, text.len()))
+}
+
+fn toml_declares(text: &str, name: &str) -> bool {
+    let key = format!("mcp_servers.{name}");
+    let sub = format!("{key}.");
+    let mut table = String::new();
+    for line in text.split_inclusive('\n') {
+        let path = match toml_header(line) {
+            Some(header) => {
+                table = header;
+                table.clone()
+            }
+            None => match toml_line(line).split_once('=') {
+                Some((k, _)) if table.is_empty() => toml_key(k),
+                Some((k, _)) => format!("{table}.{}", toml_key(k)),
+                None => continue,
+            },
+        };
+        if path == key || path.starts_with(&sub) {
+            return true;
+        }
+    }
+    false
 }
 
 fn passed_env() -> Vec<(String, String)> {
@@ -155,6 +211,7 @@ pub fn state(client: Client) -> ClientState {
             let s = match toml_section(&text, SERVER_NAME) {
                 Some((a, b)) if ours(text[a..b].split_once('\n').map_or("", |(_, body)| body)) => Link::Connected,
                 Some(_) => Link::Taken,
+                None if toml_declares(&text, SERVER_NAME) => Link::Taken,
                 None => Link::NotConnected,
             };
             ClientState { client, label, state: s, config: Some(path), note: taken(s) }
@@ -198,6 +255,7 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
             let block = format!("[mcp_servers.{SERVER_NAME}]\ncommand = {}\nargs = [{list}]\n{env_line}startup_timeout_sec = 600\ntool_timeout_sec = 900\n", quote(&exe));
             let next = match toml_section(&text, SERVER_NAME) {
                 Some((a, b)) => format!("{}{block}\n{}", &text[..a], &text[b..]),
+                None if toml_declares(&text, SERVER_NAME) => return Err(format!("{} declares mcp_servers.{SERVER_NAME} in a form formMCP does not edit; not changed", path.display())),
                 None if text.trim().is_empty() => block,
                 None => format!("{}\n\n{block}", text.trim_end()),
             };
