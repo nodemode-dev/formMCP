@@ -197,3 +197,40 @@ fn cursor_compact_crlf_and_byte_order_mark_files_round_trip() {
         assert_eq!(&fs::read_to_string(&path).unwrap(), original, "shape {n} did not round trip");
     }
 }
+
+#[test]
+fn cursor_remove_gives_back_a_file_that_had_no_mcp_servers() {
+    let shapes = [
+        "{\n  \"theme\": \"dark\",\n  \"aaa\": 2.50\n}\n",
+        "{\"theme\":\"dark\"}",
+        "{\r\n\t\"theme\": \"dark\"\r\n}\r\n",
+        "\u{feff}{\n    \"theme\": \"dark\"\n}\n",
+        "{}\n",
+    ];
+    for (n, original) in shapes.iter().enumerate() {
+        let scratch = scratch(&format!("cursor-no-servers-{n}"));
+        let path = config(&scratch, Client::Cursor);
+        fs::write(&path, original).unwrap();
+
+        assert_eq!(connect(Client::Cursor, true), Ok(Link::Connected), "shape {n}");
+        let text = fs::read_to_string(&path).unwrap();
+        let data: serde_json::Value = serde_json::from_str(text.trim_start_matches('\u{feff}')).unwrap_or_else(|e| panic!("shape {n}: {e}\n{text}"));
+        assert_eq!(data["mcpServers"]["formmcp"]["command"], "/x/formmcp", "shape {n}");
+
+        assert_eq!(connect(Client::Cursor, false), Ok(Link::NotConnected), "shape {n}");
+        assert_eq!(fs::read_to_string(&path).unwrap().as_bytes(), original.as_bytes(), "shape {n} did not round trip");
+    }
+}
+
+#[test]
+fn cursor_remove_keeps_an_mcp_servers_object_the_person_wrote() {
+    let scratch = scratch("cursor-own-empty");
+    let path = config(&scratch, Client::Cursor);
+    let original = "{\n  \"mcpServers\": {\n  },\n  \"theme\": \"dark\"\n}\n";
+    fs::write(&path, original).unwrap();
+    assert_eq!(connect(Client::Cursor, true), Ok(Link::Connected));
+    assert_eq!(connect(Client::Cursor, false), Ok(Link::NotConnected));
+    let text = fs::read_to_string(&path).unwrap();
+    let data: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(data, serde_json::json!({"mcpServers": {}, "theme": "dark"}), "{text}");
+}

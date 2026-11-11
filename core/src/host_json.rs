@@ -186,15 +186,27 @@ pub(crate) fn set(text: &str, server: &str, entry: &Value) -> Option<String> {
     }
 }
 
+fn cut(text: &str, object: &Object, k: usize) -> String {
+    let own = &object.members[k];
+    let (from, to) = match (k, object.members.len()) {
+        (_, 1) => (object.open + 1, object.close),
+        (0, _) => (own.start, object.members[1].start),
+        _ => (object.members[k - 1].value.1, own.value.1),
+    };
+    format!("{}{}", &text[..from], &text[to..])
+}
+
 pub(crate) fn remove(text: &str, server: &str) -> Option<String> {
     let top = root(text)?;
-    let (_, servers) = find(&top, SERVERS)?;
+    let (s, servers) = find(&top, SERVERS)?;
     let servers = object(text, servers.value.0)?;
     let (k, own) = find(&servers, server)?;
-    let (cut_from, cut_to) = match (k, servers.members.len()) {
-        (_, 1) => (servers.open + 1, servers.close),
-        (0, _) => (own.start, servers.members[1].start),
-        _ => (servers.members[k - 1].value.1, own.value.1),
-    };
-    Some(format!("{}{}", &text[..cut_from], &text[cut_to..]))
+    if servers.members.len() == 1 {
+        let entry: Value = serde_json::from_str(&text[own.value.0..own.value.1]).ok()?;
+        let before = cut(text, &top, s);
+        if set(&before, server, &entry).as_deref() == Some(text) {
+            return Some(before);
+        }
+    }
+    Some(cut(text, &servers, k))
 }

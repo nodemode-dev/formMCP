@@ -422,7 +422,7 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
             let path = codex_config();
             let text = read_host(&path)?;
             let doc = toml_doc(&path, &text)?;
-            let list =launcher.args.iter().map(|a| quote(a)).collect::<Vec<_>>().join(", ");
+            let list = launcher.args.iter().map(|a| quote(a)).collect::<Vec<_>>().join(", ");
             let env_line = if env.is_empty() { String::new() } else { format!("env = {{ {} }}\n", env.iter().map(|(k, v)| format!("{k} = {}", quote(v))).collect::<Vec<_>>().join(", ")) };
             let block = format!("[mcp_servers.{SERVER_NAME}]\ncommand = {}\nargs = [{list}]\n{env_line}startup_timeout_sec = 600\ntool_timeout_sec = 900\n", quote(&exe));
             let next = match toml_section(&text, SERVER_NAME) {
@@ -494,14 +494,22 @@ fn remove(client: Client) -> Result<(), String> {
             let path = cursor_config();
             let text = read_host(&path)?;
             let mut data = cursor_data(&path, &text)?;
-            if let Some(servers) = data.get_mut("mcpServers").and_then(|m| m.as_object_mut()) {
-                if servers.remove(SERVER_NAME).is_some() {
-                    let next = host_json::remove(&text, SERVER_NAME).ok_or_else(|| format!("{}: formMCP could not find its entry in this file; not changed", path.display()))?;
-                    cursor_checked(&path, &next, &data)?;
-                    backup(&path)?;
-                    save(&path, &next)?;
+            let Some(servers) = data.get_mut("mcpServers").and_then(|m| m.as_object_mut()) else {
+                return Ok(());
+            };
+            if servers.remove(SERVER_NAME).is_none() {
+                return Ok(());
+            }
+            let emptied = servers.is_empty();
+            let next = host_json::remove(&text, SERVER_NAME).ok_or_else(|| format!("{}: formMCP could not find its entry in this file; not changed", path.display()))?;
+            if emptied && cursor_data(&path, &next).is_ok_and(|d| d.get("mcpServers").is_none()) {
+                if let Some(top) = data.as_object_mut() {
+                    top.remove("mcpServers");
                 }
             }
+            cursor_checked(&path, &next, &data)?;
+            backup(&path)?;
+            save(&path, &next)?;
         }
     }
     Ok(())
