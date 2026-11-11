@@ -98,9 +98,36 @@ fn which(program: &str) -> Option<PathBuf> {
 
 fn backup(path: &Path) -> Result<(), String> {
     if path.exists() {
-        let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+        let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0);
         let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
-        fs::copy(path, path.with_file_name(format!("{name}.bak-{stamp}"))).map_err(|e| format!("{}: {e}", path.display()))?;
+        let mut target = path.with_file_name(format!("{name}.bak-{stamp}"));
+        let mut n = 0;
+        while target.exists() {
+            n += 1;
+            target = path.with_file_name(format!("{name}.bak-{stamp}-{n}"));
+        }
+        fs::copy(path, target).map_err(|e| format!("{}: {e}", path.display()))?;
+    }
+    Ok(())
+}
+
+fn save(path: &Path, text: &str) -> Result<(), String> {
+    let real = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    if let Some(dir) = real.parent() {
+        fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+    }
+    static WRITES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let name = real.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let part = real.with_file_name(format!("{name}.part-{}-{}", std::process::id(), WRITES.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
+    let written = fs::write(&part, text)
+        .and_then(|()| match fs::metadata(&real) {
+            Ok(meta) if cfg!(unix) => fs::set_permissions(&part, meta.permissions()),
+            _ => Ok(()),
+        })
+        .and_then(|()| fs::rename(&part, &real));
+    if let Err(e) = written {
+        let _ = fs::remove_file(&part);
+        return Err(format!("{}: {e}", path.display()));
     }
     Ok(())
 }
@@ -316,16 +343,17 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
                 None if text.trim().is_empty() => block,
                 None => format!("{}\n\n{block}", text.trim_end()),
             };
-            backup(&path)?;
-            if let Some(dir) = path.parent() {
-                fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+            if next == text {
+                return Ok(());
             }
-            fs::write(&path, next).map_err(|e| format!("{}: {e}", path.display()))?;
+            backup(&path)?;
+            save(&path, &next)?;
         }
         Client::Cursor => {
             let path = cursor_config();
-            let mut data: Value = match read_host(&path)? {
-                text if !text.trim().is_empty() => serde_json::from_str(text.strip_prefix('\u{feff}').unwrap_or(&text)).map_err(|e| format!("{} is not valid JSON ({e}; comments are not supported); not changed", path.display()))?,
+            let text = read_host(&path)?;
+            let mut data: Value = match text.as_str() {
+                text if !text.trim().is_empty() => serde_json::from_str(text.strip_prefix('\u{feff}').unwrap_or(text)).map_err(|e| format!("{} is not valid JSON ({e}; comments are not supported); not changed", path.display()))?,
                 _ => json!({}),
             };
             let servers = data.as_object_mut().ok_or_else(|| format!("{} is not a JSON object; not changed", path.display()))?.entry("mcpServers").or_insert_with(|| json!({}));
@@ -334,11 +362,12 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
                 entry["env"] = Value::Object(env.into_iter().map(|(k, v)| (k, Value::String(v))).collect());
             }
             servers.as_object_mut().ok_or_else(|| format!("mcpServers in {} is not an object; not changed", path.display()))?.insert(SERVER_NAME.to_string(), entry);
-            backup(&path)?;
-            if let Some(dir) = path.parent() {
-                fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+            let next = serde_json::to_string_pretty(&data).map_err(|e| e.to_string())? + "\n";
+            if next == text {
+                return Ok(());
             }
-            fs::write(&path, serde_json::to_string_pretty(&data).map_err(|e| e.to_string())? + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
+            backup(&path)?;
+            save(&path, &next)?;
         }
     }
     Ok(())
@@ -356,7 +385,7 @@ fn remove(client: Client) -> Result<(), String> {
             let text = fs::read_to_string(&path).unwrap_or_default();
             if let Some((a, b)) = toml_section(&text, SERVER_NAME) {
                 backup(&path)?;
-                fs::write(&path, format!("{}{}", &text[..a], &text[b..])).map_err(|e| format!("{}: {e}", path.display()))?;
+                save(&path, &format!("{}{}", &text[..a], &text[b..]))?;
             }
         }
         Client::Cursor => {
@@ -366,7 +395,7 @@ fn remove(client: Client) -> Result<(), String> {
                     if let Some(servers) = data.get_mut("mcpServers").and_then(|m| m.as_object_mut()) {
                         if servers.remove(SERVER_NAME).is_some() {
                             backup(&path)?;
-                            fs::write(&path, serde_json::to_string_pretty(&data).map_err(|e| e.to_string())? + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
+                            save(&path, &(serde_json::to_string_pretty(&data).map_err(|e| e.to_string())? + "\n"))?;
                         }
                     }
                 }
