@@ -3,7 +3,7 @@
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
 Current build version: v0.10.2
-Last updated: 2026-11-10 · v0.10.3 hook commands keep Windows backslashes, an unreadable host file is refused, programs found by Windows extensions, ownership from the entry's command, Codex entries in any TOML form; 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
+Last updated: 2026-11-10 · v0.10.3 Cursor files with a byte order mark, hook commands keep Windows backslashes, an unreadable host file is refused, programs found by Windows extensions, ownership from the entry's command, Codex entries in any TOML form; 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
 
 ## v0.10.3 · other tools' config files are left intact {#v0-10-3}
 
@@ -41,6 +41,13 @@ Both `which` functions tried the bare name first on every platform. An npm-insta
 - logged: v0.10.3 · 2026-11-10
 
 `split` treated every backslash as a POSIX escape, so a before or after hook set to `C:\Tools\check.exe` or `"C:\Program Files\Hook\check.exe"` became `C:Toolscheck.exe`; `hook_set` accepted it, the spawn then failed, and a failing before hook refuses every `call_app`. A backslash outside single quotes now escapes only a following `"`, `'` or `\` and is otherwise kept as written; a trailing backslash is kept instead of being an error, and a word that starts with a backslash now counts as a word (it was dropped before when nothing else followed it). Single quotes still keep everything literally. A UNC path still needs its leading `\\` written as `\\\\` or put in single quotes. `formmcp cli hook before <words...>` still joins its arguments with spaces, so a path with a space is passed as one quoted argument (`hook before '"C:\Program Files\x.exe" --flag'`). Checked with `formmcp-cli hook before` built from these sources in a scratch HOME: `C:\Tools\check.exe --x` gives `C:\Tools\check.exe`, `--x`; the quoted Program Files path keeps its backslashes and space; `a\"b` gives `a"b`; `x\\y` gives `x\y`; `trail\` gives `trail\`; an unclosed quote is still refused.
+
+### clients.rs · Cursor's mcp.json may start with a byte order mark
+- refers-to: core/src/clients.rs :: state, write, remove
+- kind: fix
+- logged: v0.10.3 · 2026-11-10
+
+Windows editors and PowerShell 5.1's `Out-File -Encoding utf8` save mcp.json with a UTF-8 byte order mark, which serde_json does not skip. `state` read Not connected even with formMCP's entry present (so Disconnect was never offered) and Connect refused the file as invalid JSON. `state`, `write` and `remove` now parse the text after a leading U+FEFF; the file is written back without it, which Cursor reads the same. The invalid-JSON refusal now also says comments are not supported, since JSON with comments is the other common reason. Checked with `formmcp-cli` built from these sources in a scratch HOME: a mcp.json with a byte order mark and another server read Not connected, then connected with the other server kept; one with formMCP's entry read Connected and `agents remove` left only the other server; a file with a `//` comment was refused with the new message.
 
 ## v0.10.2 · the agent check no longer matches its own header {#v0-10-2}
 

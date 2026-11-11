@@ -266,7 +266,7 @@ pub fn state(client: Client) -> ClientState {
                 Ok(text) => (text, None),
                 Err(e) => (String::new(), Some(e)),
             };
-            let data: Value = serde_json::from_str(&text).unwrap_or_default();
+            let data: Value = serde_json::from_str(text.strip_prefix('\u{feff}').unwrap_or(&text)).unwrap_or_default();
             let s = match data.get("mcpServers").and_then(|m| m.get(SERVER_NAME)) {
                 Some(entry) if entry.get("command").and_then(Value::as_str).is_some_and(ours) => Link::Connected,
                 Some(_) => Link::Taken,
@@ -316,7 +316,7 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
         Client::Cursor => {
             let path = cursor_config();
             let mut data: Value = match read_host(&path)? {
-                text if !text.trim().is_empty() => serde_json::from_str(&text).map_err(|e| format!("{} is not valid JSON ({e}); not changed", path.display()))?,
+                text if !text.trim().is_empty() => serde_json::from_str(text.strip_prefix('\u{feff}').unwrap_or(&text)).map_err(|e| format!("{} is not valid JSON ({e}; comments are not supported); not changed", path.display()))?,
                 _ => json!({}),
             };
             let servers = data.as_object_mut().ok_or_else(|| format!("{} is not a JSON object; not changed", path.display()))?.entry("mcpServers").or_insert_with(|| json!({}));
@@ -353,7 +353,7 @@ fn remove(client: Client) -> Result<(), String> {
         Client::Cursor => {
             let path = cursor_config();
             if let Ok(text) = fs::read_to_string(&path) {
-                if let Ok(mut data) = serde_json::from_str::<Value>(&text) {
+                if let Ok(mut data) = serde_json::from_str::<Value>(text.strip_prefix('\u{feff}').unwrap_or(&text)) {
                     if let Some(servers) = data.get_mut("mcpServers").and_then(|m| m.as_object_mut()) {
                         if servers.remove(SERVER_NAME).is_some() {
                             backup(&path)?;
