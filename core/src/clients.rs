@@ -108,8 +108,10 @@ fn quote(text: &str) -> String {
     format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\""))
 }
 
-fn ours(text: &str) -> bool {
-    text.to_lowercase().contains("formmcp")
+fn ours(command: &str) -> bool {
+    let path = Path::new(command);
+    let stem = path.file_stem().map(|s| s.to_string_lossy().to_lowercase());
+    matches!(stem.as_deref(), Some("formmcp" | "formmcp-cli")) || Launcher::current().is_ok_and(|l| l.program == path)
 }
 
 fn toml_line(line: &str) -> &str {
@@ -163,6 +165,36 @@ fn toml_section(text: &str, name: &str) -> Option<(usize, usize)> {
     start.map(|s| (s, text.len()))
 }
 
+fn toml_string(value: &str) -> Option<String> {
+    if let Some(rest) = value.strip_prefix('\'') {
+        return rest.split_once('\'').map(|(s, _)| s.to_string());
+    }
+    let mut out = String::new();
+    let mut chars = value.strip_prefix('"')?.chars();
+    while let Some(c) = chars.next() {
+        match c {
+            '"' => return Some(out),
+            '\\' => out.push(chars.next()?),
+            _ => out.push(c),
+        }
+    }
+    None
+}
+
+fn toml_command(section: &str) -> Option<String> {
+    for line in section.split_inclusive('\n').skip(1) {
+        if toml_header(line).is_some() {
+            break;
+        }
+        if let Some((k, v)) = toml_line(line).split_once('=') {
+            if toml_key(k) == "command" {
+                return toml_string(v.trim());
+            }
+        }
+    }
+    None
+}
+
 fn toml_declares(text: &str, name: &str) -> bool {
     let key = format!("mcp_servers.{name}");
     let sub = format!("{key}.");
@@ -199,7 +231,7 @@ pub fn state(client: Client) -> ClientState {
             Some(claude) => match Command::new(claude).args(["mcp", "get", SERVER_NAME]).current_dir(home()).output() {
                 Ok(out) if out.status.success() && String::from_utf8_lossy(&out.stdout).contains("Scope: User") => {
                     let shown = String::from_utf8_lossy(&out.stdout);
-                    let s = if ours(shown.split_once('\n').map_or("", |(_, body)| body)) { Link::Connected } else { Link::Taken };
+                    let s = if shown.lines().find_map(|l| l.trim().strip_prefix("Command:")).is_some_and(|c| ours(c.trim())) { Link::Connected } else { Link::Taken };
                     ClientState { client, label, state: s, config: None, note: taken(s) }
                 }
                 _ => ClientState { client, label, state: Link::NotConnected, config: None, note: None },
@@ -209,7 +241,7 @@ pub fn state(client: Client) -> ClientState {
             let path = codex_config();
             let text = fs::read_to_string(&path).unwrap_or_default();
             let s = match toml_section(&text, SERVER_NAME) {
-                Some((a, b)) if ours(text[a..b].split_once('\n').map_or("", |(_, body)| body)) => Link::Connected,
+                Some((a, b)) if toml_command(&text[a..b]).is_some_and(|c| ours(&c)) => Link::Connected,
                 Some(_) => Link::Taken,
                 None if toml_declares(&text, SERVER_NAME) => Link::Taken,
                 None => Link::NotConnected,
@@ -220,7 +252,7 @@ pub fn state(client: Client) -> ClientState {
             let path = cursor_config();
             let data: Value = fs::read_to_string(&path).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
             let s = match data.get("mcpServers").and_then(|m| m.get(SERVER_NAME)) {
-                Some(entry) if ours(&entry.to_string()) => Link::Connected,
+                Some(entry) if entry.get("command").and_then(Value::as_str).is_some_and(ours) => Link::Connected,
                 Some(_) => Link::Taken,
                 None => Link::NotConnected,
             };
