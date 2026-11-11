@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.10.4 · 2026-11-11
+
+- Connecting Codex no longer breaks a config.toml that holds a multi-line string (`"""` or `'''`) with a line such as `[mcp_servers.formmcp]` inside it. That text used to read as FormMCP's own section, so Codex showed as connected, and Connect rewrote the lines inside the string, closing quotes included, after which Codex could not load the file. Text inside a multi-line string is now never read as a section.
+- A Codex config.toml that is not valid TOML is refused with the reason (for example "line 1: unclosed table, expected `]`") and left unchanged; the status shows the same reason. Before, Connect added FormMCP's section to the broken file and reported connected. Every Codex change is now also checked before it is saved: the result must be valid TOML, hold FormMCP's entry as written (or none after Remove) and leave every other setting the same, or nothing is written.
+- Connect and Remove in Cursor change only FormMCP's entry in mcp.json. Before, the whole file was rewritten: keys sorted, two-space indents, `1.50` saved as `1.5` and escapes such as `é` turned into characters. Now every other byte stays as it was (indents, key order, numbers, escapes, Windows line endings and a byte order mark), the new entry is indented like its neighbours, and removing it gives back the file as it was before Connect.
+- The status of a Cursor mcp.json that is not plain JSON now says why it cannot be connected: FormMCP edits only plain JSON and leaves a file with comments or trailing commas alone. Connect still refuses such a file and changes nothing.
+- Removing FormMCP from a Cursor mcp.json that had no `mcpServers` before Connect gives back that file byte for byte. Before, Remove left an empty `"mcpServers": {}` behind. An `mcpServers` object the person wrote themselves is kept, empty, when FormMCP's entry was its only one, unless its bytes are exactly what Connect would have added.
+
 ## v0.10.3 · 2026-11-10
 
 - Connecting Codex no longer breaks its config.toml. A `formmcp` entry written another valid way (a comment after the header, spaces or quotes in it, a byte order mark, or `formmcp = { ... }` under `[mcp_servers]`) used to read as not connected, and Connect added a second `[mcp_servers.formmcp]` table that Codex could not load. FormMCP now finds its section in any of those forms, and one it cannot edit shows as taken and is left alone.

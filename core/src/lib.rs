@@ -4,6 +4,7 @@ pub mod clients;
 pub mod extensions;
 pub mod family;
 pub mod hooks;
+mod host_json;
 pub mod http;
 pub mod log;
 pub mod mcp;
