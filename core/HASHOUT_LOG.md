@@ -2,7 +2,7 @@
 
 Living log for `formmcp-core`, `formmcp-cli` and `setup/family.py`. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.10.2
+Current build version: v0.10.3
 Last updated: 2026-11-10 · v0.10.3 imported profiles keyed by app id, launchers pass every argument, host files written whole with unique backups, comments after the Codex section kept, Cursor files with a byte order mark, hook commands keep Windows backslashes, an unreadable host file is refused, programs found by Windows extensions, ownership from the entry's command, Codex entries in any TOML form; 2026-11-10 · v0.10.2 the agent check no longer matches its own header, formmcp.bat branches run at run time; 2026-11-09 · v0.10.0 demo_open; 2026-11-02 · the catalogue from the public download store; 2026-10-26 · the test suite (cli/tests, core/tests); 2026-10-25 · the file check against FormPortal's record; keychain secrets, redaction, the file check, hooks and tracing; profiles and start policies; HTTP, apps per agent, tool switches, resources and prompts; formMCP in the registry, never in its own list; skills out of formMCP; the activity log and Claude Code's user scope; the signed catalogue, suggest_app, always-expose, agents install; the gateway; the family list and the MCP server
 
 ## v0.10.3 · other tools' config files are left intact {#v0-10-3}
