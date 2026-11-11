@@ -303,7 +303,7 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
         Client::Codex => {
             let path = codex_config();
             let text = read_host(&path)?;
-            let list =launcher.args.iter().map(|a| quote(a)).collect::<Vec<_>>().join(", ");
+            let list = launcher.args.iter().map(|a| quote(a)).collect::<Vec<_>>().join(", ");
             let env_line = if env.is_empty() { String::new() } else { format!("env = {{ {} }}\n", env.iter().map(|(k, v)| format!("{k} = {}", quote(v))).collect::<Vec<_>>().join(", ")) };
             let block = format!("[mcp_servers.{SERVER_NAME}]\ncommand = {}\nargs = [{list}]\n{env_line}startup_timeout_sec = 600\ntool_timeout_sec = 900\n", quote(&exe));
             let next = match toml_section(&text, SERVER_NAME) {
