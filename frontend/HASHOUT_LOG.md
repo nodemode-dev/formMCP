@@ -2,8 +2,8 @@
 
 Living log for formMCP's window. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.10.3
-Last updated: 2026-11-10 · v0.10.3 no window changes; 2026-11-10 · v0.10.2 no window changes; 2026-11-09 · v0.10.1 app card overflow; v0.10.0 the demos inside the app; 2026-11-07 · v0.9.1 no window changes (Greg's README note on FormPortal updates); v0.9.0 the extension host; v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+Current build version: v0.10.4
+Last updated: 2026-11-11 · v0.10.4 no window changes; 2026-11-10 · v0.10.3 no window changes; 2026-11-10 · v0.10.2 no window changes; 2026-11-09 · v0.10.1 app card overflow; v0.10.0 the demos inside the app; 2026-11-07 · v0.9.1 no window changes (Greg's README note on FormPortal updates); v0.9.0 the extension host; v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
 
 ## v0.10.0 · the demos inside the app {#v0-10-0}
 
