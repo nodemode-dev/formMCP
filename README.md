@@ -69,7 +69,7 @@
 
 <table>
   <tr>
-    <td width="33%" valign="top"><h4>8 MCP tools</h4>family_apps · suggest_app · app_tools · call_app · app_resources · read_app_resource · app_prompts · get_app_prompt</td>
+    <td width="33%" valign="top"><h4>11 MCP tools</h4>family_apps · suggest_app · app_tools · call_app · app_resources · read_app_resource · app_prompts · get_app_prompt · extensions_list · extension_command · demo_open</td>
     <td width="33%" valign="top"><h4>Controls</h4>Apps per agent · single tools · profiles · start policies · hooks · secrets · tracing · activity log</td>
     <td width="33%" valign="top"><h4>Transports</h4>stdio · local HTTP at <code>127.0.0.1:5625/mcp</code> with an access token · Claude Code, Codex and Cursor</td>
   </tr>

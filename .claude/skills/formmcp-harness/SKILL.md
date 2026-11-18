@@ -19,6 +19,9 @@ formMCP is one MCP server for the whole Form family. It keeps the conversation s
 | `read_app_resource` | no | one resource's contents by its `uri`, as the app sent them |
 | `app_prompts` | no | the prompt templates one app offers, with their arguments |
 | `get_app_prompt` | no | one prompt filled with its `arguments` (strings): the app's messages, ready to follow |
+| `extensions_list` | no | the extensions installed in formMCP itself: `state`, permissions and `commands` (see below) |
+| `extension_command` | what the extension's command changes in formMCP's settings | runs one extension command (`id`, `command`, `args`) in formMCP's window, which must be open |
+| `demo_open` | no | opens one of formMCP's demos (`window`, `connect` or `safety`) beside formMCP's window, which must be open |
 
 ## Workflow
 
