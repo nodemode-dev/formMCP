@@ -86,7 +86,7 @@ The list is short on purpose: one line per app and no app's tools. An app's tool
 
 `./formmcp` sets `FORMMCP_DEV_ROOTS` to the folder that holds the formMCP checkout when it is not set, so Form app checkouts beside it are found; set it empty to turn that off. FormPortal's program is `FORMPORTAL_BIN`, else `formportal-cli` or `formportal` on PATH, else `/Applications/FormPortal.app` on macOS. FormPortal starts an install only when the install's `form-app.json` names a launcher (`agents.mcp.command`); until the apps' bundles carry one, installed apps are reached through their checkouts.
 
-An app's server inherits formMCP's environment, so what an app needs (form.md's `FORMMD_MCP_TOKEN`) is set once in the client's config for formmcp. `FORMMCP_START_TIMEOUT` (600 s) and `FORMMCP_CALL_TIMEOUT` (900 s) bound the waits. A started server lives as long as the client's formMCP session and ends with it.
+An app's server inherits formMCP's environment, so what an app needs (form.md's `FORMMD_MCP_TOKEN`) is set once in the client's config for formmcp. `FORMMCP_START_TIMEOUT` (120 s) and `FORMMCP_CALL_TIMEOUT` (900 s) bound the waits. A started server lives as long as the client's formMCP session and ends with it.
 
 ## Always showing one app's tools
 

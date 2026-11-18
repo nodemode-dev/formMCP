@@ -15,7 +15,7 @@ const PROTOCOL: &str = "2025-06-18";
 const STDERR_TAIL: usize = 20;
 
 pub fn start_timeout() -> Duration {
-    Duration::from_secs(std::env::var("FORMMCP_START_TIMEOUT").ok().and_then(|v| v.parse().ok()).unwrap_or(600))
+    Duration::from_secs(std::env::var("FORMMCP_START_TIMEOUT").ok().and_then(|v| v.parse().ok()).unwrap_or(120))
 }
 
 pub fn call_timeout() -> Duration {
