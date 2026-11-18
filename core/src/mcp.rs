@@ -545,7 +545,13 @@ pub fn answer(gateway: &mut Gateway, msg: &Value) -> Option<Value> {
             let wall = std::time::SystemTime::now();
             let mut answer = match call(gateway, name, &args) {
                 Ok(Outcome::Passed(result)) => result,
-                Ok(Outcome::Mine(v)) => json!({ "content": [{ "type": "text", "text": serde_json::to_string(&v).unwrap_or_default() }], "structuredContent": v, "isError": false }),
+                Ok(Outcome::Mine(v)) => {
+                    let mut mine = json!({ "content": [{ "type": "text", "text": serde_json::to_string(&v).unwrap_or_default() }], "isError": false });
+                    if gateway.settings.structured {
+                        mine["structuredContent"] = v;
+                    }
+                    mine
+                }
                 Err(e) => json!({ "content": [{ "type": "text", "text": e }], "isError": true }),
             };
             let redacted = if gateway.settings.redact_off { 0 } else { redact::value(&mut answer) };

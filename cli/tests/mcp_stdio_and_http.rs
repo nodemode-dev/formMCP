@@ -146,7 +146,25 @@ fn an_app_that_writes_bytes_that_are_not_utf8_still_answers() {
     m.initialize();
     let reply = m.call(2, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
     assert_ne!(reply["result"]["isError"], json!(true), "{reply}");
-    assert_eq!(reply["result"]["structuredContent"]["tools"][0]["name"], "ping", "{reply}");
+    let answer: Value = serde_json::from_str(&text(&reply)).unwrap();
+    assert_eq!(answer["tools"][0]["name"], "ping", "{reply}");
+}
+
+#[test]
+fn own_answers_are_sent_once_as_text_unless_the_structured_copy_is_on() {
+    let s = Sandbox::new("structured");
+    let mut m = Stdio2::start(&s, &[]);
+    m.initialize();
+    let plain = m.call(2, "tools/call", json!({ "name": "family_apps", "arguments": {} }));
+    assert!(plain["result"].get("structuredContent").is_none(), "{plain}");
+    let data: Value = serde_json::from_str(&text(&plain)).unwrap();
+    assert!(data["count"].as_u64().unwrap_or(0) > 0, "{plain}");
+    drop(m);
+    assert_eq!(s.json(&["structured", "on"], &[])["structured"], json!(true));
+    let mut m = Stdio2::start(&s, &[]);
+    m.initialize();
+    let both = m.call(2, "tools/call", json!({ "name": "family_apps", "arguments": {} }));
+    assert_eq!(both["result"]["structuredContent"], data, "{both}");
 }
 
 #[test]

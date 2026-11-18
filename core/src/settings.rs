@@ -28,6 +28,8 @@ pub struct Settings {
     pub redact_off: bool,
     #[serde(default, skip_serializing_if = "is_false")]
     pub verify_off: bool,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub structured: bool,
     #[serde(default, skip_serializing_if = "Hooks::is_empty")]
     pub hooks: Hooks,
     #[serde(default, skip_serializing_if = "Option::is_none")]

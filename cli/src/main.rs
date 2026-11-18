@@ -30,6 +30,7 @@ const HELP: &str = "formmcp-cli: formMCP without the window
                         an installed app's files, checked before formMCP starts it against what formMCP recorded the first
                         time it started that FormPortal install; --trust records the files as they are now
   redact on|off|check   hide known secrets and token-shaped text in results and the log (on); check reads stdin
+  structured on|off     also send formMCP's own answers as structuredContent, beside the text (off)
   hook before|after <command>|off
                         a command run before each app tool call (JSON on stdin; prints {\"decision\":\"deny\",\"reason\":...}
                         or exits 2 to refuse; a failure refuses) and after it (JSON with the outcome; its answer is ignored)
@@ -308,7 +309,7 @@ fn main() -> ExitCode {
                 }
             }
         }
-        "secret" | "verify" | "redact" | "hook" | "telemetry" => {
+        "secret" | "verify" | "redact" | "structured" | "hook" | "telemetry" => {
             let mut saved = Settings::saved();
             let known = |id: Option<&String>| id.and_then(|i| family.get(i)).map(|a| a.id.clone()).ok_or_else(|| "name an app id; apps lists them".to_string());
             let a1 = args.get(1).map(String::as_str);
@@ -336,6 +337,11 @@ fn main() -> ExitCode {
                     saved.redact_off = a1 == Some("off");
                     saved.save().map(|p| json!({ "redact": !saved.redact_off, "settings": p }))
                 }
+                ("structured", Some("on" | "off")) => {
+                    saved.structured = a1 == Some("on");
+                    saved.save().map(|p| json!({ "structured": saved.structured, "settings": p }))
+                }
+                ("structured", None) => Ok(json!({ "structured": saved.structured, "note": "on adds structuredContent, a copy of the text, to formMCP's own answers" })),
                 ("redact", Some("check")) => {
                     let mut text = String::new();
                     std::io::Read::read_to_string(&mut std::io::stdin(), &mut text).map_err(|e| e.to_string()).map(|_| {
@@ -364,7 +370,7 @@ fn main() -> ExitCode {
                     }
                 },
                 ("telemetry", None) => Ok(json!({ "telemetry": saved.telemetry })),
-                _ => Err("secret set|remove|list, verify [on|off|<id>|--trust <id>], redact on|off|check, hook before|after <command>|off, telemetry <address>|off".to_string()),
+                _ => Err("secret set|remove|list, verify [on|off|<id>|--trust <id>], redact on|off|check, structured on|off, hook before|after <command>|off, telemetry <address>|off".to_string()),
             };
             match result {
                 Ok(v) => {
