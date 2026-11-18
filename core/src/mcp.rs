@@ -25,7 +25,8 @@ pub struct Gateway {
     pub transport: &'static str,
     forced_client: bool,
     running: HashMap<String, (String, AppServer)>,
-    pending: HashMap<String, Receiver<Result<(String, AppServer), String>>>,
+    pending: HashMap<String, Receiver<Result<(String, AppServer), (String, bool)>>>,
+    failed: HashMap<String, (Instant, String)>,
     last_used: HashMap<String, Instant>,
     catalog_read: bool,
     list_changed: bool,
@@ -35,7 +36,7 @@ impl Gateway {
     pub fn new(family: Family, places: Places) -> Gateway {
         let settings = Settings::load();
         secrets::remember_all(&settings);
-        Gateway { family, places, settings, client: "other".into(), transport: "stdio", forced_client: false, running: HashMap::new(), pending: HashMap::new(), last_used: HashMap::new(), catalog_read: false, list_changed: false }
+        Gateway { family, places, settings, client: "other".into(), transport: "stdio", forced_client: false, running: HashMap::new(), pending: HashMap::new(), failed: HashMap::new(), last_used: HashMap::new(), catalog_read: false, list_changed: false }
     }
 
     pub fn force_client(&mut self, name: &str) {
@@ -133,6 +134,12 @@ impl Gateway {
             self.running.remove(&app.id);
         }
         if !self.running.contains_key(&app.id) {
+            if let Some((at, error)) = self.failed.get(&app.id) {
+                let left = START_RETRY.saturating_sub(at.elapsed());
+                if !left.is_zero() {
+                    return Err(format!("{error} (formMCP will try to start {} again in {} s)", app.name, left.as_secs_f64().ceil() as u64));
+                }
+            }
             let early = self.pending.remove(&app.id).and_then(|rx| rx.recv().ok());
             let started = match early {
                 Some(result) => result,
@@ -141,7 +148,18 @@ impl Gateway {
                     start_app_server(app, &self.places, self.settings.start_of(&self.client, &app.id), &self.settings)
                 }
             };
-            self.running.insert(app.id.clone(), started?);
+            match started {
+                Ok(server) => {
+                    self.failed.remove(&app.id);
+                    self.running.insert(app.id.clone(), server);
+                }
+                Err((error, launched)) => {
+                    if launched {
+                        self.failed.insert(app.id.clone(), (Instant::now(), error.clone()));
+                    }
+                    return Err(error);
+                }
+            }
         }
         self.last_used.insert(app.id.clone(), Instant::now());
         self.running.get_mut(&app.id).ok_or_else(|| "the app's server is gone".to_string())
@@ -200,9 +218,11 @@ pub fn idle_limit() -> Duration {
     Duration::from_secs(minutes.saturating_mul(60))
 }
 
-fn start_app_server(app: &App, places: &Places, policy: &str, settings: &Settings) -> Result<(String, AppServer), String> {
+const START_RETRY: Duration = Duration::from_secs(60);
+
+fn start_app_server(app: &App, places: &Places, policy: &str, settings: &Settings) -> Result<(String, AppServer), (String, bool)> {
     if !app.mcp {
-        return Err(format!("{} has no MCP server yet, so there are no tools to reach", app.name));
+        return Err((format!("{} has no MCP server yet, so there are no tools to reach", app.name), false));
     }
     let reach = places.reach(app);
     let Some(route) = reach.route else {
@@ -211,7 +231,7 @@ fn start_app_server(app: &App, places: &Places, policy: &str, settings: &Setting
         } else {
             "it is not installed: FormPortal installs it, or set FORMMCP_DEV_ROOTS to a folder holding its checkout"
         };
-        return Err(format!("{} cannot be reached: {how}", app.name));
+        return Err((format!("{} cannot be reached: {how}", app.name), false));
     };
     let (program, args, dir) = route.command();
     let started = Instant::now();
@@ -226,11 +246,11 @@ fn start_app_server(app: &App, places: &Places, policy: &str, settings: &Setting
         e
     };
     let checked = match (&route, settings.verify_off) {
-        (Route::Formportal { .. }, false) => Some(verify::check(&places.portal_root, &app.id).map_err(|e| failed("verify", format!("{} was not started: {e}", app.name)))?),
+        (Route::Formportal { .. }, false) => Some(verify::check(&places.portal_root, &app.id).map_err(|e| (failed("verify", format!("{} was not started: {e}", app.name)), false))?),
         _ => None,
     };
-    let env = secrets::env_for(settings, &app.id).map_err(|e| failed("secrets", format!("{} was not started: {e}", app.name)))?;
-    let server = AppServer::start(&program, &args, dir.as_ref(), &env).map_err(|e| failed("start", format!("{} did not start through {}: {e}", app.name, route.label())))?;
+    let env = secrets::env_for(settings, &app.id).map_err(|e| (failed("secrets", format!("{} was not started: {e}", app.name)), false))?;
+    let server = AppServer::start(&program, &args, dir.as_ref(), &env).map_err(|e| (failed("start", format!("{} did not start through {}: {e}", app.name, route.label())), true))?;
     log::record("app-start", json!({ "app": app.id, "via": route.label(), "ok": true, "tools": server.tools.len(), "ms": started.elapsed().as_millis() as u64, "policy": policy, "verified": checked.as_ref().map(|c| c.outcome), "files": checked.as_ref().map(|c| c.files), "verify_ms": checked.as_ref().map(|c| c.ms), "secrets": env.len() }));
     span(true, None);
     toolcache::remember(&app.id, &server.server, &server.tools);

@@ -123,6 +123,29 @@ fn timeouts_too_large_for_a_deadline_wait_without_one() {
 
 #[cfg(unix)]
 #[test]
+fn a_failed_start_is_remembered_and_answered_at_once() {
+    use std::os::unix::fs::PermissionsExt;
+    let s = Sandbox::new("failed-start");
+    std::fs::create_dir_all(s.path("dev/formpdf")).unwrap();
+    let launcher = s.path("dev/formpdf/formpdf");
+    std::fs::write(&launcher, "#!/bin/sh\nwhile read -r line; do :; done\n").unwrap();
+    std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let mut m = Stdio2::start(&s, &[("FORMMCP_DEV_ROOTS", s.path("dev").to_str().unwrap()), ("FORMMCP_START_TIMEOUT", "2")]);
+    m.initialize();
+    let started = Instant::now();
+    let first = m.call(2, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
+    assert!(started.elapsed() >= Duration::from_secs(2), "took {:?}", started.elapsed());
+    assert!(text(&first).contains("did not answer initialize within 2 s"), "{first}");
+    let started = Instant::now();
+    let second = m.call(3, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
+    assert!(started.elapsed() < Duration::from_secs(1), "took {:?}", started.elapsed());
+    assert_eq!(second["result"]["isError"], json!(true), "{second}");
+    assert!(text(&second).starts_with(&text(&first)), "{second}");
+    assert!(text(&second).contains("again in"), "{second}");
+}
+
+#[cfg(unix)]
+#[test]
 fn an_app_that_writes_bytes_that_are_not_utf8_still_answers() {
     use std::os::unix::fs::PermissionsExt;
     let s = Sandbox::new("not-utf8");
