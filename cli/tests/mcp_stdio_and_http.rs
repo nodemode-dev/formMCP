@@ -190,6 +190,25 @@ fn own_answers_are_sent_once_as_text_unless_the_structured_copy_is_on() {
     assert_eq!(both["result"]["structuredContent"], data, "{both}");
 }
 
+#[cfg(unix)]
+#[test]
+fn the_before_hook_sees_resource_reads_and_prompts() {
+    use std::os::unix::fs::PermissionsExt;
+    let s = Sandbox::new("hook-reads");
+    let hook = s.path("bin/deny-reads");
+    std::fs::write(&hook, "#!/bin/sh\nread -r l\ncase \"$l\" in *read_app_resource*|*get_app_prompt*) echo '{\"decision\":\"deny\",\"reason\":\"reads are off\"}';; esac\n").unwrap();
+    std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+    s.json(&["hook", "before", hook.to_str().unwrap()], &[]);
+    let mut m = Stdio2::start(&s, &[]);
+    m.initialize();
+    let read = m.call(2, "tools/call", json!({ "name": "read_app_resource", "arguments": { "app": "formpdf", "uri": "pdf://open" } }));
+    assert!(text(&read).contains("reads are off"), "{read}");
+    let prompt = m.call(3, "tools/call", json!({ "name": "get_app_prompt", "arguments": { "app": "formpdf", "name": "summary" } }));
+    assert!(text(&prompt).contains("reads are off"), "{prompt}");
+    let call = m.call(4, "tools/call", json!({ "name": "call_app", "arguments": { "app": "formpdf", "tool": "status" } }));
+    assert!(!text(&call).contains("reads are off") && text(&call).contains("cannot be reached"), "{call}");
+}
+
 #[test]
 fn an_app_with_no_mcp_server_is_refused_with_the_reason() {
     let s = Sandbox::new("no-mcp");

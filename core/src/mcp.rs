@@ -459,12 +459,13 @@ fn read_app_resource(gateway: &mut Gateway, args: &Value) -> Result<Value, Strin
     if uri.trim().is_empty() {
         return Err("uri is required: one from app_resources".into());
     }
-    let (_, server) = gateway.server(&app)?;
-    let mut server = lock(&server);
-    if !server.offers("resources") {
-        return Err(format!("{} offers no resources", app.name));
-    }
-    let read = server.request("resources/read", json!({ "uri": uri }), call_timeout())?;
+    let name = app.name.clone();
+    let read = hooked(gateway, &app, "read_app_resource", ("uri", &uri), &json!({ "uri": uri }), |server| {
+        if !server.offers("resources") {
+            return Err(format!("{name} offers no resources"));
+        }
+        server.request("resources/read", json!({ "uri": uri }), call_timeout())
+    })?;
     let contents: Vec<Value> = read.get("contents").and_then(Value::as_array).cloned().unwrap_or_default();
     let blocks: Vec<Value> = contents.into_iter().map(|c| json!({ "type": "resource", "resource": c })).collect();
     Ok(json!({ "content": blocks, "isError": false }))
@@ -488,12 +489,14 @@ fn get_app_prompt(gateway: &mut Gateway, args: &Value) -> Result<Value, String> 
         return Err("name is required: a prompt name from app_prompts".into());
     }
     let arguments = args.get("arguments").cloned().unwrap_or_else(|| json!({}));
-    let (_, server) = gateway.server(&app)?;
-    let mut server = lock(&server);
-    if !server.offers("prompts") {
-        return Err(format!("{} offers no prompts", app.name));
-    }
-    let filled = server.request("prompts/get", json!({ "name": name, "arguments": arguments }), call_timeout())?;
+    let label = app.name.clone();
+    let request = json!({ "name": name, "arguments": arguments });
+    let filled = hooked(gateway, &app, "get_app_prompt", ("prompt", &name), &arguments, |server| {
+        if !server.offers("prompts") {
+            return Err(format!("{label} offers no prompts"));
+        }
+        server.request("prompts/get", request, call_timeout())
+    })?;
     Ok(json!({ "app": app.id, "prompt": name, "description": filled.get("description"), "messages": filled.get("messages") }))
 }
 
@@ -507,21 +510,28 @@ fn call_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
         return Err(format!("{tool} in {} is turned off in formMCP; the person can turn it on in formMCP's window", app.name));
     }
     let arguments = args.get("arguments").cloned().unwrap_or_else(|| json!({}));
+    let request = json!({ "name": tool, "arguments": arguments });
+    hooked(gateway, &app, "call_app", ("tool", &tool), &arguments, |server| server.request("tools/call", request, call_timeout()))
+}
+
+fn hooked(gateway: &mut Gateway, app: &App, call: &str, subject: (&str, &str), arguments: &Value, run: impl FnOnce(&mut AppServer) -> Result<Value, String>) -> Result<Value, String> {
     let exposed = gateway.settings.expose.iter().any(|e| e == &app.id);
     let hook_set = gateway.settings.hooks.clone();
     let event = |kind: &str| {
         let mut shown = arguments.clone();
         redact::value(&mut shown);
         hooks::shorten(&mut shown);
-        json!({ "event": kind, "app": app.id, "tool": tool, "arguments": shown, "client": gateway.client, "transport": gateway.transport, "formmcp": CORE_VERSION })
+        let mut event = json!({ "event": kind, "call": call, "app": app.id, "arguments": shown, "client": gateway.client, "transport": gateway.transport, "formmcp": CORE_VERSION });
+        event[subject.0] = json!(subject.1);
+        event
     };
     let before = event("before");
     let mut after = event("after");
     hooks::before(&hook_set.before, &before)?;
     let started = Instant::now();
-    let (_, server) = gateway.server(&app)?;
+    let (_, server) = gateway.server(app)?;
     let mut server = lock(&server);
-    let result = server.request("tools/call", json!({ "name": tool, "arguments": arguments }), call_timeout());
+    let result = run(&mut server);
     if exposed && server.tools_changed {
         gateway.list_changed = true;
     }
