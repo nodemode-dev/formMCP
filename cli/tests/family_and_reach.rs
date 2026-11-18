@@ -50,6 +50,21 @@ fn a_signed_catalogue_updates_the_family_and_never_lists_formmcp() {
 }
 
 #[test]
+fn a_signed_catalogue_can_mark_a_bundled_app_unreleased() {
+    let s = Sandbox::new("unreleased");
+    let k = key(25);
+    let bundled_listing = s.json(&["apps"], &[]);
+    assert_eq!(app(&bundled_listing, "formpdf")["released"], json!(true));
+    assert_eq!(app(&bundled_listing, "formwav")["released"], json!(true));
+    let body = catalogue(&[product("formpdf", true, None), product("formvis", true, Some("2.0.0"))]);
+    let path = write_catalogue(&s.root, &body, Some(&k));
+    let listing = s.json(&["apps"], &[("FORMMCP_CATALOG", path.to_str().unwrap()), ("FORMAI_CATALOG_PUBKEY", &public(&k))]);
+    assert_eq!(app(&listing, "formpdf")["released"], json!(false), "the catalogue lists formpdf with no release");
+    assert_eq!(app(&listing, "formvis")["released"], json!(true));
+    assert_eq!(app(&listing, "formwav")["released"], json!(true), "an app the catalogue does not list keeps the bundled flag");
+}
+
+#[test]
 fn a_catalogue_with_one_changed_byte_is_not_used() {
     let s = Sandbox::new("tampered");
     let k = key(22);
