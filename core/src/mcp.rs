@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::io::{self, BufRead, Write};
 use std::sync::mpsc::{self, Receiver};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -24,19 +25,42 @@ pub struct Gateway {
     pub client: String,
     pub transport: &'static str,
     forced_client: bool,
-    running: HashMap<String, (String, AppServer)>,
+    pool: Arc<Mutex<Pool>>,
+    catalog_read: bool,
+    list_changed: bool,
+}
+
+type Shared = Arc<Mutex<AppServer>>;
+
+#[derive(Default)]
+struct Pool {
+    running: HashMap<String, (String, Shared)>,
     pending: HashMap<String, Receiver<Result<(String, AppServer), (String, bool)>>>,
     failed: HashMap<String, (Instant, String)>,
     last_used: HashMap<String, Instant>,
-    catalog_read: bool,
-    list_changed: bool,
+}
+
+fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
+    m.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
 impl Gateway {
     pub fn new(family: Family, places: Places) -> Gateway {
         let settings = Settings::load();
         secrets::remember_all(&settings);
-        Gateway { family, places, settings, client: "other".into(), transport: "stdio", forced_client: false, running: HashMap::new(), pending: HashMap::new(), failed: HashMap::new(), last_used: HashMap::new(), catalog_read: false, list_changed: false }
+        Gateway { family, places, settings, client: "other".into(), transport: "stdio", forced_client: false, pool: Arc::default(), catalog_read: false, list_changed: false }
+    }
+
+    pub fn session(&self) -> Gateway {
+        Gateway { family: self.family.clone(), places: self.places.clone(), settings: self.settings.clone(), client: self.client.clone(), transport: self.transport, forced_client: self.forced_client, pool: Arc::clone(&self.pool), catalog_read: self.catalog_read, list_changed: false }
+    }
+
+    pub fn absorb(&mut self, used: Gateway) {
+        if used.catalog_read && !self.catalog_read {
+            self.catalog_read = true;
+            self.family = used.family;
+        }
+        self.settings = used.settings;
     }
 
     pub fn force_client(&mut self, name: &str) {
@@ -61,7 +85,8 @@ impl Gateway {
         self.ensure_catalog();
         let app = self.family.get(id).cloned().ok_or_else(|| format!("there is no Form app {id:?}"))?;
         let (_, server) = self.server(&app)?;
-        Ok(server.tools.len())
+        let count = lock(&server).tools.len();
+        Ok(count)
     }
 
     pub fn is_off(&self, id: &str) -> bool {
@@ -88,6 +113,7 @@ impl Gateway {
                 continue;
             }
             let started = self.server(&app).map(|(_, s)| {
+                let mut s = lock(&s);
                 if s.tools_changed {
                     let _ = s.load_tools();
                 }
@@ -128,41 +154,51 @@ impl Gateway {
         Ok(app)
     }
 
-    fn server(&mut self, app: &App) -> Result<&mut (String, AppServer), String> {
-        let stale = self.running.get_mut(&app.id).map(|(_, s)| !s.alive()).unwrap_or(false);
-        if stale {
-            self.running.remove(&app.id);
-        }
-        if !self.running.contains_key(&app.id) {
-            if let Some((at, error)) = self.failed.get(&app.id) {
+    fn server(&mut self, app: &App) -> Result<(String, Shared), String> {
+        let early = {
+            let mut pool = lock(&self.pool);
+            let stale = pool.running.get(&app.id).is_some_and(|(_, s)| s.try_lock().is_ok_and(|mut s| !s.alive()));
+            if stale {
+                pool.running.remove(&app.id);
+            }
+            if let Some(found) = pool.running.get(&app.id).cloned() {
+                pool.last_used.insert(app.id.clone(), Instant::now());
+                return Ok(found);
+            }
+            if let Some((at, error)) = pool.failed.get(&app.id) {
                 let left = START_RETRY.saturating_sub(at.elapsed());
                 if !left.is_zero() {
                     return Err(format!("{error} (formMCP will try to start {} again in {} s)", app.name, left.as_secs_f64().ceil() as u64));
                 }
             }
-            let early = self.pending.remove(&app.id).and_then(|rx| rx.recv().ok());
-            let started = match early {
-                Some(result) => result,
-                None => {
-                    self.places.refresh();
-                    start_app_server(app, &self.places, self.settings.start_of(&self.client, &app.id), &self.settings)
+            pool.pending.remove(&app.id)
+        };
+        let started = match early.and_then(|rx| rx.recv().ok()) {
+            Some(result) => result,
+            None => {
+                self.places.refresh();
+                start_app_server(app, &self.places, self.settings.start_of(&self.client, &app.id), &self.settings)
+            }
+        };
+        let mut pool = lock(&self.pool);
+        match started {
+            Ok((via, server)) => {
+                pool.failed.remove(&app.id);
+                let found = pool.running.entry(app.id.clone()).or_insert_with(|| (via, Arc::new(Mutex::new(server)))).clone();
+                pool.last_used.insert(app.id.clone(), Instant::now());
+                Ok(found)
+            }
+            Err((error, launched)) => {
+                if launched {
+                    pool.failed.insert(app.id.clone(), (Instant::now(), error.clone()));
                 }
-            };
-            match started {
-                Ok(server) => {
-                    self.failed.remove(&app.id);
-                    self.running.insert(app.id.clone(), server);
-                }
-                Err((error, launched)) => {
-                    if launched {
-                        self.failed.insert(app.id.clone(), (Instant::now(), error.clone()));
-                    }
-                    return Err(error);
-                }
+                Err(error)
             }
         }
-        self.last_used.insert(app.id.clone(), Instant::now());
-        self.running.get_mut(&app.id).ok_or_else(|| "the app's server is gone".to_string())
+    }
+
+    fn running_labels(&self) -> HashMap<String, String> {
+        lock(&self.pool).running.iter().map(|(k, (v, _))| (k.clone(), v.clone())).collect()
     }
 
     pub fn start_early(&mut self) {
@@ -173,7 +209,11 @@ impl Gateway {
         self.ensure_catalog();
         self.places.refresh();
         for app in self.family.apps.clone() {
-            if !app.mcp || self.is_off(&app.id) || self.running.contains_key(&app.id) || self.pending.contains_key(&app.id) {
+            let known = {
+                let pool = lock(&self.pool);
+                pool.running.contains_key(&app.id) || pool.pending.contains_key(&app.id)
+            };
+            if !app.mcp || self.is_off(&app.id) || known {
                 continue;
             }
             if self.settings.start_of(&self.client, &app.id) != "session" || self.places.reach(&app).route.is_none() {
@@ -186,28 +226,29 @@ impl Gateway {
             thread::spawn(move || {
                 let _ = send.send(start_app_server(&app, &places, "session", &settings));
             });
-            self.pending.insert(id, receive);
+            lock(&self.pool).pending.insert(id, receive);
         }
     }
 
     pub fn sweep_idle(&mut self) {
         let idle = idle_limit();
-        let stale: Vec<String> = self
+        let mut pool = lock(&self.pool);
+        let stale: Vec<String> = pool
             .running
-            .keys()
-            .filter(|id| self.settings.start_of(&self.client, id) == "demand" && self.last_used.get(*id).is_some_and(|t| t.elapsed() >= idle))
-            .cloned()
+            .iter()
+            .filter(|(id, (_, s))| self.settings.start_of(&self.client, id) == "demand" && pool.last_used.get(*id).is_some_and(|t| t.elapsed() >= idle) && s.try_lock().is_ok())
+            .map(|(id, _)| id.clone())
             .collect();
         for id in stale {
-            self.running.remove(&id);
-            self.last_used.remove(&id);
+            pool.running.remove(&id);
+            pool.last_used.remove(&id);
             log::record("app-stop", json!({ "app": id, "reason": "idle", "minutes": idle.as_secs() / 60 }));
             self.list_changed |= self.settings.expose.iter().any(|e| e == &id);
         }
     }
 
     pub fn running_apps(&self) -> Vec<String> {
-        let mut ids: Vec<String> = self.running.keys().cloned().collect();
+        let mut ids: Vec<String> = lock(&self.pool).running.keys().cloned().collect();
         ids.sort();
         ids
     }
@@ -341,7 +382,7 @@ fn suggest_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     }
     let limit = args.get("limit").and_then(Value::as_u64).unwrap_or(3) as usize;
     gateway.places.refresh();
-    let running: HashMap<String, String> = gateway.running.iter().map(|(k, (v, _))| (k.clone(), v.clone())).collect();
+    let running = gateway.running_labels();
     let mut picks = suggest(&gateway.family, &gateway.places, &|id: &str| running.get(id).cloned(), &task, 5);
     picks.retain(|p| !gateway.is_off(&p.id));
     picks.truncate(limit);
@@ -352,7 +393,8 @@ fn suggest_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
 fn family_apps(gateway: &mut Gateway, args: &Value) -> Value {
     let mcp_only = args.get("mcp_only").and_then(Value::as_bool).unwrap_or(false);
     gateway.places.refresh();
-    let Gateway { family, places, running, settings, client, .. } = gateway;
+    let running = gateway.running_labels();
+    let Gateway { family, places, settings, client, .. } = gateway;
     let off = family.apps.iter().filter(|a| settings.is_off(client, &a.id)).count();
     let apps: Vec<Value> = family
         .apps
@@ -361,7 +403,7 @@ fn family_apps(gateway: &mut Gateway, args: &Value) -> Value {
         .filter(|a| !settings.is_off(client, &a.id))
         .map(|a| {
             let reach = places.reach(a);
-            let via = running.get(&a.id).map(|(v, _)| v.clone()).or_else(|| reach.route.as_ref().map(|r| r.label().to_string()));
+            let via = running.get(&a.id).cloned().or_else(|| reach.route.as_ref().map(|r| r.label().to_string()));
             json!({ "id": a.id, "name": a.name, "kind": a.kind, "summary": a.summary, "mcp": a.mcp, "state": a.state, "installed": reach.installed, "reach": via })
         })
         .collect();
@@ -379,6 +421,7 @@ fn app_tools(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     let refresh = args.get("refresh").and_then(Value::as_bool).unwrap_or(false);
     let (settings, client) = (gateway.settings.clone(), gateway.client.clone());
     let (via, server) = gateway.server(&app)?;
+    let mut server = lock(&server);
     if refresh || server.tools_changed {
         server.load_tools()?;
         toolcache::remember(&app.id, &server.server, &server.tools);
@@ -401,6 +444,7 @@ fn app_tools(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
 fn app_resources(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     let app = gateway.app(args)?;
     let (via, server) = gateway.server(&app)?;
+    let mut server = lock(&server);
     if !server.offers("resources") {
         return Ok(json!({ "app": app.id, "via": via, "count": 0, "resources": [], "templates": [], "note": format!("{} offers no resources", app.name) }));
     }
@@ -416,6 +460,7 @@ fn read_app_resource(gateway: &mut Gateway, args: &Value) -> Result<Value, Strin
         return Err("uri is required: one from app_resources".into());
     }
     let (_, server) = gateway.server(&app)?;
+    let mut server = lock(&server);
     if !server.offers("resources") {
         return Err(format!("{} offers no resources", app.name));
     }
@@ -428,6 +473,7 @@ fn read_app_resource(gateway: &mut Gateway, args: &Value) -> Result<Value, Strin
 fn app_prompts(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     let app = gateway.app(args)?;
     let (via, server) = gateway.server(&app)?;
+    let mut server = lock(&server);
     if !server.offers("prompts") {
         return Ok(json!({ "app": app.id, "via": via, "count": 0, "prompts": [], "note": format!("{} offers no prompts", app.name) }));
     }
@@ -443,6 +489,7 @@ fn get_app_prompt(gateway: &mut Gateway, args: &Value) -> Result<Value, String> 
     }
     let arguments = args.get("arguments").cloned().unwrap_or_else(|| json!({}));
     let (_, server) = gateway.server(&app)?;
+    let mut server = lock(&server);
     if !server.offers("prompts") {
         return Err(format!("{} offers no prompts", app.name));
     }
@@ -473,10 +520,12 @@ fn call_app(gateway: &mut Gateway, args: &Value) -> Result<Value, String> {
     hooks::before(&hook_set.before, &before)?;
     let started = Instant::now();
     let (_, server) = gateway.server(&app)?;
+    let mut server = lock(&server);
     let result = server.request("tools/call", json!({ "name": tool, "arguments": arguments }), call_timeout());
     if exposed && server.tools_changed {
         gateway.list_changed = true;
     }
+    drop(server);
     if !hook_set.after.trim().is_empty() {
         let mut shown = result.clone().unwrap_or_else(|e| json!({ "error": e }));
         redact::value(&mut shown);

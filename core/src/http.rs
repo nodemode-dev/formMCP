@@ -245,25 +245,31 @@ fn handle(req: Request, state: &Mutex<State>, port: u16) -> Reply {
                 one => vec![one.clone()],
             };
             let initializing = messages.iter().any(|m| m.get("method").and_then(Value::as_str) == Some("initialize"));
+            let mut gateway = {
+                let st = state.lock().unwrap_or_else(PoisonError::into_inner);
+                let mut gateway = st.gateway.session();
+                if initializing {
+                    gateway.set_session_client(param(&req.query, "client"));
+                } else {
+                    match &session {
+                        None => return Reply::text(400, "Bad Request", "Mcp-Session-Id is required after initialize"),
+                        Some(id) => match st.sessions.get(id).cloned() {
+                            Some(client) => gateway.client = client,
+                            None => return Reply::text(404, "Not Found", "this session is over; initialize again"),
+                        },
+                    }
+                }
+                gateway
+            };
+            gateway.transport = "http";
+            let replies: Vec<Value> = messages.iter().filter_map(|m| mcp::answer(&mut gateway, m)).collect();
+            gateway.take_list_changed();
+            let client = gateway.client.clone();
             let mut st = state.lock().unwrap_or_else(PoisonError::into_inner);
+            st.gateway.absorb(gateway);
             let mut new_session = None;
             if initializing {
-                st.gateway.set_session_client(param(&req.query, "client"));
-            } else {
-                match &session {
-                    None => return Reply::text(400, "Bad Request", "Mcp-Session-Id is required after initialize"),
-                    Some(id) => match st.sessions.get(id).cloned() {
-                        Some(client) => st.gateway.client = client,
-                        None => return Reply::text(404, "Not Found", "this session is over; initialize again"),
-                    },
-                }
-            }
-            st.gateway.transport = "http";
-            let replies: Vec<Value> = messages.iter().filter_map(|m| mcp::answer(&mut st.gateway, m)).collect();
-            st.gateway.take_list_changed();
-            if initializing {
                 let id = session_id();
-                let client = st.gateway.client.clone();
                 st.sessions.insert(id.clone(), client);
                 st.order.push_back(id.clone());
                 while st.order.len() > SESSIONS_MAX {
