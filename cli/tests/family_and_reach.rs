@@ -137,6 +137,28 @@ fn reach_sees_only_installs_and_checkouts_on_this_computer() {
     }
 }
 
+#[test]
+fn suggest_puts_the_app_that_fits_first() {
+    let s = Sandbox::new("suggest");
+    let cases = [
+        ("redact every email address in this contract", &["formpdf"][..]),
+        ("clean the hum out of a podcast recording", &["formwav"]),
+        ("key out a green screen and add motion blur", &["formvfx"]),
+        ("find the duplicate photos in my library", &["formlit", "formdam"]),
+        ("make my holiday photos look like film", &["formlit", "formvis"]),
+        ("make a three second animated logo sting", &["formvfx"]),
+        ("turn these meeting notes into a ten slide deck", &["formslide"]),
+        ("convert a folder of MOV files to H.264 MP4", &["formencoder"]),
+        ("cut the silences out of this interview video", &["formcut"]),
+        ("remove the noise from a voice recording", &["formwav"]),
+    ];
+    for (task, fits) in cases {
+        let answer = s.json(&["suggest", task], &[]);
+        let first = answer["apps"][0]["id"].as_str().unwrap_or_default().to_string();
+        assert!(fits.contains(&first.as_str()), "{task:?} suggested {first:?}: {answer}");
+    }
+}
+
 #[cfg(unix)]
 fn make_executable(path: &std::path::Path) {
     use std::os::unix::fs::PermissionsExt;
