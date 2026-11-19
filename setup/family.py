@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "core" / "data" / "family.json"
+KEPT = ROOT / "setup" / "family.spec.json"
 FORMAT = "formmcp-family"
 SPEC_FORMAT = "formai-family"
 SELF = "formMCP"
@@ -54,11 +55,12 @@ def build(spec):
 
 def main():
     parser = argparse.ArgumentParser(description="core/data/family.json from the family spec (family.json built by formadaptor)")
-    parser.add_argument("--family", required=True, help="the family spec, a family.json from nodemode-dev/formadaptor")
+    parser.add_argument("--family", required=True, help="the family spec, a family.json from nodemode-dev/formadaptor; when it changes core/data/family.json it is also kept as setup/family.spec.json")
     parser.add_argument("--check", action="store_true", help="write nothing; exit 1 naming the file when core/data/family.json differs")
     args = parser.parse_args()
     try:
-        spec = json.loads(Path(args.family).read_text(encoding="utf-8"))
+        raw = Path(args.family).read_bytes()
+        spec = json.loads(raw.decode("utf-8"))
         text = json.dumps(build(spec), indent=2, ensure_ascii=False) + "\n"
     except (OSError, ValueError, KeyError, TypeError, SpecError) as error:
         print(f"family: {args.family} cannot be used: {error}", file=sys.stderr)
@@ -68,10 +70,17 @@ def main():
         name = OUT.relative_to(ROOT).as_posix()
         print(f"family: {name} is in step" if current == text else f"family: {name} differs (run python3 -I setup/family.py --family PATH)")
         sys.exit(0 if current == text else 1)
+    count = len(json.loads(text)["apps"])
+    if current == text:
+        print(f"family: {OUT.relative_to(ROOT)} unchanged, {count} apps; {KEPT.relative_to(ROOT)} left alone")
+        return
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(text, encoding="utf-8")
-    count = len(json.loads(text)["apps"])
-    print(f"family: {OUT.relative_to(ROOT)} {'unchanged' if current == text else 'written'}, {count} apps")
+    kept = f"{KEPT.relative_to(ROOT)} unchanged"
+    if not KEPT.is_file() or KEPT.read_bytes() != raw:
+        KEPT.write_bytes(raw)
+        kept = f"{KEPT.relative_to(ROOT)} written"
+    print(f"family: {OUT.relative_to(ROOT)} written, {count} apps; {kept}")
 
 
 if __name__ == "__main__":

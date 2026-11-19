@@ -52,8 +52,9 @@ Markdown or an emoji in any tracked text.
   [.docs/BRANCHING.md](.docs/BRANCHING.md)).
 - `core/data/family.json` is generated: it follows the family spec that formadaptor builds
   from formcompiler's registry. Run `./formmcp family --family PATH`, never edit it by hand.
-  The spec it was generated from is kept as `setup/family.spec.json`, and CI runs `--check`
-  against that copy.
+  When the spec changes the list, the generator itself also copies that spec to
+  `setup/family.spec.json` (a spec that leaves the list unchanged leaves the copy alone), and CI
+  runs `--check` against that copy.
 - FormMCP suggests and FormPortal installs: a tool that installs, updates or removes an
   app will not be accepted. FormMCP serves the Form family only, with no third-party or
   remote MCP servers.

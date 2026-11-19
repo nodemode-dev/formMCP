@@ -28,11 +28,11 @@ On Windows: `formmcp_oc_install.bat`, then `formmcp.bat`, `formmcp.bat mcp`, `fo
 The list is generated from the family spec, the `family.json` that nodemode-dev/formadaptor publishes on its `spec` branch (public apps only; nothing is fetched by the generator):
 
 ```bash
-./formmcp family --family PATH          # writes core/data/family.json
+./formmcp family --family PATH          # writes core/data/family.json; keeps the spec when the list changed
 ./formmcp family --family PATH --check  # writes nothing; exits 1 and names the file while it drifts
 ```
 
-The file records the registry version the spec came from; the window's footer and `family_apps` show it. The spec the file was generated from is kept beside the generator as `setup/family.spec.json`, and CI runs `--check` against it.
+The file records the registry version the spec came from; the window's footer and `family_apps` show it. When a spec changes the list, the generator also copies that spec to `setup/family.spec.json`, beside itself; a spec that differs only in fields the list does not use (the generation time, a licence) changes nothing, so no commit is needed for it. CI runs `--check` against the kept copy and fetches nothing.
 
 ## Ports
 
