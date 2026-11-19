@@ -151,30 +151,6 @@
       "mcp": true
     },
     {
-      "id": "formpromo",
-      "app": "formpromo",
-      "name": "FormPromo",
-      "kind": "promo",
-      "summary": "Promo films from your own media, style and sourced claims.",
-      "repository": "https://github.com/nodemode-dev/formpromo",
-      "launcher": "formpromo",
-      "state": "prelaunch",
-      "released": true,
-      "mcp": true
-    },
-    {
-      "id": "formranker",
-      "app": "formranker",
-      "name": "FormRanker",
-      "kind": "parity",
-      "summary": "Parity, testing and feedback for the Form apps, kept on this computer.",
-      "repository": "https://github.com/nodemode-dev/formranker",
-      "launcher": "formranker",
-      "state": "prelaunch",
-      "released": true,
-      "mcp": true
-    },
-    {
       "id": "formref",
       "app": "formref",
       "name": "FormRef",
@@ -182,18 +158,6 @@
       "summary": "Reference boards for images, ideas and creative work.",
       "repository": "https://github.com/nodemode-dev/formref",
       "launcher": "formref",
-      "state": "prelaunch",
-      "released": true,
-      "mcp": true
-    },
-    {
-      "id": "formsculpt",
-      "app": "formsculpt",
-      "name": "FormSculpt",
-      "kind": "sculpt",
-      "summary": "3D sculpting and modeling, with a Rust engine and a command set agents can drive.",
-      "repository": "https://github.com/nodemode-dev/formsculpt",
-      "launcher": "formsculpt",
       "state": "prelaunch",
       "released": true,
       "mcp": true
@@ -219,18 +183,6 @@
       "repository": "https://github.com/nodemode-dev/formdeck",
       "launcher": "formdeck",
       "state": "live",
-      "released": true,
-      "mcp": true
-    },
-    {
-      "id": "formsurface",
-      "app": "formsurface",
-      "name": "FormSurface",
-      "kind": "texture",
-      "summary": "Paint textures and materials straight onto 3D models.",
-      "repository": "https://github.com/nodemode-dev/formsurface",
-      "launcher": "formsurface",
-      "state": "prelaunch",
       "released": true,
       "mcp": true
     },
