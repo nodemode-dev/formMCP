@@ -72,7 +72,7 @@ function snapshot(): unknown {
     hidden_tools: settings.hidden_tools[a.id]?.length ?? 0,
   }));
   return {
-    source: `bundled list from ${family.source.repository} ${family.source.version}`,
+    source: `bundled list from ${family.source.repository}`,
     apps,
     clients: ["claude", "codex", "cursor"].map(clientState),
     formportal: false,

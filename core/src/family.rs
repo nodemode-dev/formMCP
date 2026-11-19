@@ -23,7 +23,6 @@ pub struct App {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Source {
     pub repository: String,
-    pub version: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -58,10 +57,6 @@ impl Family {
         if let Some(note) = &self.note {
             return note.clone();
         }
-        if self.source.version.is_empty() {
-            format!("bundled list from {}", self.source.repository)
-        } else {
-            format!("bundled list from {} {}", self.source.repository, self.source.version)
-        }
+        format!("bundled list from {}", self.source.repository)
     }
 }

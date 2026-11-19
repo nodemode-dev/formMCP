@@ -41,7 +41,7 @@ formMCP has no open file. Its "document" is the state the person edits in the wi
   ],
   "profiles": [{ "name": "quiet", "apps_off": 3, "tools_off": 0, "starts": 1, "used_by": ["codex"] }],
   "http": { "running": false, "port": 5625, "address": "http://127.0.0.1:5625/mcp" },
-  "source": "bundled list from nodemode-dev/formcompiler 0.16.0"
+  "source": "bundled list from nodemode-dev/formcompiler"
 }
 ```
 

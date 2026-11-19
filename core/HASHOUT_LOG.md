@@ -98,6 +98,13 @@ The family decided that the generator keeps the copy, so no person or bot copies
 
 The README said 30 Rust tests. Counted from source (`#[test]` in core/tests and cli/tests, none in src) there are 47, and `cargo test --locked -p formmcp-core -p formmcp-cli` reports 47 passed, 0 failed (44 before the generator tests, 3 after). The tools were counted again the same way: `tools()` in core/src/mcp.rs names 11 and `const TOOLS` in cli/tests/mcp_stdio_and_http.rs lists the same 11; the README, the wiki's Architecture page and the skill's table already said 11. No document states an app count.
 
+### family.rs · the source line names the repository only
+- refers-to: core/src/family.rs :: Source, Family::describe_source · docs/EXTENSIONS.md :: the snapshot example
+- kind: change
+- logged: v0.11.0 · 2026-11-19
+
+The registry version in `source` moved with every release of formcompiler, also with releases that change nothing the gateway shows, so the line "bundled list from <repository> <version>" was a number that said nothing about the list. `Source` now holds `repository` only and `describe_source` reads "bundled list from <repository>", with the catalogue note after it as before. serde ignores a field it does not know, so a list that still carries `version` loads the same; this lands before the generator stops writing it, and each commit builds. Chosen over reading the version from `setup/family.spec.json` at build time: the kept copy is only rewritten when the list changes, so the number shown would be the registry release of the last list change, not the current one, and a reader would take it for stale. Which registry release last changed the list is still on record, in the kept spec's `source.registry_version`. The window's footer, the demos' `source` strings and the example in docs/EXTENSIONS.md say the same. Checked: `formmcp-cli catalog` offline with an empty home prints "bundled list from nodemode-dev/formcompiler; the catalogue was not used: no copy kept by FormPortal".
+
 ## v0.10.4 · other tools' config files are really left intact {#v0-10-4}
 
 Post-merge QA of v0.10.3 found three ways the claim "host config files are never corrupted or taken over" still failed. Each fix has a test in `core/tests/host_files.rs` (seven tests, every one run first against the v0.10.3 sources, where all seven failed). The tests point HOME, USERPROFILE and CODEX_HOME at a temp dir, assert the config path is inside it before any change, and hold one lock because those variables are process-wide.

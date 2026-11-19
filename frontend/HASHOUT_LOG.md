@@ -14,6 +14,13 @@ Last updated: 2026-11-11 · v0.10.4 no window changes; 2026-11-10 · v0.10.3 no 
 
 `core/data/family.json` no longer records a commit (see core/HASHOUT_LOG.md, the family spec entry), so the footer reads "List from <repository> <version>" with no bracketed short hash. Same node, same text slot; only the string is shorter.
 
+### main.ts · the footer names the repository only
+- refers-to: frontend/src/main.ts :: the source line under the list
+- kind: change
+- logged: v0.11.0 · 2026-11-19
+
+The list no longer carries the registry version (see core/HASHOUT_LOG.md, "the source line names the repository only"), so the first frame's footer reads "List from <repository>". The snapshot then writes the engine's own line into the same node, as before. Same node, same flexible text slot, a shorter string; nothing else in the page moves. Type-checked through the demo projects, which include this file (`tsc --noEmit -p demo`); the window itself was not opened here.
+
 ## v0.10.0 · the demos inside the app {#v0-10-0}
 
 ### demos-bundle.ts, vite.config.ts · the built demo pages ship in the window's bundle

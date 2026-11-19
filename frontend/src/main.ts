@@ -89,7 +89,7 @@ const rows = family.apps.map((app) => ({ app, node: row(app) }));
 list.append(...rows.map((r) => r.node));
 
 (document.getElementById("version") as HTMLElement).textContent = `v${__APP_VERSION__}`;
-(document.getElementById("source") as HTMLElement).textContent = `List from ${family.source.repository} ${family.source.version}`;
+(document.getElementById("source") as HTMLElement).textContent = `List from ${family.source.repository}`;
 
 const chips = Array.from(document.querySelectorAll<HTMLButtonElement>(".chip"));
 const withMcp = family.apps.filter((a) => a.mcp).length;
