@@ -5,6 +5,22 @@ Living log for demo 2. Source files stay comment-free; what they would have said
 Current build version: v0.9.1
 Last updated: 2026-11-07 · v0.9.1 rebuilt for the version it shows (no demo changes); v0.9.0 rebuilt with the window's Extensions button (empty list: no extension route in a file:// demo); first release of the connecting-agents demo
 
+## v0.11.0 · gateway wave 1 {#v0-11-0}
+
+### agent.ts · the source line has no commit
+- refers-to: demos/connect/src/agent.ts :: sourceText
+- kind: change
+- logged: v0.11.0 · 2026-11-19
+
+The family list no longer records a commit (see core/HASHOUT_LOG.md, the family spec entry), so `sourceText` returns "bundled list from <repository> <version>". The compiled page in `demos/connect/assets` still shows the old line until the demo is rebuilt for the release.
+
+### agent.ts · the source line names the repository only
+- refers-to: demos/connect/src/agent.ts :: sourceText
+- kind: change
+- logged: v0.11.0 · 2026-11-19
+
+The family list no longer carries the registry version (see core/HASHOUT_LOG.md, "the source line names the repository only"), so `sourceText` returns "bundled list from <repository>". The compiled page in `demos/connect/assets` still shows the old line until the demo is rebuilt for the release.
+
 ## v0.8.4 · connecting agents {#v0-8-4}
 
 ### main.ts, isolate.ts, shim.ts · the real window, memory only

@@ -87,6 +87,8 @@ jobs:
           done
       - name: Python compiles
         run: python3 -m py_compile setup/family.py
+      - name: Family list matches the family spec
+        run: python3 -I setup/family.py --family setup/family.spec.json --check
       - name: No em dash in tracked markdown, no emoji in tracked text
         run: |
           python3 - <<'PY'

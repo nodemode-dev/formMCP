@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.10.4" src="https://img.shields.io/badge/version-0.10.4-eef0f4?style=flat-square">
+  <img alt="version 0.11.0" src="https://img.shields.io/badge/version-0.11.0-eef0f4?style=flat-square">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-B7410E?style=flat-square&logo=rust&logoColor=white">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square">
   <img alt="macOS, Windows, Linux" src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-native-2f7bf5?style=flat-square">
@@ -69,7 +69,7 @@
 
 <table>
   <tr>
-    <td width="33%" valign="top"><h4>8 MCP tools</h4>family_apps · suggest_app · app_tools · call_app · app_resources · read_app_resource · app_prompts · get_app_prompt</td>
+    <td width="33%" valign="top"><h4>11 MCP tools</h4>family_apps · suggest_app · app_tools · call_app · app_resources · read_app_resource · app_prompts · get_app_prompt · extensions_list · extension_command · demo_open</td>
     <td width="33%" valign="top"><h4>Controls</h4>Apps per agent · single tools · profiles · start policies · hooks · secrets · tracing · activity log</td>
     <td width="33%" valign="top"><h4>Transports</h4>stdio · local HTTP at <code>127.0.0.1:5625/mcp</code> with an access token · Claude Code, Codex and Cursor</td>
   </tr>
@@ -95,11 +95,11 @@ FormMCP loads extensions made to the Form Extension Contract (API 1): FormPortal
 ## Under the hood
 
 - **Headless first:** the engine and the MCP server need no window, and the installed app answers `formmcp mcp` without opening one.
-- **Family list:** the signed family catalogue over a list generated from formcompiler's registry, and every answer says which was used.
+- **Family list:** the signed family catalogue over a list generated from the family spec, and every answer says which was used.
 - **Pass-through:** `call_app` returns an app's own result unchanged, so the tools are always the running app's.
 - **Window:** vanilla TypeScript and Vite with zero runtime dependencies, painted complete in its first frame.
 - **Local only:** HTTP binds 127.0.0.1, checks Host and Origin, and needs a token on every request.
-- **Tested:** 30 Rust tests (family list, catalogue keys, reach, the MCP server over stdio and HTTP).
+- **Tested:** 47 Rust tests (family list and its generator, catalogue keys, reach, the MCP server over stdio and HTTP).
 
 ## Download
 
@@ -162,7 +162,7 @@ On Windows run `formmcp_oc_install.bat`, then `formmcp.bat`. Form app checkouts 
 | `cli/` | `formmcp-cli`, the command line and MCP server |
 | `src-tauri/` | the Tauri 2 shell: the window, and `formmcp mcp` with no window |
 | `frontend/` | the window: tokens, layers, one list |
-| `setup/` | `family.py`, which generates the family list from formcompiler |
+| `setup/` | `family.py`, which generates the family list from the family spec |
 
 Docs: [`.docs/wiki`](.docs/wiki) · Agents: [`CLAUDE.md`](CLAUDE.md), [`AGENTS.md`](AGENTS.md)
 

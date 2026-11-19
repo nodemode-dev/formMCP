@@ -123,6 +123,29 @@ fn timeouts_too_large_for_a_deadline_wait_without_one() {
 
 #[cfg(unix)]
 #[test]
+fn a_failed_start_is_remembered_and_answered_at_once() {
+    use std::os::unix::fs::PermissionsExt;
+    let s = Sandbox::new("failed-start");
+    std::fs::create_dir_all(s.path("dev/formpdf")).unwrap();
+    let launcher = s.path("dev/formpdf/formpdf");
+    std::fs::write(&launcher, "#!/bin/sh\nwhile read -r line; do :; done\n").unwrap();
+    std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let mut m = Stdio2::start(&s, &[("FORMMCP_DEV_ROOTS", s.path("dev").to_str().unwrap()), ("FORMMCP_START_TIMEOUT", "2")]);
+    m.initialize();
+    let started = Instant::now();
+    let first = m.call(2, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
+    assert!(started.elapsed() >= Duration::from_secs(2), "took {:?}", started.elapsed());
+    assert!(text(&first).contains("did not answer initialize within 2 s"), "{first}");
+    let started = Instant::now();
+    let second = m.call(3, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
+    assert!(started.elapsed() < Duration::from_secs(1), "took {:?}", started.elapsed());
+    assert_eq!(second["result"]["isError"], json!(true), "{second}");
+    assert!(text(&second).starts_with(&text(&first)), "{second}");
+    assert!(text(&second).contains("again in"), "{second}");
+}
+
+#[cfg(unix)]
+#[test]
 fn an_app_that_writes_bytes_that_are_not_utf8_still_answers() {
     use std::os::unix::fs::PermissionsExt;
     let s = Sandbox::new("not-utf8");
@@ -146,7 +169,44 @@ fn an_app_that_writes_bytes_that_are_not_utf8_still_answers() {
     m.initialize();
     let reply = m.call(2, "tools/call", json!({ "name": "app_tools", "arguments": { "app": "formpdf" } }));
     assert_ne!(reply["result"]["isError"], json!(true), "{reply}");
-    assert_eq!(reply["result"]["structuredContent"]["tools"][0]["name"], "ping", "{reply}");
+    let answer: Value = serde_json::from_str(&text(&reply)).unwrap();
+    assert_eq!(answer["tools"][0]["name"], "ping", "{reply}");
+}
+
+#[test]
+fn own_answers_are_sent_once_as_text_unless_the_structured_copy_is_on() {
+    let s = Sandbox::new("structured");
+    let mut m = Stdio2::start(&s, &[]);
+    m.initialize();
+    let plain = m.call(2, "tools/call", json!({ "name": "family_apps", "arguments": {} }));
+    assert!(plain["result"].get("structuredContent").is_none(), "{plain}");
+    let data: Value = serde_json::from_str(&text(&plain)).unwrap();
+    assert!(data["count"].as_u64().unwrap_or(0) > 0, "{plain}");
+    drop(m);
+    assert_eq!(s.json(&["structured", "on"], &[])["structured"], json!(true));
+    let mut m = Stdio2::start(&s, &[]);
+    m.initialize();
+    let both = m.call(2, "tools/call", json!({ "name": "family_apps", "arguments": {} }));
+    assert_eq!(both["result"]["structuredContent"], data, "{both}");
+}
+
+#[cfg(unix)]
+#[test]
+fn the_before_hook_sees_resource_reads_and_prompts() {
+    use std::os::unix::fs::PermissionsExt;
+    let s = Sandbox::new("hook-reads");
+    let hook = s.path("bin/deny-reads");
+    std::fs::write(&hook, "#!/bin/sh\nread -r l\ncase \"$l\" in *read_app_resource*|*get_app_prompt*) echo '{\"decision\":\"deny\",\"reason\":\"reads are off\"}';; esac\n").unwrap();
+    std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+    s.json(&["hook", "before", hook.to_str().unwrap()], &[]);
+    let mut m = Stdio2::start(&s, &[]);
+    m.initialize();
+    let read = m.call(2, "tools/call", json!({ "name": "read_app_resource", "arguments": { "app": "formpdf", "uri": "pdf://open" } }));
+    assert!(text(&read).contains("reads are off"), "{read}");
+    let prompt = m.call(3, "tools/call", json!({ "name": "get_app_prompt", "arguments": { "app": "formpdf", "name": "summary" } }));
+    assert!(text(&prompt).contains("reads are off"), "{prompt}");
+    let call = m.call(4, "tools/call", json!({ "name": "call_app", "arguments": { "app": "formpdf", "tool": "status" } }));
+    assert!(!text(&call).contains("reads are off") && text(&call).contains("cannot be reached"), "{call}");
 }
 
 #[test]

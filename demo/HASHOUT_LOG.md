@@ -5,6 +5,22 @@ Living log for the offline demo. Source files stay comment-free; what they would
 Current build version: v0.9.1
 Last updated: 2026-11-07 · v0.9.1 rebuilt for the version it shows (Greg's README note on FormPortal updates, no demo changes); v0.9.0 the shim marks and restores settings, and gives tool_list's loaded in seconds; the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
 
+## v0.11.0 · gateway wave 1 {#v0-11-0}
+
+### shim.ts, gateway.ts · the source line has no commit
+- refers-to: demo/src/shim.ts :: snapshot · demo/src/gateway.ts :: family_apps
+- kind: change
+- logged: v0.11.0 · 2026-11-19
+
+The family list no longer records a commit (see core/HASHOUT_LOG.md, the family spec entry), so both `source` strings read "bundled list from <repository> <version>", as the real gateway now does. The compiled page in `demo/assets` still shows the old line until the demo is rebuilt for the release.
+
+### shim.ts, gateway.ts · the source line names the repository only
+- refers-to: demo/src/shim.ts :: snapshot · demo/src/gateway.ts :: family_apps
+- kind: change
+- logged: v0.11.0 · 2026-11-19
+
+The family list no longer carries the registry version (see core/HASHOUT_LOG.md, "the source line names the repository only"), so both `source` strings read "bundled list from <repository>", as the real gateway does. The compiled page in `demo/assets` still shows the old line until the demo is rebuilt for the release.
+
 ## v0.9.0 · the shim marks and restores settings {#v0-9-0}
 
 ### shim.ts · settings_mark, settings_restore

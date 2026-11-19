@@ -2,8 +2,24 @@
 
 Living log for formMCP's window. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.10.4
-Last updated: 2026-11-11 · v0.10.4 no window changes; 2026-11-10 · v0.10.3 no window changes; 2026-11-10 · v0.10.2 no window changes; 2026-11-09 · v0.10.1 app card overflow; v0.10.0 the demos inside the app; 2026-11-07 · v0.9.1 no window changes (Greg's README note on FormPortal updates); v0.9.0 the extension host; v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+Current build version: v0.11.0
+Last updated: 2026-11-19 · v0.11.0 the footer names the list's repository only; 2026-11-11 · v0.10.4 no window changes; 2026-11-10 · v0.10.3 no window changes; 2026-11-10 · v0.10.2 no window changes; 2026-11-09 · v0.10.1 app card overflow; v0.10.0 the demos inside the app; 2026-11-07 · v0.9.1 no window changes (Greg's README note on FormPortal updates); v0.9.0 the extension host; v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
+
+## v0.11.0 · gateway wave 1 {#v0-11-0}
+
+### main.ts · the footer names the registry version, not a commit
+- refers-to: frontend/src/main.ts :: the source line under the list
+- kind: change
+- logged: v0.11.0 · 2026-11-19
+
+`core/data/family.json` no longer records a commit (see core/HASHOUT_LOG.md, the family spec entry), so the footer reads "List from <repository> <version>" with no bracketed short hash. Same node, same text slot; only the string is shorter.
+
+### main.ts · the footer names the repository only
+- refers-to: frontend/src/main.ts :: the source line under the list
+- kind: change
+- logged: v0.11.0 · 2026-11-19
+
+The list no longer carries the registry version (see core/HASHOUT_LOG.md, "the source line names the repository only"), so the first frame's footer reads "List from <repository>". The snapshot then writes the engine's own line into the same node, as before. Same node, same flexible text slot, a shorter string; nothing else in the page moves. Type-checked through the demo projects, which include this file (`tsc --noEmit -p demo`); the window itself was not opened here.
 
 ## v0.10.0 · the demos inside the app {#v0-10-0}
 

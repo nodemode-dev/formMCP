@@ -28,13 +28,15 @@ Claude Code is set up with `claude mcp add --scope user formmcp` (only a user-sc
 | `family_apps` | no | every Form app (`id`, `name`, `kind`, `summary`, `mcp`, `state`, `installed`, `reach`) and where the list came from; `mcp_only` keeps the apps with an MCP server |
 | `suggest_app` | no | for a task in the person's words, up to five apps, best first, each with `installed`, `reach` and the next step (load its tools, install it with FormPortal, install FormPortal first, or why an agent cannot drive it yet) |
 | `app_tools` | no | one app's own tools with their input schemas, its server name and version, and its instructions; starts its server the first time |
-| `call_app` | what the app's tool changes | the app's own result for one of its tools, unchanged |
+| `call_app` | what the app's tool changes | the app's own result for one of its tools, unchanged; the app itself may refuse a change (see below the table) |
 | `app_resources` | no | the resources one app offers (each with a `uri`) and its resource templates; empty with a note when the app declares no resources |
 | `read_app_resource` | no | one resource's contents by `uri`, as embedded resource content |
 | `app_prompts` | no | the prompt templates one app offers, with their arguments |
 | `get_app_prompt` | no | one prompt filled with its `arguments`: the app's description and messages |
 
 `app_tools` also says which of the app's tools are turned off (`hidden`) and whether it offers resources and prompts (`offers`).
+
+formMCP has no consent step of its own for `call_app`: what it refuses is what the person turned off in its window. The app being called decides too. Every Form app asks the person in its own window before an outside agent changes anything, and to the app formMCP is an outside agent, so a changing call can come back refused, or wait for an answer, even though formMCP let it through. The refusal is the app's own message and is passed on unchanged. The person opens the app and answers its question, or sets the app's Outside agents choice (Ask, Allowed or Blocked) in the app's own settings; only the app's window can change it, and under Blocked the app refuses every time.
 
 ## Apps per agent, and single tools
 
@@ -86,7 +88,7 @@ The list is short on purpose: one line per app and no app's tools. An app's tool
 
 `./formmcp` sets `FORMMCP_DEV_ROOTS` to the folder that holds the formMCP checkout when it is not set, so Form app checkouts beside it are found; set it empty to turn that off. FormPortal's program is `FORMPORTAL_BIN`, else `formportal-cli` or `formportal` on PATH, else `/Applications/FormPortal.app` on macOS. FormPortal starts an install only when the install's `form-app.json` names a launcher (`agents.mcp.command`); until the apps' bundles carry one, installed apps are reached through their checkouts.
 
-An app's server inherits formMCP's environment, so what an app needs (form.md's `FORMMD_MCP_TOKEN`) is set once in the client's config for formmcp. `FORMMCP_START_TIMEOUT` (600 s) and `FORMMCP_CALL_TIMEOUT` (900 s) bound the waits. A started server lives as long as the client's formMCP session and ends with it.
+An app's server inherits formMCP's environment, so what an app needs (form.md's `FORMMD_MCP_TOKEN`) is set once in the client's config for formmcp. `FORMMCP_START_TIMEOUT` (120 s) and `FORMMCP_CALL_TIMEOUT` (900 s) bound the waits. A started server lives as long as the client's formMCP session and ends with it.
 
 ## Always showing one app's tools
 
@@ -110,7 +112,7 @@ Open Safety in the window, or use the command line:
 
 A secret is given to that app's server only, as the environment variable named, when formMCP starts it; a running server keeps the value it started with. If the keychain cannot be read (on Linux, no Secret Service running), the app is not started and the agent is told why.
 
-A before hook gets one JSON object on stdin: `event` ("before"), `app`, `tool`, `arguments` (secrets hidden), `client`, `transport` and `formmcp`. To refuse, print `{"decision":"deny","reason":"..."}` or exit with 2 (the first line of stderr is the reason); exit 0 with nothing printed, or `{"decision":"allow"}`, lets the call run. If the hook cannot start, exits otherwise, prints something that is not JSON or takes longer than 10 s (`FORMMCP_HOOK_TIMEOUT`), the call is refused. The after hook gets the same fields plus `ok`, `ms` and `result`; what it prints is ignored. Hooks apply to app tool calls (`call_app` and always-shown tools).
+A before hook gets one JSON object on stdin: `event` ("before"), `call` (`call_app`, `read_app_resource` or `get_app_prompt`), `app`, then `tool` for a tool call, `uri` for a resource read or `prompt` for a prompt, `arguments` (the tool's or the prompt's arguments, or the `uri`; secrets hidden), `client`, `transport` and `formmcp`. To refuse, print `{"decision":"deny","reason":"..."}` or exit with 2 (the first line of stderr is the reason); exit 0 with nothing printed, or `{"decision":"allow"}`, lets the call run. If the hook cannot start, exits otherwise, prints something that is not JSON or takes longer than 10 s (`FORMMCP_HOOK_TIMEOUT`), the call is refused. The after hook gets the same fields plus `ok`, `ms` and `result`; what it prints is ignored. Hooks apply to everything sent to an app: tool calls (`call_app` and always-shown tools), resource reads (`read_app_resource`) and prompts (`get_app_prompt`).
 
 ## Activity
 

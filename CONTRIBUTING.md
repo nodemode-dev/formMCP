@@ -28,7 +28,7 @@ The code lives in:
 | `cli` | `formmcp-cli`, the command line (Rust) |
 | `src-tauri` | the desktop shell (Rust, Tauri) |
 | `frontend` | the window (TypeScript, Vite) |
-| `setup` | `family.py`, which generates `core/data/family.json` from formcompiler's registry |
+| `setup` | `family.py`, which generates `core/data/family.json` from the family spec |
 | `.docs/wiki` | the wiki's source |
 
 ## Before you open a pull request
@@ -40,6 +40,7 @@ Run the same checks CI runs:
 cargo check --locked -p formmcp-core -p formmcp-cli
 cargo test --locked -p formmcp-core -p formmcp-cli
 python3 -m py_compile setup/family.py
+python3 -I setup/family.py --family setup/family.spec.json --check
 ```
 
 CI also checks the shell scripts with `bash -n` and refuses an em dash in tracked
@@ -49,8 +50,11 @@ Markdown or an emoji in any tracked text.
 - Write commit subjects in Conventional Commits: `feat(core): ...`, `fix(cli): ...`,
   `docs(...)`. Leave the version alone; a maintainer bumps it when releasing (see
   [.docs/BRANCHING.md](.docs/BRANCHING.md)).
-- `core/data/family.json` is generated: change formcompiler's registry and run
-  `./formmcp family --compiler PATH`, never edit it by hand.
+- `core/data/family.json` is generated: it follows the family spec that formadaptor builds
+  from formcompiler's registry. Run `./formmcp family --family PATH`, never edit it by hand.
+  When the spec changes the list, the generator itself also copies that spec to
+  `setup/family.spec.json` (a spec that leaves the list unchanged leaves the copy alone), and CI
+  runs `--check` against that copy.
 - FormMCP suggests and FormPortal installs: a tool that installs, updates or removes an
   app will not be accepted. FormMCP serves the Form family only, with no third-party or
   remote MCP servers.

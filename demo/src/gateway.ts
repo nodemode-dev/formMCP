@@ -313,7 +313,7 @@ export function familyApps(client: string, mcpOnly: boolean): Record<string, unk
   return {
     count: shown.length,
     apps: shown.map((a) => ({ id: a.id, name: a.name, kind: a.kind, summary: a.summary, mcp: a.mcp, state: a.state, installed: false, reach: null })),
-    source: `bundled list from ${family.source.repository} ${family.source.version} (${family.source.commit.slice(0, 7)})`,
+    source: `bundled list from ${family.source.repository}`,
     turned_off: family.apps.filter((a) => isOff(client, a.id)).length,
     install: "formMCP never installs. FormPortal (id formai) installs, updates and removes the Form apps.",
   };

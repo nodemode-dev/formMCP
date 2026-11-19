@@ -19,20 +19,24 @@ formMCP is one MCP server for the whole Form family. It keeps the conversation s
 | `read_app_resource` | no | one resource's contents by its `uri`, as the app sent them |
 | `app_prompts` | no | the prompt templates one app offers, with their arguments |
 | `get_app_prompt` | no | one prompt filled with its `arguments` (strings): the app's messages, ready to follow |
+| `extensions_list` | no | the extensions installed in formMCP itself: `state`, permissions and `commands` (see below) |
+| `extension_command` | what the extension's command changes in formMCP's settings | runs one extension command (`id`, `command`, `args`) in formMCP's window, which must be open |
+| `demo_open` | no | opens one of formMCP's demos (`window`, `connect` or `safety`) beside formMCP's window, which must be open |
 
 ## Workflow
 
 1. Call `suggest_app` with the task in the person's words, and follow the first suggestion's `next` unless a later one clearly fits better. Use `family_apps` (once per conversation) when the person wants the whole family or `suggest_app` finds nothing. If two apps fit, name both and say how they differ.
 2. If the app has `reach`, call `app_tools` for that one app, read its instructions and the tool you need, then `call_app`. Load another app only when the task moves to it.
-3. Before a `call_app` that changes the person's files or computer (the app's tool is not read-only, or says so), say what will change and get their go-ahead. The app's own tool descriptions and annotations decide this, not formMCP's.
+3. Before a `call_app` that changes the person's files or computer (the app's tool is not read-only, or says so), say what will change and get their go-ahead. The app's own tool descriptions and annotations decide this, not formMCP's. The app then asks the person itself as well (step 11), so say that an answer is coming in the app's window.
 4. If the app has no `reach`: when `installed` is false, say which app fits and that FormPortal (`id` `formai`) installs and updates the Form apps; formMCP never installs. When `installed` is true but `reach` is null, FormPortal could not be found to start it, or the app's install names no launcher yet; say so plainly.
 5. When `app_tools` or `call_app` fails, the message carries the app's own last output. Pass on what it asks for (for example form.md asks for `FORMMD_MCP_TOKEN`, a personal API token from its Account settings, which the person keeps in formMCP's Safety panel or with `formmcp cli secret set formmd FORMMD_MCP_TOKEN`; never ask them to paste it into the chat) instead of retrying.
 
-6. An app missing from `family_apps`, or refused as "turned off" for this agent, and a tool missing from `app_tools` (listed in `hidden`) or refused in `call_app`, were turned off by the person in formMCP's window, directly or through a profile the message names. Say so and suggest they turn it on there; do not look for a way around it.
+6. An app missing from `family_apps`, or refused as "turned off" for this agent, and a tool missing from `app_tools` (listed in `hidden`) or refused in `call_app`, were turned off by the person in formMCP's window, directly or through a profile the message names. Say so and suggest they turn it on there; do not look for a way around it. A refusal that comes from the app itself is a different case: see step 11.
 7. When `app_tools` shows `offers.resources` or `offers.prompts`, the app's own documents and prompt templates are reachable through `app_resources` and `read_app_resource`, `app_prompts` and `get_app_prompt`; read what the task needs rather than everything.
 8. Tools named `<id>__<tool>` (for example `formai__status`) are an app's own tools that the person chose to always show; they behave as `call_app` with that app.
 9. `source` in `family_apps` says whether the list is the signed family catalogue or the bundled list, and why; mention it only when it matters (a newer app the person names is missing, for example).
 10. "[redacted by formMCP]" in a result stands for a secret or token formMCP hid; work without it. A call refused by "formMCP's before-call hook", or an app "not started" because its installed files changed, was stopped by a rule the person set or by formMCP's check: tell them the reason as given and do not retry around it.
+11. The app behind `call_app` can refuse too. Every Form app asks the person in its own window before an outside agent changes anything, and to the app formMCP is an outside agent, so a `call_app` that changes something can be refused, or can wait for an answer, even though formMCP let it through. The message is the app's own: pass it on and do not retry in a loop or look for a way around it. Tell the person what to do: open the app and answer its question, or, if they want agents to go ahead without asking, set that app's Outside agents choice (Ask, Allowed or Blocked) in the app's own settings, where its message says. Only the app's window can change that choice, not formMCP and not you. Under Blocked the app refuses every time. Once the person has answered or changed it, call again once.
 
 ## formMCP's own extensions
 

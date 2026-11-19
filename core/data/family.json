@@ -2,9 +2,7 @@
   "format": "formmcp-family",
   "format_version": 1,
   "source": {
-    "repository": "nodemode-dev/formcompiler",
-    "version": "0.6.1",
-    "commit": "f0e3201aa8da152a21a464a9b62551ef032cc17d"
+    "repository": "nodemode-dev/formcompiler"
   },
   "apps": [
     {
@@ -41,7 +39,7 @@
       "launcher": "formcel",
       "state": "prelaunch",
       "released": true,
-      "mcp": false
+      "mcp": true
     },
     {
       "id": "formcut",
@@ -88,6 +86,18 @@
       "repository": "https://github.com/nodemode-dev/formencoder",
       "launcher": "formencoder",
       "state": "public",
+      "released": true,
+      "mcp": true
+    },
+    {
+      "id": "formext",
+      "app": "form.ext",
+      "name": "form.ext",
+      "kind": "extensions",
+      "summary": "The extension studio: make, preview, check, package and publish extensions for every Form app.",
+      "repository": "https://github.com/nodemode-dev/form.ext",
+      "launcher": "formext",
+      "state": "live",
       "released": true,
       "mcp": true
     },
@@ -140,30 +150,6 @@
       "mcp": true
     },
     {
-      "id": "formpromo",
-      "app": "formpromo",
-      "name": "FormPromo",
-      "kind": "promo",
-      "summary": "Promo films from your own media, style and sourced claims.",
-      "repository": "https://github.com/nodemode-dev/formpromo",
-      "launcher": "formpromo",
-      "state": "prelaunch",
-      "released": true,
-      "mcp": true
-    },
-    {
-      "id": "formranker",
-      "app": "formranker",
-      "name": "FormRanker",
-      "kind": "parity",
-      "summary": "Parity, testing and feedback for the Form apps, kept on this computer.",
-      "repository": "https://github.com/nodemode-dev/formranker",
-      "launcher": "formranker",
-      "state": "prelaunch",
-      "released": true,
-      "mcp": true
-    },
-    {
       "id": "formref",
       "app": "formref",
       "name": "FormRef",
@@ -171,18 +157,6 @@
       "summary": "Reference boards for images, ideas and creative work.",
       "repository": "https://github.com/nodemode-dev/formref",
       "launcher": "formref",
-      "state": "prelaunch",
-      "released": true,
-      "mcp": true
-    },
-    {
-      "id": "formsculpt",
-      "app": "formsculpt",
-      "name": "FormSculpt",
-      "kind": "sculpt",
-      "summary": "3D sculpting and modeling, with a Rust engine and a command set agents can drive.",
-      "repository": "https://github.com/nodemode-dev/formsculpt",
-      "launcher": "formsculpt",
       "state": "prelaunch",
       "released": true,
       "mcp": true
@@ -202,7 +176,7 @@
     {
       "id": "formslide",
       "app": "formdeck",
-      "name": "FormSlide",
+      "name": "FormDeck",
       "kind": "slides",
       "summary": "Presentations: build slides, present and export.",
       "repository": "https://github.com/nodemode-dev/formdeck",
@@ -212,13 +186,13 @@
       "mcp": true
     },
     {
-      "id": "formsurface",
-      "app": "formsurface",
-      "name": "FormSurface",
-      "kind": "texture",
-      "summary": "Paint textures and materials straight onto 3D models.",
-      "repository": "https://github.com/nodemode-dev/formsurface",
-      "launcher": "formsurface",
+      "id": "formtools",
+      "app": "formtools",
+      "name": "FormTools",
+      "kind": "utility",
+      "summary": "Viewers for almost any file, batch image tools, 3D viewing and desktop utilities in one window.",
+      "repository": "https://github.com/nodemode-dev/formtools",
+      "launcher": "formtools",
       "state": "prelaunch",
       "released": true,
       "mcp": true
@@ -245,7 +219,7 @@
       "launcher": "formtxt",
       "state": "prelaunch",
       "released": true,
-      "mcp": false
+      "mcp": true
     },
     {
       "id": "formvfx",

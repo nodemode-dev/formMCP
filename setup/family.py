@@ -1,69 +1,86 @@
 import argparse
 import json
-import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "core" / "data" / "family.json"
+KEPT = ROOT / "setup" / "family.spec.json"
 FORMAT = "formmcp-family"
+SPEC_FORMAT = "formai-family"
 SELF = "formMCP"
+USAGE_ERROR = 2
 
 
-def git(repo, *args):
-    try:
-        return subprocess.check_output(["git", "-C", str(repo), *args], text=True, stderr=subprocess.DEVNULL).strip()
-    except (OSError, subprocess.CalledProcessError):
-        return ""
+class SpecError(Exception):
+    pass
 
 
-def build(compiler):
-    apps_dir = compiler / "apps"
-    if not apps_dir.is_dir():
-        sys.exit(f"family: {apps_dir} is not formcompiler's registry folder")
-    version = (compiler / "VERSION").read_text(encoding="utf-8").strip() if (compiler / "VERSION").is_file() else ""
+def build(spec):
+    if not isinstance(spec, dict) or spec.get("format") != SPEC_FORMAT or spec.get("format_version") != 1:
+        raise SpecError(f"not a {SPEC_FORMAT} version 1 document")
+    source = spec.get("source")
+    if not isinstance(source, dict) or not source.get("repository"):
+        raise SpecError("the spec has no source.repository")
+    entries = spec.get("apps")
+    if not isinstance(entries, list):
+        raise SpecError("the spec has no apps list")
     apps = []
-    for path in sorted(apps_dir.glob("*.json")):
-        entry = json.loads(path.read_text(encoding="utf-8"))
+    for entry in entries:
+        if not isinstance(entry, dict) or entry.get("public") is not True:
+            continue
         if entry["app"] == SELF:
             continue
-        catalog = entry["catalog"]
-        agents = entry.get("agents") or {"mcp": False}
+        agents = entry.get("agents") or {}
         apps.append({
-            "id": catalog["id"],
+            "id": entry["id"],
             "app": entry["app"],
-            "name": catalog["name"],
-            "kind": catalog["kind"],
-            "summary": catalog["summary"],
+            "name": entry["name"],
+            "kind": entry["kind"],
+            "summary": entry["summary"],
             "repository": f"https://github.com/{entry['repository']}",
-            "launcher": entry["build"].get("cli") or entry["app"],
-            "state": catalog["state"],
-            "released": bool(entry.get("enabled")),
+            "launcher": entry["launcher"],
+            "state": entry["state"],
+            "released": entry.get("release") is not None,
             "mcp": bool(agents.get("mcp")),
         })
     apps.sort(key=lambda a: a["id"])
     return {
         "format": FORMAT,
         "format_version": 1,
-        "source": {"repository": "nodemode-dev/formcompiler", "version": version, "commit": git(compiler, "rev-parse", "HEAD")},
+        "source": {"repository": source["repository"]},
         "apps": apps,
     }
 
 
 def main():
-    parser = argparse.ArgumentParser(description="core/data/family.json from formcompiler's registry")
-    parser.add_argument("--compiler", required=True, help="a checkout of nodemode-dev/formcompiler")
-    parser.add_argument("--check", action="store_true", help="fail when core/data/family.json differs")
+    parser = argparse.ArgumentParser(description="core/data/family.json from the family spec (family.json built by formadaptor)")
+    parser.add_argument("--family", required=True, help="the family spec, a family.json from nodemode-dev/formadaptor; when it changes core/data/family.json it is also kept as setup/family.spec.json")
+    parser.add_argument("--check", action="store_true", help="write nothing; exit 1 naming the file when core/data/family.json differs")
     args = parser.parse_args()
-    text = json.dumps(build(Path(args.compiler).resolve()), indent=2, ensure_ascii=False) + "\n"
+    try:
+        raw = Path(args.family).read_bytes()
+        spec = json.loads(raw.decode("utf-8"))
+        text = json.dumps(build(spec), indent=2, ensure_ascii=False) + "\n"
+    except (OSError, ValueError, KeyError, TypeError, SpecError) as error:
+        print(f"family: {args.family} cannot be used: {error}", file=sys.stderr)
+        sys.exit(USAGE_ERROR)
     current = OUT.read_text(encoding="utf-8") if OUT.is_file() else ""
     if args.check:
-        print("family: in step" if current == text else "family: drifted (run python3 setup/family.py --compiler PATH)")
+        name = OUT.relative_to(ROOT).as_posix()
+        print(f"family: {name} is in step" if current == text else f"family: {name} differs (run python3 -I setup/family.py --family PATH)")
         sys.exit(0 if current == text else 1)
+    count = len(json.loads(text)["apps"])
+    if current == text:
+        print(f"family: {OUT.relative_to(ROOT)} unchanged, {count} apps; {KEPT.relative_to(ROOT)} left alone")
+        return
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(text, encoding="utf-8")
-    count = len(json.loads(text)["apps"])
-    print(f"family: {OUT.relative_to(ROOT)} {'unchanged' if current == text else 'written'}, {count} apps")
+    kept = f"{KEPT.relative_to(ROOT)} unchanged"
+    if not KEPT.is_file() or KEPT.read_bytes() != raw:
+        KEPT.write_bytes(raw)
+        kept = f"{KEPT.relative_to(ROOT)} written"
+    print(f"family: {OUT.relative_to(ROOT)} written, {count} apps; {kept}")
 
 
 if __name__ == "__main__":

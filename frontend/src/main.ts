@@ -89,8 +89,7 @@ const rows = family.apps.map((app) => ({ app, node: row(app) }));
 list.append(...rows.map((r) => r.node));
 
 (document.getElementById("version") as HTMLElement).textContent = `v${__APP_VERSION__}`;
-const commit = family.source.commit.slice(0, 7);
-(document.getElementById("source") as HTMLElement).textContent = `List from ${family.source.repository} ${family.source.version} (${commit})`;
+(document.getElementById("source") as HTMLElement).textContent = `List from ${family.source.repository}`;
 
 const chips = Array.from(document.querySelectorAll<HTMLButtonElement>(".chip"));
 const withMcp = family.apps.filter((a) => a.mcp).length;

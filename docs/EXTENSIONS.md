@@ -41,11 +41,11 @@ formMCP has no open file. Its "document" is the state the person edits in the wi
   ],
   "profiles": [{ "name": "quiet", "apps_off": 3, "tools_off": 0, "starts": 1, "used_by": ["codex"] }],
   "http": { "running": false, "port": 5625, "address": "http://127.0.0.1:5625/mcp" },
-  "source": "bundled list from nodemode-dev/formcompiler 0.6.1 (f0e3201)"
+  "source": "bundled list from nodemode-dev/formcompiler"
 }
 ```
 
-- `apps` lists all 24 family apps in the window's order. `on_for_agent` is for the agent in `selection.agent`; `off_for` names the agents the person turned the app off for, `profile_off_for` the agents whose profile turns it off. `start` is `demand`, `session` or `keep`. `hidden_tools` counts the app's tools turned off for every agent.
+- `apps` lists every family app in the window's order. `on_for_agent` is for the agent in `selection.agent`; `off_for` names the agents the person turned the app off for, `profile_off_for` the agents whose profile turns it off. `start` is `demand`, `session` or `keep`. `hidden_tools` counts the app's tools turned off for every agent.
 - `selection` is the window's Apps for picker (`claude`, `codex`, `cursor`, `other`) and its filter chip (`all` or `mcp`).
 - `live` is false in a browser preview without the app: then `apps` holds the bundled list only, without `installed`, `reach` or the switches, and `document.apply` answers -32003.
 

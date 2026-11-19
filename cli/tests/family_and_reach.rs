@@ -19,7 +19,7 @@ fn with_no_catalogue_the_bundled_family_is_listed_with_its_flags() {
     let expected: Vec<String> = bundled["apps"].as_array().unwrap().iter().map(|a| a["id"].as_str().unwrap().to_string()).collect();
     assert_eq!(listing["count"], json!(expected.len()));
     assert_eq!(ids(&listing), expected);
-    assert_eq!(expected.len(), 24);
+    assert!(!expected.is_empty());
     for want in bundled["apps"].as_array().unwrap() {
         let got = app(&listing, want["id"].as_str().unwrap());
         assert_eq!(got["mcp"], want["mcp"], "{}", want["id"]);
@@ -47,6 +47,21 @@ fn a_signed_catalogue_updates_the_family_and_never_lists_formmcp() {
     let mut sorted = ids(&listing);
     sorted.sort();
     assert_eq!(ids(&listing), sorted);
+}
+
+#[test]
+fn a_signed_catalogue_can_mark_a_bundled_app_unreleased() {
+    let s = Sandbox::new("unreleased");
+    let k = key(25);
+    let bundled_listing = s.json(&["apps"], &[]);
+    assert_eq!(app(&bundled_listing, "formpdf")["released"], json!(true));
+    assert_eq!(app(&bundled_listing, "formwav")["released"], json!(true));
+    let body = catalogue(&[product("formpdf", true, None), product("formvis", true, Some("2.0.0"))]);
+    let path = write_catalogue(&s.root, &body, Some(&k));
+    let listing = s.json(&["apps"], &[("FORMMCP_CATALOG", path.to_str().unwrap()), ("FORMAI_CATALOG_PUBKEY", &public(&k))]);
+    assert_eq!(app(&listing, "formpdf")["released"], json!(false), "the catalogue lists formpdf with no release");
+    assert_eq!(app(&listing, "formvis")["released"], json!(true));
+    assert_eq!(app(&listing, "formwav")["released"], json!(true), "an app the catalogue does not list keeps the bundled flag");
 }
 
 #[test]
@@ -119,6 +134,28 @@ fn reach_sees_only_installs_and_checkouts_on_this_computer() {
         if r["mcp"] == json!(false) {
             assert!(r["reach"]["route"].is_null(), "{} has no MCP server and no route", r["id"]);
         }
+    }
+}
+
+#[test]
+fn suggest_puts_the_app_that_fits_first() {
+    let s = Sandbox::new("suggest");
+    let cases = [
+        ("redact every email address in this contract", &["formpdf"][..]),
+        ("clean the hum out of a podcast recording", &["formwav"]),
+        ("key out a green screen and add motion blur", &["formvfx"]),
+        ("find the duplicate photos in my library", &["formlit", "formdam"]),
+        ("make my holiday photos look like film", &["formlit", "formvis"]),
+        ("make a three second animated logo sting", &["formvfx"]),
+        ("turn these meeting notes into a ten slide deck", &["formslide"]),
+        ("convert a folder of MOV files to H.264 MP4", &["formencoder"]),
+        ("cut the silences out of this interview video", &["formcut"]),
+        ("remove the noise from a voice recording", &["formwav"]),
+    ];
+    for (task, fits) in cases {
+        let answer = s.json(&["suggest", task], &[]);
+        let first = answer["apps"][0]["id"].as_str().unwrap_or_default().to_string();
+        assert!(fits.contains(&first.as_str()), "{task:?} suggested {first:?}: {answer}");
     }
 }
 

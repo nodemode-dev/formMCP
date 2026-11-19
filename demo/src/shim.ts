@@ -72,7 +72,7 @@ function snapshot(): unknown {
     hidden_tools: settings.hidden_tools[a.id]?.length ?? 0,
   }));
   return {
-    source: `bundled list from ${family.source.repository} ${family.source.version} (${family.source.commit.slice(0, 7)})`,
+    source: `bundled list from ${family.source.repository}`,
     apps,
     clients: ["claude", "codex", "cursor"].map(clientState),
     formportal: false,

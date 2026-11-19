@@ -6,7 +6,7 @@ Rules for agents working in this repository. Read the in-tree HASHOUT logs (`cor
 
 - One MCP server for the whole Form family, cheap on context: an app that is not installed costs one line in `family_apps`; no app's tools or skills are copied into formMCP.
 - formMCP suggests; FormPortal installs. Never add a tool that installs, updates or removes an app.
-- Every list formMCP carries is generated. `core/data/family.json` comes from formcompiler's registry through `setup/family.py` (`./formmcp family --compiler PATH`); `--check` fails while it drifts.
+- Every list formMCP carries is generated. `core/data/family.json` comes from the family spec that nodemode-dev/formadaptor builds, through `setup/family.py` (`python3 -I setup/family.py --family PATH`); `--check` writes nothing and exits 1, naming the file, while it drifts. When a spec changes the list, the generator also keeps that spec as `setup/family.spec.json` (CI checks against it with no network); a spec that leaves the list unchanged leaves the kept copy alone. The list carries no registry version, so a registry release that changes no public app is not drift; the kept copy records the version.
 - The engine owns all logic and works with no window: `formmcp-core` holds the family list and the MCP server, `cli` and `src-tauri` are thin. The installed app answers `formmcp mcp` on stdio without opening a window.
 - HTTP (`http.rs`) listens on 127.0.0.1 only and checks the access token, the Host and the Origin on every request; never bind another address, skip a check, log the token or the arguments, or add a server stream without the same checks.
 - formMCP serves the Form family only (owner): no third-party or remote MCP servers.

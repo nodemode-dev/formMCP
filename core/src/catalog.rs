@@ -127,7 +127,7 @@ fn merge(mut family: Family, products: Vec<Product>) -> Family {
                 app.summary = product.summary;
                 app.state = product.state;
                 app.version = version;
-                app.released = released || app.released;
+                app.released = released;
                 if let Some(agents) = product.agents {
                     app.mcp = agents.mcp;
                 }

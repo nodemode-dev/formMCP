@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.11.0 · 2026-11-19
+
+- FormMCP's own answers (the family list, a suggestion, an app's tools and the rest) are sent once, as text. Each reply used to carry the same data twice, so an agent now reads about half as much: the family list went from 10319 to 5515 bytes in a test with one app of 41 tools. A new setting, `structured` (off by default; `formmcp-cli structured on` or `off`), adds the second copy back. What an app itself answers is passed on unchanged.
+- When an app fails to start, calls to it in the next 60 seconds are answered at once with the same error and the seconds until FormMCP tries again. Before, every call waited out the same failure. Only a failed start is remembered: a refusal for another reason (a failed file check, a missing secret, an app that cannot be reached) is not, so fixing it takes effect at once.
+- An app has 120 seconds to start by default; it was 600. `FORMMCP_START_TIMEOUT` and `FORMMCP_CALL_TIMEOUT` still set the limits, and one call may still take 900 seconds.
+- Over HTTP, one slow call to an app no longer holds up every session. Other apps and FormMCP's own tools answer at once while it runs; calls to the same app still run one at a time.
+- The signed catalogue can mark an app as not released yet, and `suggest_app` then says so instead of telling the person to install it.
+- Before and after hooks also run when an agent reads an app's resource or gets one of its prompts, not only when it calls a tool. The event a hook receives now says which call it is (`call`) and names the `tool`, the `uri` or the `prompt`.
+- `suggest_app` puts the fitting app first more often. It matches words by their stem, gives rare words more weight, and settles a tie by the kind of app, then by whether it is released. It also knows common video and audio formats (MOV, MP4, H.264, MP3 and others), film looks and logo stings: "MOV to H.264 MP4" now suggests FormEncoder first (it was third) and "animated logo sting" suggests FormVFX first.
+- The family list offers FormExt and FormTools, shows FormCel and FormTxt with an MCP server, and names FormSlide FormDeck. FormPromo, FormSculpt, FormSurface and FormRanker are no longer offered: nobody can install them, and `suggest_app` recommended them anyway. The bundled list now holds public apps only. When FormMCP is online, an app that opens later still appears through the signed catalogue; offline it appears with the next FormMCP release.
+- The family list is generated from the family spec (built from formcompiler's registry): `setup/family.py --family PATH`, and `--check` exits 1 and names the file when the list is out of step. The generator keeps the spec it generated from as `setup/family.spec.json`, only when that spec changes the list, and CI checks the list against it. The list no longer records a registry commit or version, so the window's footer reads "List from nodemode-dev/formcompiler" and every answer says "bundled list from nodemode-dev/formcompiler".
+- The README, the wiki and the agent skill name all 11 tools (they said 8) and say that an app behind `call_app` may itself refuse a change or wait for the person's answer, and what the person does then. The README's test count is 47, and SECURITY.md names 0.11.x as the supported line.
+
 ## v0.10.4 · 2026-11-11
 
 - Connecting Codex no longer breaks a config.toml that holds a multi-line string (`"""` or `'''`) with a line such as `[mcp_servers.formmcp]` inside it. That text used to read as FormMCP's own section, so Codex showed as connected, and Connect rewrote the lines inside the string, closing quotes included, after which Codex could not load the file. Text inside a multi-line string is now never read as a section.

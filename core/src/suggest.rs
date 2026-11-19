@@ -12,11 +12,11 @@ const STOP: &[&str] = &[
 
 const KIND_WORDS: &[(&str, &[&str])] = &[
     ("image", &["photo", "picture", "image", "edit", "retouch", "layer", "mask", "background", "remove", "cutout", "crop", "resize", "thumbnail", "poster", "blur", "png", "jpeg", "psd"]),
-    ("photo", &["photo", "raw", "develop", "library", "grade", "exposure", "lightroom", "camera"]),
+    ("photo", &["photo", "raw", "develop", "library", "grade", "exposure", "lightroom", "camera", "film", "look", "preset", "grain"]),
     ("video", &["video", "cut", "clip", "trim", "footage", "caption", "subtitle", "reel", "timeline", "film", "edit", "mp4"]),
     ("audio", &["audio", "sound", "mix", "podcast", "music", "voice", "record", "wav", "mp3", "noise", "master"]),
-    ("motion", &["motion", "animate", "animation", "effects", "vfx", "composite", "compositing", "title", "keyframe"]),
-    ("encoder", &["convert", "compress", "transcode", "export", "batch", "encode", "format"]),
+    ("motion", &["motion", "animate", "animation", "effects", "vfx", "composite", "compositing", "title", "keyframe", "sting", "ident", "intro", "outro", "bumper", "chroma", "key", "greenscreen", "roto", "rotoscope"]),
+    ("encoder", &["convert", "compress", "transcode", "export", "batch", "encode", "format", "mov", "mp4", "mkv", "webm", "avi", "h264", "264", "h265", "265", "hevc", "av1", "prores", "mp3", "wav", "flac", "aac"]),
     ("layout", &["layout", "page", "magazine", "flyer", "poster", "print", "brochure", "book", "publish", "pdf"]),
     ("vector", &["vector", "illustration", "logo", "svg", "path", "icon", "draw", "artboard", "shape"]),
     ("pdf", &["pdf", "sign", "form", "annotate", "fill", "comment", "redact"]),
@@ -56,30 +56,36 @@ fn words(text: &str) -> Vec<String> {
         .collect()
 }
 
-fn close(a: &str, b: &str) -> bool {
-    if a == b {
-        return true;
+fn stem(word: &str) -> String {
+    let mut w = word.to_string();
+    let long = |w: &String, n: usize| w.chars().count() > n;
+    if long(&w, 3) && w.ends_with('s') && !w.ends_with("ss") {
+        w.pop();
     }
-    let stem = |w: &str| w.chars().take(5).collect::<String>();
-    a.len() >= 4 && b.len() >= 4 && stem(a) == stem(b)
-}
-
-fn score(task: &[String], app: &App) -> u32 {
-    let mut hay = words(&format!("{} {} {} {}", app.name, app.id, app.kind, app.summary));
-    if let Some((_, extra)) = KIND_WORDS.iter().find(|(k, _)| *k == app.kind) {
-        hay.extend(extra.iter().map(|w| w.to_string()));
-    }
-    let mut total = 0;
-    for word in task {
-        if word == &app.id || word == &app.name.to_lowercase() || word == &app.app.to_lowercase() {
-            total += 5;
-        } else if word == &app.kind {
-            total += 2;
-        } else if hay.iter().any(|h| close(word, h)) {
-            total += 1;
+    if let Some(suffix) = ["ing", "ion", "ed"].into_iter().find(|s| long(&w, s.len() + 2) && w.ends_with(s)) {
+        w.truncate(w.len() - suffix.len());
+        let b = w.as_bytes();
+        if b.len() >= 2 && b[b.len() - 1] == b[b.len() - 2] && b[b.len() - 1].is_ascii_alphabetic() && !b"aeioulsz".contains(&b[b.len() - 1]) {
+            w.pop();
         }
     }
-    total
+    if long(&w, 4) && w.ends_with('e') {
+        w.pop();
+    }
+    w
+}
+
+fn points(word: &str, app: &App) -> u32 {
+    if word == app.id || word == app.name.to_lowercase() || word == app.app.to_lowercase() {
+        return 5;
+    }
+    let wanted = stem(word);
+    let kind_words = KIND_WORDS.iter().find(|(k, _)| *k == app.kind).map(|(_, w)| *w).unwrap_or_default();
+    if stem(&app.kind) == wanted || kind_words.iter().any(|w| stem(w) == wanted) {
+        return 2;
+    }
+    let hay = words(&format!("{} {} {}", app.name, app.id, app.summary));
+    u32::from(hay.iter().any(|h| stem(h) == wanted))
 }
 
 fn next_step(app: &App, places: &Places, reach: Option<&str>, installed: bool) -> String {
@@ -107,18 +113,28 @@ fn next_step(app: &App, places: &Places, reach: Option<&str>, installed: bool) -
 pub fn suggest(family: &Family, places: &Places, running: &dyn Fn(&str) -> Option<String>, task: &str, limit: usize) -> Vec<Suggestion> {
     let task_words = words(task);
     let about_installing = task_words.iter().any(|w| matches!(w.as_str(), "install" | "update" | "uninstall" | "rollback"));
-    let mut ranked: Vec<(u32, &App)> = family
-        .apps
-        .iter()
-        .filter(|a| a.id != PORTAL_ID || about_installing)
-        .map(|a| (score(&task_words, a), a))
-        .filter(|(s, _)| *s > 0)
+    let apps: Vec<&App> = family.apps.iter().filter(|a| a.id != PORTAL_ID || about_installing).collect();
+    let table: Vec<Vec<u32>> = apps.iter().map(|a| task_words.iter().map(|w| points(w, a)).collect()).collect();
+    let weight: Vec<f64> = (0..task_words.len())
+        .map(|i| {
+            let matched = table.iter().filter(|row| row[i] > 0).count().max(1);
+            1.0 + (apps.len() as f64 / matched as f64).ln()
+        })
         .collect();
-    ranked.sort_by(|x, y| y.0.cmp(&x.0).then(y.1.released.cmp(&x.1.released)).then(x.1.id.cmp(&y.1.id)));
+    let mut ranked: Vec<(u32, usize, &App)> = apps
+        .iter()
+        .zip(&table)
+        .map(|(a, row)| {
+            let total: f64 = row.iter().zip(&weight).map(|(p, w)| f64::from(*p) * w).sum();
+            ((total * 10.0).round() as u32, row.iter().filter(|p| **p == 2).count(), *a)
+        })
+        .filter(|(s, _, _)| *s > 0)
+        .collect();
+    ranked.sort_by(|x, y| y.0.cmp(&x.0).then(y.1.cmp(&x.1)).then(y.2.released.cmp(&x.2.released)).then(x.2.id.cmp(&y.2.id)));
     ranked
         .into_iter()
         .take(limit.clamp(1, 5))
-        .map(|(score, app)| {
+        .map(|(score, _, app)| {
             let reach = places.reach(app);
             let via = running(&app.id).or_else(|| reach.route.as_ref().map(|r| r.label().to_string()));
             Suggestion {
