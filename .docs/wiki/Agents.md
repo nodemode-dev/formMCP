@@ -28,13 +28,15 @@ Claude Code is set up with `claude mcp add --scope user formmcp` (only a user-sc
 | `family_apps` | no | every Form app (`id`, `name`, `kind`, `summary`, `mcp`, `state`, `installed`, `reach`) and where the list came from; `mcp_only` keeps the apps with an MCP server |
 | `suggest_app` | no | for a task in the person's words, up to five apps, best first, each with `installed`, `reach` and the next step (load its tools, install it with FormPortal, install FormPortal first, or why an agent cannot drive it yet) |
 | `app_tools` | no | one app's own tools with their input schemas, its server name and version, and its instructions; starts its server the first time |
-| `call_app` | what the app's tool changes | the app's own result for one of its tools, unchanged |
+| `call_app` | what the app's tool changes | the app's own result for one of its tools, unchanged; the app itself may refuse a change (see below the table) |
 | `app_resources` | no | the resources one app offers (each with a `uri`) and its resource templates; empty with a note when the app declares no resources |
 | `read_app_resource` | no | one resource's contents by `uri`, as embedded resource content |
 | `app_prompts` | no | the prompt templates one app offers, with their arguments |
 | `get_app_prompt` | no | one prompt filled with its `arguments`: the app's description and messages |
 
 `app_tools` also says which of the app's tools are turned off (`hidden`) and whether it offers resources and prompts (`offers`).
+
+formMCP has no consent step of its own for `call_app`: what it refuses is what the person turned off in its window. The app being called decides too. Every Form app asks the person in its own window before an outside agent changes anything, and to the app formMCP is an outside agent, so a changing call can come back refused, or wait for an answer, even though formMCP let it through. The refusal is the app's own message and is passed on unchanged. The person opens the app and answers its question, or sets the app's Outside agents choice (Ask, Allowed or Blocked) in the app's own settings; only the app's window can change it, and under Blocked the app refuses every time.
 
 ## Apps per agent, and single tools
 
