@@ -24,7 +24,6 @@ pub struct App {
 pub struct Source {
     pub repository: String,
     pub version: String,
-    pub commit: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -59,11 +58,10 @@ impl Family {
         if let Some(note) = &self.note {
             return note.clone();
         }
-        let commit: String = self.source.commit.chars().take(7).collect();
         if self.source.version.is_empty() {
-            format!("bundled list from {} at {commit}", self.source.repository)
+            format!("bundled list from {}", self.source.repository)
         } else {
-            format!("bundled list from {} {} ({commit})", self.source.repository, self.source.version)
+            format!("bundled list from {} {}", self.source.repository, self.source.version)
         }
     }
 }

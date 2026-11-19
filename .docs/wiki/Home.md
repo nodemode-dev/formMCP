@@ -12,7 +12,7 @@ formMCP is one MCP server for the whole Form family. Add it to Claude Code, Code
 
 ## What it does
 
-- `family_apps`: the Form family from formcompiler's registry, generated into the build, never edited by hand, with each app's install state and how formMCP can reach it on this computer (v0.2.0).
+- `family_apps`: the Form family from the family spec (built from formcompiler's registry), generated into the build, never edited by hand, with each app's install state and how formMCP can reach it on this computer (v0.2.0).
 - `app_tools` and `call_app`: one app's own tools, loaded only when asked for, and its results passed through unchanged (v0.2.0).
 - `suggest_app`: the app that fits a task in the person's words, with the next step; the signed family catalogue as the list's first source; an app's tools always shown when the person chooses; `agents install` for Claude Code, Codex and Cursor (v0.3.0).
 - A window listing the same apps, filterable by MCP server; from v0.4.0 it also connects formMCP to Claude Code, Codex and Cursor, shows each app's install state and route, holds the always-show switches, and shows the activity (sessions, tool calls, app starts).

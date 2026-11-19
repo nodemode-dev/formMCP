@@ -40,7 +40,7 @@ function nextStep(app: App, via: string | null): string {
 }
 
 export function sourceText(): string {
-  return `bundled list from ${family.source.repository} ${family.source.version} (${family.source.commit.slice(0, 7)})`;
+  return `bundled list from ${family.source.repository} ${family.source.version}`;
 }
 
 function profileMessage(client: string, app: App): string {

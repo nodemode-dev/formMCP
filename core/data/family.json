@@ -3,8 +3,7 @@
   "format_version": 1,
   "source": {
     "repository": "nodemode-dev/formcompiler",
-    "version": "0.6.1",
-    "commit": "f0e3201aa8da152a21a464a9b62551ef032cc17d"
+    "version": "0.16.0"
   },
   "apps": [
     {
@@ -41,7 +40,7 @@
       "launcher": "formcel",
       "state": "prelaunch",
       "released": true,
-      "mcp": false
+      "mcp": true
     },
     {
       "id": "formcut",
@@ -88,6 +87,18 @@
       "repository": "https://github.com/nodemode-dev/formencoder",
       "launcher": "formencoder",
       "state": "public",
+      "released": true,
+      "mcp": true
+    },
+    {
+      "id": "formext",
+      "app": "form.ext",
+      "name": "form.ext",
+      "kind": "extensions",
+      "summary": "The extension studio: make, preview, check, package and publish extensions for every Form app.",
+      "repository": "https://github.com/nodemode-dev/form.ext",
+      "launcher": "formext",
+      "state": "live",
       "released": true,
       "mcp": true
     },
@@ -202,7 +213,7 @@
     {
       "id": "formslide",
       "app": "formdeck",
-      "name": "FormSlide",
+      "name": "FormDeck",
       "kind": "slides",
       "summary": "Presentations: build slides, present and export.",
       "repository": "https://github.com/nodemode-dev/formdeck",
@@ -219,6 +230,18 @@
       "summary": "Paint textures and materials straight onto 3D models.",
       "repository": "https://github.com/nodemode-dev/formsurface",
       "launcher": "formsurface",
+      "state": "prelaunch",
+      "released": true,
+      "mcp": true
+    },
+    {
+      "id": "formtools",
+      "app": "formtools",
+      "name": "FormTools",
+      "kind": "utility",
+      "summary": "Viewers for almost any file, batch image tools, 3D viewing and desktop utilities in one window.",
+      "repository": "https://github.com/nodemode-dev/formtools",
+      "launcher": "formtools",
       "state": "prelaunch",
       "released": true,
       "mcp": true
@@ -245,7 +268,7 @@
       "launcher": "formtxt",
       "state": "prelaunch",
       "released": true,
-      "mcp": false
+      "mcp": true
     },
     {
       "id": "formvfx",

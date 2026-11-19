@@ -25,14 +25,14 @@ On Windows: `formmcp_oc_install.bat`, then `formmcp.bat`, `formmcp.bat mcp`, `fo
 
 ## Refreshing the family list
 
-The list is generated from formcompiler's registry (`apps/<app>.json`, its `catalog` and `agents` blocks):
+The list is generated from the family spec, the `family.json` that nodemode-dev/formadaptor publishes on its `spec` branch (public apps only; nothing is fetched by the generator):
 
 ```bash
-./formmcp family --compiler ../formcompiler          # writes core/data/family.json
-./formmcp family --compiler ../formcompiler --check  # fails while it drifts
+./formmcp family --family PATH          # writes core/data/family.json
+./formmcp family --family PATH --check  # writes nothing; exits 1 and names the file while it drifts
 ```
 
-The file records formcompiler's version and commit it came from; the window's footer and `family_apps` show it.
+The file records the registry version the spec came from; the window's footer and `family_apps` show it.
 
 ## Ports
 

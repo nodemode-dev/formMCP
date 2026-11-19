@@ -95,7 +95,7 @@ FormMCP loads extensions made to the Form Extension Contract (API 1): FormPortal
 ## Under the hood
 
 - **Headless first:** the engine and the MCP server need no window, and the installed app answers `formmcp mcp` without opening one.
-- **Family list:** the signed family catalogue over a list generated from formcompiler's registry, and every answer says which was used.
+- **Family list:** the signed family catalogue over a list generated from the family spec, and every answer says which was used.
 - **Pass-through:** `call_app` returns an app's own result unchanged, so the tools are always the running app's.
 - **Window:** vanilla TypeScript and Vite with zero runtime dependencies, painted complete in its first frame.
 - **Local only:** HTTP binds 127.0.0.1, checks Host and Origin, and needs a token on every request.
@@ -162,7 +162,7 @@ On Windows run `formmcp_oc_install.bat`, then `formmcp.bat`. Form app checkouts 
 | `cli/` | `formmcp-cli`, the command line and MCP server |
 | `src-tauri/` | the Tauri 2 shell: the window, and `formmcp mcp` with no window |
 | `frontend/` | the window: tokens, layers, one list |
-| `setup/` | `family.py`, which generates the family list from formcompiler |
+| `setup/` | `family.py`, which generates the family list from the family spec |
 
 Docs: [`.docs/wiki`](.docs/wiki) · Agents: [`CLAUDE.md`](CLAUDE.md), [`AGENTS.md`](AGENTS.md)
 

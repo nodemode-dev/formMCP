@@ -28,7 +28,7 @@ The code lives in:
 | `cli` | `formmcp-cli`, the command line (Rust) |
 | `src-tauri` | the desktop shell (Rust, Tauri) |
 | `frontend` | the window (TypeScript, Vite) |
-| `setup` | `family.py`, which generates `core/data/family.json` from formcompiler's registry |
+| `setup` | `family.py`, which generates `core/data/family.json` from the family spec |
 | `.docs/wiki` | the wiki's source |
 
 ## Before you open a pull request
@@ -49,8 +49,8 @@ Markdown or an emoji in any tracked text.
 - Write commit subjects in Conventional Commits: `feat(core): ...`, `fix(cli): ...`,
   `docs(...)`. Leave the version alone; a maintainer bumps it when releasing (see
   [.docs/BRANCHING.md](.docs/BRANCHING.md)).
-- `core/data/family.json` is generated: change formcompiler's registry and run
-  `./formmcp family --compiler PATH`, never edit it by hand.
+- `core/data/family.json` is generated: it follows the family spec that formadaptor builds
+  from formcompiler's registry. Run `./formmcp family --family PATH`, never edit it by hand.
 - FormMCP suggests and FormPortal installs: a tool that installs, updates or removes an
   app will not be accepted. FormMCP serves the Form family only, with no third-party or
   remote MCP servers.
