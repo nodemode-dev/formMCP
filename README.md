@@ -99,7 +99,7 @@ FormMCP loads extensions made to the Form Extension Contract (API 1): FormPortal
 - **Pass-through:** `call_app` returns an app's own result unchanged, so the tools are always the running app's.
 - **Window:** vanilla TypeScript and Vite with zero runtime dependencies, painted complete in its first frame.
 - **Local only:** HTTP binds 127.0.0.1, checks Host and Origin, and needs a token on every request.
-- **Tested:** 30 Rust tests (family list, catalogue keys, reach, the MCP server over stdio and HTTP).
+- **Tested:** 47 Rust tests (family list and its generator, catalogue keys, reach, the MCP server over stdio and HTTP).
 
 ## Download
 
