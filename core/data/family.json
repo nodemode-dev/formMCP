@@ -2,8 +2,7 @@
   "format": "formmcp-family",
   "format_version": 1,
   "source": {
-    "repository": "nodemode-dev/formcompiler",
-    "version": "0.16.0"
+    "repository": "nodemode-dev/formcompiler"
   },
   "apps": [
     {

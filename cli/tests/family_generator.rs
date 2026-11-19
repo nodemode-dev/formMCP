@@ -81,6 +81,8 @@ fn the_spec_is_kept_only_when_it_changes_the_list() {
         spec["generated"] = Value::from("2030-01-01T00:00:00Z");
         spec["content_sha256"] = Value::from("0".repeat(64));
         spec["apps"][0]["licence"] = Value::from("Another-Licence");
+        spec["source"]["registry_version"] = Value::from("99.0.0");
+        spec["apps"].as_array_mut().unwrap().push(serde_json::json!({ "id": "formprivate", "public": false }));
     });
     assert_ne!(std::fs::read(&unused_field).unwrap(), kept_now);
     for check in [true, false, false] {

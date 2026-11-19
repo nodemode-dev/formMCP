@@ -20,8 +20,8 @@ def build(spec):
     if not isinstance(spec, dict) or spec.get("format") != SPEC_FORMAT or spec.get("format_version") != 1:
         raise SpecError(f"not a {SPEC_FORMAT} version 1 document")
     source = spec.get("source")
-    if not isinstance(source, dict) or not source.get("repository") or not source.get("registry_version"):
-        raise SpecError("the spec has no source.repository and source.registry_version")
+    if not isinstance(source, dict) or not source.get("repository"):
+        raise SpecError("the spec has no source.repository")
     entries = spec.get("apps")
     if not isinstance(entries, list):
         raise SpecError("the spec has no apps list")
@@ -48,7 +48,7 @@ def build(spec):
     return {
         "format": FORMAT,
         "format_version": 1,
-        "source": {"repository": source["repository"], "version": source["registry_version"]},
+        "source": {"repository": source["repository"]},
         "apps": apps,
     }
 

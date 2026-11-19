@@ -32,7 +32,7 @@ The list is generated from the family spec, the `family.json` that nodemode-dev/
 ./formmcp family --family PATH --check  # writes nothing; exits 1 and names the file while it drifts
 ```
 
-The file records the registry version the spec came from; the window's footer and `family_apps` show it. When a spec changes the list, the generator also copies that spec to `setup/family.spec.json`, beside itself; a spec that differs only in fields the list does not use (the generation time, a licence) changes nothing, so no commit is needed for it. CI runs `--check` against the kept copy and fetches nothing.
+The file names the registry's repository as its `source` (the window's footer and `family_apps` show it) and carries no registry version, so a new registry release that changes no public app leaves it as it is. When a spec changes the list, the generator also copies that spec to `setup/family.spec.json`, beside itself, and that copy records the registry version the list came from; a spec that differs only in what the list does not use (the registry version, the generation time, a licence, an app that is not public) changes nothing, so no commit is needed for it. CI runs `--check` against the kept copy and fetches nothing.
 
 ## Ports
 
