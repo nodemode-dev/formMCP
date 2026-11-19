@@ -77,6 +77,13 @@ The owner decided that the gateway's list of apps comes from the family spec tha
 
 Regenerated with `python3 -I setup/family.py --family` from the sample spec, with no other change. FormPromo, FormSculpt and FormSurface are `"public": false` in the spec, and FormRanker is not in the spec at all (the spec lists enabled registry entries). `family_apps`, `suggest_app`, `app_tools`, the window and the demos no longer offer them, and `formmcp-cli apps` lists 22 apps instead of 26 (24 before the previous commit, which added FormExt and FormTools). An agent that names one of them gets "there is no Form app". Nothing about a private app is written to the file. The demos' sample settings in `demos/connect/src/shim.ts` still name some of the four in their off lists; that file was not changed here.
 
+### setup/family.spec.json, ci.yml · the spec is kept and the check runs in CI
+- refers-to: setup/family.spec.json · .github/workflows/ci.yml :: scripts, Family list matches the family spec
+- kind: decision
+- logged: v0.11.0 · 2026-11-19
+
+formadaptor's contract says a target runs its own `--check` in CI against the spec it last committed. The copy is `setup/family.spec.json`, byte for byte the spec the list was generated from (the sample spec for now; the first spec that formadaptor publishes replaces it). It holds the spec's private entries as the spec publishes them, `{"id": ..., "public": false}`, and nothing else about them; the generator never writes them to `core/data/family.json`. The `scripts` job runs `python3 -I setup/family.py --family setup/family.spec.json --check`, with no new action. Open point for formadaptor: its proposals change only the files in targets.json, so a proposal that changes `core/data/family.json` leaves this copy old and the check fails on that pull request until the copy is also listed in targets.json and refreshed with it.
+
 ## v0.10.4 · other tools' config files are really left intact {#v0-10-4}
 
 Post-merge QA of v0.10.3 found three ways the claim "host config files are never corrupted or taken over" still failed. Each fix has a test in `core/tests/host_files.rs` (seven tests, every one run first against the v0.10.3 sources, where all seven failed). The tests point HOME, USERPROFILE and CODEX_HOME at a temp dir, assert the config path is inside it before any change, and hold one lock because those variables are process-wide.

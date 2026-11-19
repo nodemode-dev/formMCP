@@ -40,6 +40,7 @@ Run the same checks CI runs:
 cargo check --locked -p formmcp-core -p formmcp-cli
 cargo test --locked -p formmcp-core -p formmcp-cli
 python3 -m py_compile setup/family.py
+python3 -I setup/family.py --family setup/family.spec.json --check
 ```
 
 CI also checks the shell scripts with `bash -n` and refuses an em dash in tracked
@@ -51,6 +52,8 @@ Markdown or an emoji in any tracked text.
   [.docs/BRANCHING.md](.docs/BRANCHING.md)).
 - `core/data/family.json` is generated: it follows the family spec that formadaptor builds
   from formcompiler's registry. Run `./formmcp family --family PATH`, never edit it by hand.
+  The spec it was generated from is kept as `setup/family.spec.json`, and CI runs `--check`
+  against that copy.
 - FormMCP suggests and FormPortal installs: a tool that installs, updates or removes an
   app will not be accepted. FormMCP serves the Form family only, with no third-party or
   remote MCP servers.

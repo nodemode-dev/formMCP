@@ -32,7 +32,7 @@ The list is generated from the family spec, the `family.json` that nodemode-dev/
 ./formmcp family --family PATH --check  # writes nothing; exits 1 and names the file while it drifts
 ```
 
-The file records the registry version the spec came from; the window's footer and `family_apps` show it.
+The file records the registry version the spec came from; the window's footer and `family_apps` show it. The spec the file was generated from is kept beside the generator as `setup/family.spec.json`, and CI runs `--check` against it.
 
 ## Ports
 
