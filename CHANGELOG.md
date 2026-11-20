@@ -1,6 +1,13 @@
 # Changelog
 
-## v0.11.0 · 2026-11-19
+## v0.12.0 · 2026-11-19
+
+- FormMCP connects to a fourth agent program: Antigravity, Google's `agy`, beside Claude Code, Codex and Cursor. The window has a Connect button for it, and `formmcp-cli agents status`, `install` and `remove` take `antigravity`. FormMCP adds its own entry to `~/.gemini/config/mcp_config.json` and leaves every other server and setting in that file exactly as it was; an entry named `formmcp` that FormMCP did not write is left alone and reported; connecting twice changes nothing. An older `~/.gemini/antigravity-cli/mcp_config.json` is never read or changed, and FormMCP says so when it is the only one there.
+- FormMCP finds Claude Code however FormMCP was started. A window opened from the Dock, the Start menu or a desktop launcher could say Claude Code was not installed, because it looked only on the short PATH such a window gets. It now also looks in the folders the usual installers use and on your shell's PATH. `FORMMCP_CLAUDE_BIN` names the program when it is somewhere else, and `FORMMCP_NO_SHELL_PATH` stops FormMCP from asking your shell.
+- An Antigravity session is counted under "other agents" in the per-agent switches and profiles for now; those four choices (Claude Code, Codex, Cursor, other agents) are unchanged.
+- FormMCP's own tests can reach only a stand-in for Claude Code, never the real program.
+- The README, the wiki, the agent pages and the notices name four agent programs. The README's test count is 56, and SECURITY.md names 0.12.x as the supported line.
+- Not checked on a real install: nobody has run the real Antigravity against the file FormMCP writes, and this release was not run on Windows or macOS before the build.
 
 - FormMCP's own answers (the family list, a suggestion, an app's tools and the rest) are sent once, as text. Each reply used to carry the same data twice, so an agent now reads about half as much: the family list went from 10319 to 5515 bytes in a test with one app of 41 tools. A new setting, `structured` (off by default; `formmcp-cli structured on` or `off`), adds the second copy back. What an app itself answers is passed on unchanged.
 - When an app fails to start, calls to it in the next 60 seconds are answered at once with the same error and the seconds until FormMCP tries again. Before, every call waited out the same failure. Only a failed start is remembered: a refusal for another reason (a failed file check, a missing secret, an app that cannot be reached) is not, so fixing it takes effect at once.
