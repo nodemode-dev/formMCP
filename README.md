@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.12.0" src="https://img.shields.io/badge/version-0.12.0-eef0f4?style=flat-square">
+  <img alt="version 0.13.0" src="https://img.shields.io/badge/version-0.13.0-eef0f4?style=flat-square">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-B7410E?style=flat-square&logo=rust&logoColor=white">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square">
   <img alt="macOS, Windows, Linux" src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-native-2f7bf5?style=flat-square">
@@ -99,7 +99,7 @@ FormMCP loads extensions made to the Form Extension Contract (API 1): FormPortal
 - **Pass-through:** `call_app` returns an app's own result unchanged, so the tools are always the running app's.
 - **Window:** vanilla TypeScript and Vite with zero runtime dependencies, painted complete in its first frame.
 - **Local only:** HTTP binds 127.0.0.1, checks Host and Origin, and needs a token on every request.
-- **Tested:** 56 Rust tests (family list and its generator, catalogue keys, reach, the MCP server over stdio and HTTP, the agents' files, finding Claude Code).
+- **Tested:** 57 Rust tests (family list and its generator, catalogue keys, reach, the MCP server over stdio and HTTP, the agents' files, finding Claude Code).
 
 ## Download
 

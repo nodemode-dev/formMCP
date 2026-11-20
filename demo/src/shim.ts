@@ -74,7 +74,7 @@ function snapshot(): unknown {
   return {
     source: `bundled list from ${family.source.repository}`,
     apps,
-    clients: ["claude", "codex", "cursor"].map(clientState),
+    clients: ["claude", "codex", "cursor", "antigravity"].map(clientState),
     formportal: false,
     env_expose: false,
     http: httpState(),

@@ -8,7 +8,7 @@ type Filter = "all" | "mcp";
 declare const __APP_VERSION__: string;
 
 const STATES: Record<string, string> = { live: "Live", public: "Public", prelaunch: "Coming" };
-const AGENTS: Record<string, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", other: "other agents" };
+const AGENTS: Record<string, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", antigravity: "Antigravity", other: "other agents" };
 const START_LABELS: [string, string][] = [["demand", "Start on demand"], ["session", "Start with the session"], ["keep", "Keep running"]];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = "", text = ""): HTMLElementTagNameMap[K] {

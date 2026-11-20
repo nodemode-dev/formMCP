@@ -37,6 +37,7 @@ formMCP has no open file. Its "document" is the state the person edits in the wi
     { "client": "claude", "label": "Claude Code", "state": "connected", "profile": null },
     { "client": "codex", "label": "Codex", "state": "not-connected", "profile": null },
     { "client": "cursor", "label": "Cursor", "state": "no-client", "profile": null },
+    { "client": "antigravity", "label": "Antigravity", "state": "not-connected", "profile": null },
     { "client": "other", "label": "other agents", "state": null, "profile": null }
   ],
   "profiles": [{ "name": "quiet", "apps_off": 3, "tools_off": 0, "starts": 1, "used_by": ["codex"] }],
@@ -46,7 +47,7 @@ formMCP has no open file. Its "document" is the state the person edits in the wi
 ```
 
 - `apps` lists every family app in the window's order. `on_for_agent` is for the agent in `selection.agent`; `off_for` names the agents the person turned the app off for, `profile_off_for` the agents whose profile turns it off. `start` is `demand`, `session` or `keep`. `hidden_tools` counts the app's tools turned off for every agent.
-- `selection` is the window's Apps for picker (`claude`, `codex`, `cursor`, `other`) and its filter chip (`all` or `mcp`).
+- `selection` is the window's Apps for picker (`claude`, `codex`, `cursor`, `antigravity`, `other`) and its filter chip (`all` or `mcp`).
 - `live` is false in a browser preview without the app: then `apps` holds the bundled list only, without `installed`, `reach` or the switches, and `document.apply` answers -32003.
 
 ## `document.apply` and `app.run`
@@ -57,7 +58,7 @@ formMCP has no open file. Its "document" is the state the person edits in the wi
 
 | Command | Args | Does | Result |
 |---|---|---|---|
-| `set_for` | `{ client, id, on }` | offer an app to one agent or not (`client`: claude, codex, cursor, other) | `true` when it is now on |
+| `set_for` | `{ client, id, on }` | offer an app to one agent or not (`client`: claude, codex, cursor, antigravity, other) | `true` when it is now on |
 | `set_expose` | `{ id, on }` | always show that app's own tools in formMCP's tool list | the list of always-shown ids |
 | `set_start` | `{ id, policy }` | when the app's server starts: `demand`, `session`, `keep` | the policy now |
 | `set_tool` | `{ id, tool, on }` | offer one of an app's tools or not, to every agent | `true` when it is now on |

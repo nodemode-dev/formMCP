@@ -4,7 +4,7 @@ export type App = (typeof family.apps)[number];
 export type Profile = { apps_off: string[]; hidden_tools: Record<string, string[]>; start: Record<string, string> };
 export type LogEvent = { t: number; event: string; [key: string]: unknown };
 
-export const CLIENT_KEYS = ["claude", "codex", "cursor", "other"] as const;
+export const CLIENT_KEYS = ["claude", "codex", "cursor", "antigravity", "other"] as const;
 export const START_POLICIES = ["demand", "session", "keep"];
 export const PROFILE_FORMAT = "formmcp-profile";
 export const PROFILE_LIMIT = 256 * 1024;

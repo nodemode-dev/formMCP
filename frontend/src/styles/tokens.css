@@ -1,36 +1,63 @@
 :root {
   color-scheme: dark;
 
-  --ground: #14161b;
-  --pane: #1b1e25;
-  --float: #242833;
+  --accent-color: #f97316;
+  --accent-color-dim: #f9731633;
+
+  --bg-primary: #111111;
+  --bg-secondary: #17151b;
+  --bg-tertiary: #222127;
+  --bg-node: #191919;
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-scrim: rgba(0, 0, 0, 0.6);
+  --border-color: #2a2a2a;
+  --border-light: #34333a;
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --text-primary: #f7f7f7;
+  --text-secondary: #a4a4a4;
+  --text-muted: #717072;
+
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-window: 0 24px 60px rgba(0, 0, 0, 0.6);
+
+  --ground: var(--bg-primary);
+  --pane: var(--bg-secondary);
+  --float: var(--bg-tertiary);
   --control: rgb(255 255 255 / 0.08);
   --control-hover: rgb(255 255 255 / 0.14);
   --control-press: rgb(255 255 255 / 0.2);
-  --edge: rgb(255 255 255 / 0.1);
-  --edge-strong: rgb(255 255 255 / 0.22);
+  --edge: var(--border-color);
+  --edge-strong: var(--border-light);
   --sheen: rgb(255 255 255 / 0.16);
-  --ink: #eef0f4;
-  --ink-soft: #b4bac8;
-  --ink-faint: #7a8193;
+  --ink: var(--text-primary);
+  --ink-soft: var(--text-secondary);
+  --ink-faint: var(--text-muted);
   --fault: #ff5d6c;
   --live: #3ddc84;
-  --focus: #eef0f4;
+  --focus: var(--text-primary);
   --select: rgb(255 255 255 / 0.16);
-  --shadow: 0 18px 48px rgb(0 0 0 / 0.35);
+  --shadow: var(--shadow-lg);
 
-  --glass-fill: rgb(30 33 41 / 0.18);
-  --glass-solid: rgb(27 30 37 / 0.94);
+  --glass-fill: color-mix(in srgb, var(--bg-secondary) 18%, transparent);
+  --glass-solid: color-mix(in srgb, var(--bg-secondary) 94%, transparent);
 
-  --accent: #f97316;
+  --accent: var(--accent-color);
   --accent-2: #8b5cf6;
   --accent-soft: rgb(249 115 22 / 0.16);
   --accent-2-soft: rgb(139 92 246 / 0.18);
 
-  --radius-s: 8px;
-  --radius-m: 14px;
-  --radius-l: 22px;
-  --radius-xl: 28px;
+  --radius-s: var(--radius-md);
+  --radius-m: var(--radius-lg);
+  --radius-l: var(--radius-xl);
   --radius-pill: 999px;
 
   --sp-1: 4px;
@@ -58,22 +85,24 @@
 @media (prefers-color-scheme: light) {
   :root {
     color-scheme: light;
-    --ground: #f4f5f8;
-    --pane: #ffffff;
-    --float: #ffffff;
+    --bg-primary: #ecebe6;
+    --bg-secondary: #f7f6f1;
+    --bg-tertiary: #e2e0d8;
+    --bg-node: #f4f3ed;
+    --bg-hover: rgba(0, 0, 0, 0.06);
+    --bg-scrim: rgba(40, 36, 28, 0.45);
+    --border-color: #d1cdc1;
+    --border-light: #beb9aa;
+    --border-soft: rgba(0, 0, 0, 0.1);
+    --text-primary: #26241d;
+    --text-secondary: #4c4a40;
+    --text-muted: #8b887a;
+    --shadow-lg: 0 4px 14px rgba(96, 90, 70, 0.16);
+    --shadow-window: 0 18px 44px rgba(96, 90, 70, 0.22);
     --control: rgb(0 0 0 / 0.06);
     --control-hover: rgb(0 0 0 / 0.1);
     --control-press: rgb(0 0 0 / 0.16);
-    --edge: rgb(0 0 0 / 0.08);
-    --edge-strong: rgb(0 0 0 / 0.16);
     --sheen: rgb(255 255 255 / 0.6);
-    --ink: #15171c;
-    --ink-soft: #464b57;
-    --ink-faint: #7a8193;
-    --focus: #15171c;
     --select: rgb(0 0 0 / 0.1);
-    --shadow: 0 18px 48px rgb(0 0 0 / 0.16);
-    --glass-fill: rgb(255 255 255 / 0.14);
-    --glass-solid: rgb(246 247 250 / 0.95);
   }
 }

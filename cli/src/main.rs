@@ -15,7 +15,7 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   expose <id> on|off    always list that app's own tools in formMCP's tool list (saved in settings.json)
   agents [status|install|remove] [claude,codex,cursor,antigravity]
                         add formMCP to Claude Code, Codex, Cursor and Antigravity for this user account, or take it out
-  for <agent> <id> on|off   offer an app to one agent or not: claude, codex, cursor or other (saved in settings.json)
+  for <agent> <id> on|off   offer an app to one agent or not: claude, codex, cursor, antigravity or other (saved in settings.json)
   tool <id> <tool> on|off   offer one of an app's tools or not, to every agent
   tools <id>            the app's tools formMCP last saw, and which are off (JSON)
   start <id> demand|session|keep   when the app's server starts: when first needed and stopped after
@@ -265,7 +265,7 @@ fn main() -> ExitCode {
             };
             if let Some(a) = agent {
                 if !settings::CLIENT_KEYS.contains(&a) {
-                    eprintln!("formmcp: there is no agent {a:?}; use claude, codex, cursor or other");
+                    eprintln!("formmcp: there is no agent {a:?}; use claude, codex, cursor, antigravity or other");
                     return ExitCode::FAILURE;
                 }
             }
@@ -397,7 +397,7 @@ fn main() -> ExitCode {
                     if !settings::profile_name_ok(name) {
                         Err(format!("{name:?}: 1 to 40 letters, digits, spaces, hyphens or underscores"))
                     } else if !agent_ok(&from) {
-                        Err(format!("there is no agent {from:?}; use claude, codex, cursor or other"))
+                        Err(format!("there is no agent {from:?}; use claude, codex, cursor, antigravity or other"))
                     } else {
                         let profile = saved.profile_from(&from);
                         saved.profiles.insert(name.to_string(), profile.clone());

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.13.0 · 2026-11-20
+
+- Antigravity is its own choice in the per-agent switches and profiles, beside Claude Code, Codex and Cursor: the window's Apps for picker, `formmcp-cli for antigravity <id> on|off` and `profile save --from antigravity` take it. A session counts as Antigravity when the name it gives when it connects holds "antigravity" in any letter case; every other unknown name still counts as other agents. Nobody has yet seen the name the real Antigravity gives, so until it is seen an Antigravity session may still land under other agents; `--client antigravity` or `?client=antigravity` on the HTTP address sets it by hand.
+- The window takes the Form family's look: the surfaces, text, borders, corner radii and shadows of FormVis, in place of the blue-grey it had. The orange accent, the text size and the layout are unchanged. With the system set to light, the window takes FormVis's light colours.
+- The four agent cards fit side by side at the window's usual width: "Claude Code" no longer wraps and pushes its state out of the card.
+- The offline demo shows Antigravity as a fourth agent card and in the agent picker, and the new look.
+- The README's test count is 57, and SECURITY.md names 0.13.x as the supported line.
+
 ## v0.12.0 · 2026-11-19
 
 - FormMCP connects to a fourth agent program: Antigravity, Google's `agy`, beside Claude Code, Codex and Cursor. The window has a Connect button for it, and `formmcp-cli agents status`, `install` and `remove` take `antigravity`. FormMCP adds its own entry to `~/.gemini/config/mcp_config.json` and leaves every other server and setting in that file exactly as it was; an entry named `formmcp` that FormMCP did not write is left alone and reported; connecting twice changes nothing. An older `~/.gemini/antigravity-cli/mcp_config.json` is never read or changed, and FormMCP says so when it is the only one there.

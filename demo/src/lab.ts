@@ -2,7 +2,7 @@ import { buildFlows } from "./flows";
 import { iconNode } from "./media";
 import { MARK, PROFILE_FORMAT, appOf, familyApps, family, isOff, live, loaded, record, redact, redactValue, sampleTools, settings, suggest, toolHidden } from "./gateway";
 
-const AGENTS: [string, string][] = [["claude", "Claude Code"], ["codex", "Codex"], ["cursor", "Cursor"], ["other", "Other agents"]];
+const AGENTS: [string, string][] = [["claude", "Claude Code"], ["codex", "Codex"], ["cursor", "Cursor"], ["antigravity", "Antigravity"], ["other", "Other agents"]];
 const TASKS = ["cut the silences out of this interview video", "retouch a photo and remove the background", "sign and annotate a PDF", "clean up podcast audio and master it", "lay out a magazine page for print", "convert a folder of videos to smaller files", "take notes in markdown with a database"];
 
 const TOOL_LIST: [string, string, string][] = [

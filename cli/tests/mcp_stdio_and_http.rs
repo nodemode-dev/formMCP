@@ -325,3 +325,22 @@ fn http_lists_the_same_tools_as_stdio() {
     let (_, _, body) = post(&http, &[("Authorization", format!("Bearer {t}")), ("Mcp-Session-Id", session)], json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {} }));
     assert_eq!(names(&serde_json::from_str(&body).unwrap()), over_stdio);
 }
+
+#[test]
+fn a_session_whose_name_holds_antigravity_has_its_own_switches() {
+    let s = Sandbox::new("antigravity-choice");
+    let saved = s.json(&["for", "antigravity", "formvis", "off"], &[]);
+    assert_eq!(saved["off"], json!({ "antigravity": ["formvis"] }), "{saved}");
+    let refused = s.text(&["for", "gemini", "formvis", "off"], &[]);
+    assert!(refused.contains("claude, codex, cursor, antigravity or other"), "{refused}");
+
+    for (name, offered) in [("Antigravity", false), ("ANTIGRAVITY-ide", false), ("some-agent", true), ("cursor-vscode", true), ("claude-code", true)] {
+        let mut m = Stdio2::start(&s, &[]);
+        m.call(1, "initialize", json!({ "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": { "name": name, "version": "1" } }));
+        m.send(json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }));
+        let reply = m.call(2, "tools/call", json!({ "name": "family_apps", "arguments": {} }));
+        let answer: Value = serde_json::from_str(&text(&reply)).unwrap_or_else(|e| panic!("{name}: {e}: {reply}"));
+        let listed = answer["apps"].as_array().unwrap().iter().any(|a| a["id"] == json!("formvis"));
+        assert_eq!(listed, offered, "{name}: {answer}");
+    }
+}
