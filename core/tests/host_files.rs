@@ -234,3 +234,82 @@ fn cursor_remove_keeps_an_mcp_servers_object_the_person_wrote() {
     let data: serde_json::Value = serde_json::from_str(&text).unwrap();
     assert_eq!(data, serde_json::json!({"mcpServers": {}, "theme": "dark"}), "{text}");
 }
+
+#[test]
+fn antigravity_is_the_fourth_client_and_its_file_is_under_gemini_config() {
+    let scratch = scratch("antigravity-fresh");
+    assert_eq!(clients::CLIENTS.map(Client::label), ["Claude Code", "Codex", "Cursor", "Antigravity"]);
+    assert_eq!(Client::parse("Antigravity"), Some(Client::Antigravity));
+    assert_eq!(Client::parse("agy"), Some(Client::Antigravity));
+    let path = config(&scratch, Client::Antigravity);
+    assert_eq!(path, scratch.dir.join(".gemini").join("config").join("mcp_config.json"));
+    assert_eq!(clients::state(Client::Antigravity).state, Link::NotConnected);
+    assert!(!path.exists());
+
+    assert_eq!(connect(Client::Antigravity, true), Ok(Link::Connected));
+    let data: serde_json::Value = serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+    assert_eq!(data, serde_json::json!({"mcpServers": {"formmcp": {"command": "/x/formmcp", "args": ["mcp"]}}}));
+}
+
+#[test]
+fn antigravity_connect_and_remove_keep_every_other_byte() {
+    let scratch = scratch("antigravity-bytes");
+    let path = config(&scratch, Client::Antigravity);
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let original = "{\n  \"theme\": \"dark\",\n  \"mcpServers\": {\n    \"other\": { \"serverUrl\": \"https://example.test/mcp\", \"headers\": { \"X\": \"1\" }, \"disabled\": true },\n    \"tool\": { \"command\": \"/bin/tool\", \"args\": [\"a\"], \"timeoutSeconds\": 30 }\n  },\n  \"last\": [1, 2]\n}\n";
+    fs::write(&path, original).unwrap();
+
+    assert_eq!(connect(Client::Antigravity, true), Ok(Link::Connected));
+    let text = fs::read_to_string(&path).unwrap();
+    let data: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(data["mcpServers"]["formmcp"], serde_json::json!({"command": "/x/formmcp", "args": ["mcp"]}));
+    assert_eq!(data["mcpServers"]["other"]["disabled"], true);
+    assert_eq!(data["mcpServers"]["tool"]["timeoutSeconds"], 30);
+    assert_eq!(data["last"], serde_json::json!([1, 2]));
+
+    let kept = files(path.parent().unwrap());
+    assert_eq!(connect(Client::Antigravity, true), Ok(Link::Connected));
+    assert_eq!(fs::read_to_string(&path).unwrap(), text, "a second connect changed the file");
+    assert_eq!(files(path.parent().unwrap()), kept, "a second connect wrote a file");
+
+    assert_eq!(connect(Client::Antigravity, false), Ok(Link::NotConnected));
+    assert_eq!(fs::read_to_string(&path).unwrap().as_bytes(), original.as_bytes());
+}
+
+#[test]
+fn antigravity_entry_somebody_else_wrote_is_left_alone() {
+    let scratch = scratch("antigravity-taken");
+    let path = config(&scratch, Client::Antigravity);
+    fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let original = "{ \"mcpServers\": { \"formmcp\": { \"command\": \"/somebody/else\", \"args\": [] } } }\n";
+    fs::write(&path, original).unwrap();
+
+    let state = clients::state(Client::Antigravity);
+    assert_eq!(state.state, Link::Taken);
+    assert!(state.note.as_deref().is_some_and(|n| n.contains("left alone")), "note: {:?}", state.note);
+    assert_eq!(connect(Client::Antigravity, true), Ok(Link::Taken));
+    assert_eq!(connect(Client::Antigravity, false), Ok(Link::Taken));
+    assert_eq!(fs::read_to_string(&path).unwrap(), original);
+    assert_eq!(files(path.parent().unwrap()), ["mcp_config.json"]);
+}
+
+#[test]
+fn antigravity_older_file_is_reported_and_left_alone() {
+    let scratch = scratch("antigravity-older");
+    let path = config(&scratch, Client::Antigravity);
+    let older = scratch.dir.join(".gemini").join("antigravity-cli").join("mcp_config.json");
+    fs::create_dir_all(older.parent().unwrap()).unwrap();
+    let original = "{ \"mcpServers\": { \"old\": { \"command\": \"/x\" } } }\n";
+    fs::write(&older, original).unwrap();
+
+    let before = clients::state(Client::Antigravity);
+    assert_eq!(before.state, Link::NotConnected);
+    assert!(before.note.as_deref().is_some_and(|n| n.contains("older") && n.contains("left alone")), "note: {:?}", before.note);
+
+    let done = clients::connect(&[Client::Antigravity], &launcher(), true).remove(0).expect("connect failed");
+    assert_eq!(done.state, Link::Connected);
+    assert!(done.note.as_deref().is_some_and(|n| n.contains(&older.display().to_string())), "note: {:?}", done.note);
+    assert!(path.is_file());
+    assert_eq!(fs::read_to_string(&older).unwrap(), original);
+    assert_eq!(clients::state(Client::Antigravity).note, None);
+}

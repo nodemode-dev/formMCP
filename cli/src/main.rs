@@ -13,8 +13,8 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   suggest <task...>     the apps that fit a task, best first, with the next step (JSON)
   catalog               where the family list comes from now: the signed catalogue, or the bundled list and why
   expose <id> on|off    always list that app's own tools in formMCP's tool list (saved in settings.json)
-  agents [status|install|remove] [claude,codex,cursor]
-                        add formMCP to Claude Code, Codex and Cursor for this user account, or take it out
+  agents [status|install|remove] [claude,codex,cursor,antigravity]
+                        add formMCP to Claude Code, Codex, Cursor and Antigravity for this user account, or take it out
   for <agent> <id> on|off   offer an app to one agent or not: claude, codex, cursor or other (saved in settings.json)
   tool <id> <tool> on|off   offer one of an app's tools or not, to every agent
   tools <id>            the app's tools formMCP last saw, and which are off (JSON)
@@ -447,7 +447,7 @@ fn main() -> ExitCode {
                 Some(list) => match list.split(',').map(|c| Client::parse(c).ok_or_else(|| c.to_string())).collect::<Result<Vec<_>, _>>() {
                     Ok(c) => c,
                     Err(bad) => {
-                        eprintln!("formmcp: there is no client {bad:?}; use claude, codex or cursor");
+                        eprintln!("formmcp: there is no client {bad:?}; use claude, codex, cursor or antigravity");
                         return ExitCode::FAILURE;
                     }
                 },

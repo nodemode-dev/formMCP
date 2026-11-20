@@ -5,6 +5,15 @@ Living log for formMCP's window. Source files stay comment-free; what they would
 Current build version: v0.11.0
 Last updated: 2026-11-19 · v0.11.0 the footer names the list's repository only; 2026-11-11 · v0.10.4 no window changes; 2026-11-10 · v0.10.3 no window changes; 2026-11-10 · v0.10.2 no window changes; 2026-11-09 · v0.10.1 app card overflow; v0.10.0 the demos inside the app; 2026-11-07 · v0.9.1 no window changes (Greg's README note on FormPortal updates); v0.9.0 the extension host; v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
 
+## v0.12.0 · four agent programs {#v0-12-0}
+
+### index.html, app.css · a fourth client card, Antigravity
+- refers-to: frontend/index.html :: .client[data-client="antigravity"] · frontend/src/styles/app.css :: .clients
+- kind: feature
+- logged: v0.12.0 · 2026-11-19
+
+The engine's snapshot now lists four clients (see core/HASHOUT_LOG.md, "Antigravity is the fourth client"). The card for the fourth is in index.html from the first frame, the same three nodes as the others; `showClients` and the Connect handler find cards by `data-client`, so main.ts is unchanged. `.clients` no longer names a column count: `grid-auto-flow: column` with `grid-auto-columns: minmax(0, 1fr)` gives one equal column per card, four here and still three in the demo pages, whose own copies of the header keep three cards. Not looked at in a browser or in the app's window, and the frontend's own checks were not run (its packages are not installed on the build machine; no TypeScript changed). At the default 1100 px each card is about 260 px wide; near the 560 px minimum four cards are tighter than three were. The per-agent switches (the agent picker, profiles) are unchanged: an Antigravity session counts as "other agents" there, because nobody has seen the name Antigravity gives when it connects.
+
 ## v0.11.0 · gateway wave 1 {#v0-11-0}
 
 ### main.ts · the footer names the registry version, not a commit

@@ -16,9 +16,10 @@ pub enum Client {
     Claude,
     Codex,
     Cursor,
+    Antigravity,
 }
 
-pub const CLIENTS: [Client; 3] = [Client::Claude, Client::Codex, Client::Cursor];
+pub const CLIENTS: [Client; 4] = [Client::Claude, Client::Codex, Client::Cursor, Client::Antigravity];
 
 impl Client {
     pub fn label(self) -> &'static str {
@@ -26,6 +27,7 @@ impl Client {
             Client::Claude => "Claude Code",
             Client::Codex => "Codex",
             Client::Cursor => "Cursor",
+            Client::Antigravity => "Antigravity",
         }
     }
 
@@ -34,6 +36,7 @@ impl Client {
             "claude" | "claude-code" | "claude code" => Some(Client::Claude),
             "codex" => Some(Client::Codex),
             "cursor" => Some(Client::Cursor),
+            "antigravity" | "agy" => Some(Client::Antigravity),
             _ => None,
         }
     }
@@ -82,6 +85,23 @@ fn codex_config() -> PathBuf {
 
 fn cursor_config() -> PathBuf {
     home().join(".cursor").join("mcp.json")
+}
+
+fn antigravity_config() -> PathBuf {
+    home().join(".gemini").join("config").join("mcp_config.json")
+}
+
+fn antigravity_older() -> PathBuf {
+    home().join(".gemini").join("antigravity-cli").join("mcp_config.json")
+}
+
+fn json_config(client: Client) -> PathBuf {
+    if client == Client::Antigravity { antigravity_config() } else { cursor_config() }
+}
+
+fn older_seen(client: Client) -> Option<String> {
+    let (path, older) = (antigravity_config(), antigravity_older());
+    (client == Client::Antigravity && older.is_file() && !path.exists()).then(|| format!("an older Antigravity file, {}, was seen and left alone; formMCP writes {}", older.display(), path.display()))
 }
 
 fn which(program: &str) -> Option<PathBuf> {
@@ -382,8 +402,8 @@ pub fn state(client: Client) -> ClientState {
             };
             ClientState { client, label, state: s, config: Some(path), note }
         }
-        Client::Cursor => {
-            let path = cursor_config();
+        Client::Cursor | Client::Antigravity => {
+            let path = json_config(client);
             let (s, note) = match read_host(&path).and_then(|text| cursor_data(&path, &text)) {
                 Err(e) => (Link::NotConnected, Some(e)),
                 Ok(data) => {
@@ -392,7 +412,7 @@ pub fn state(client: Client) -> ClientState {
                         Some(_) => Link::Taken,
                         None => Link::NotConnected,
                     };
-                    (s, taken(s))
+                    (s, taken(s).or_else(|| older_seen(client)))
                 }
             };
             ClientState { client, label, state: s, config: Some(path), note }
@@ -442,8 +462,8 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
             backup(&path)?;
             save(&path, &next)?;
         }
-        Client::Cursor => {
-            let path = cursor_config();
+        Client::Cursor | Client::Antigravity => {
+            let path = json_config(client);
             let text = read_host(&path)?;
             let mut data = match cursor_data(&path, &text)? {
                 Value::Null => json!({}),
@@ -490,8 +510,8 @@ fn remove(client: Client) -> Result<(), String> {
                 save(&path, &next)?;
             }
         }
-        Client::Cursor => {
-            let path = cursor_config();
+        Client::Cursor | Client::Antigravity => {
+            let path = json_config(client);
             let text = read_host(&path)?;
             let mut data = cursor_data(&path, &text)?;
             let Some(servers) = data.get_mut("mcpServers").and_then(|m| m.as_object_mut()) else {
@@ -520,12 +540,18 @@ pub fn connect(clients: &[Client], launcher: &Launcher, on: bool) -> Vec<Result<
         .iter()
         .map(|&client| {
             let before = state(client);
+            let older = older_seen(client);
             let done = match (on, before.state) {
                 (true, Link::NotConnected) | (true, Link::Connected) => write(client, launcher),
                 (false, Link::Connected) => remove(client),
                 _ => Ok(()),
             };
-            done.map(|_| state(client)).map_err(|e| (client, e))
+            done.map(|_| {
+                let mut after = state(client);
+                after.note = after.note.or(older);
+                after
+            })
+            .map_err(|e| (client, e))
         })
         .collect()
 }
