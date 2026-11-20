@@ -1,11 +1,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
-
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use crate::host_json;
+use crate::{host_json, programs};
 
 pub const SERVER_NAME: &str = "formmcp";
 const PASSED_ENV: [&str; 5] = ["FORMMCP_DEV_ROOTS", "FORMPORTAL_ROOT", "FORMPORTAL_BIN", "FORMMCP_CATALOG", "FORMAI_CATALOG_PUBKEY"];
@@ -105,17 +103,7 @@ fn older_seen(client: Client) -> Option<String> {
 }
 
 fn which(program: &str) -> Option<PathBuf> {
-    let paths = std::env::var_os("PATH")?;
-    for dir in std::env::split_paths(&paths) {
-        let names: Vec<String> = if cfg!(windows) { [".exe", ".cmd", ".bat"].iter().map(|e| format!("{program}{e}")).collect() } else { vec![program.to_string()] };
-        for name in names {
-            let candidate = dir.join(&name);
-            if candidate.is_file() {
-                return Some(candidate);
-            }
-        }
-    }
-    None
+    programs::find(program)
 }
 
 fn backup(path: &Path) -> Result<(), String> {
@@ -378,7 +366,7 @@ pub fn state(client: Client) -> ClientState {
     match client {
         Client::Claude => match which("claude") {
             None => ClientState { client, label, state: Link::NoClient, config: None, note: Some("the claude command is not installed on this computer".into()) },
-            Some(claude) => match Command::new(claude).args(["mcp", "get", SERVER_NAME]).current_dir(home()).output() {
+            Some(claude) => match programs::command(&claude).args(["mcp", "get", SERVER_NAME]).current_dir(home()).output() {
                 Ok(out) if out.status.success() && String::from_utf8_lossy(&out.stdout).contains("Scope: User") => {
                     let shown = String::from_utf8_lossy(&out.stdout);
                     let s = if shown.lines().find_map(|l| l.trim().strip_prefix("Command:")).is_some_and(|c| ours(c.trim())) { Link::Connected } else { Link::Taken };
@@ -426,8 +414,8 @@ fn write(client: Client, launcher: &Launcher) -> Result<(), String> {
     match client {
         Client::Claude => {
             let claude = which("claude").ok_or("the claude command is not installed")?;
-            let _ = Command::new(&claude).args(["mcp", "remove", SERVER_NAME, "--scope", "user"]).output();
-            let mut command = Command::new(&claude);
+            let _ = programs::command(&claude).args(["mcp", "remove", SERVER_NAME, "--scope", "user"]).output();
+            let mut command = programs::command(&claude);
             command.args(["mcp", "add", "--scope", "user", SERVER_NAME]);
             for (k, v) in &env {
                 command.arg("-e").arg(format!("{k}={v}"));
@@ -496,7 +484,7 @@ fn remove(client: Client) -> Result<(), String> {
     match client {
         Client::Claude => {
             if let Some(claude) = which("claude") {
-                let _ = Command::new(claude).args(["mcp", "remove", SERVER_NAME, "--scope", "user"]).output();
+                let _ = programs::command(&claude).args(["mcp", "remove", SERVER_NAME, "--scope", "user"]).output();
             }
         }
         Client::Codex => {

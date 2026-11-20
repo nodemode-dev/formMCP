@@ -49,6 +49,8 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   FORMMCP_DEV_ROOTS     folders holding Form app checkouts (path list); a checkout's own launcher is used first
   FORMPORTAL_ROOT       FormPortal's folder, when it is not in the usual place
   FORMPORTAL_BIN        the FormPortal program that runs `app-mcp`, when it is not on PATH
+  FORMMCP_CLAUDE_BIN    the Claude Code program, when formMCP does not find it on PATH, in the known install
+                        folders or on your shell's PATH
   FORMMCP_START_TIMEOUT seconds an app's server has to start (120)
   FORMMCP_CALL_TIMEOUT  seconds one tool call may take (900)
   FORMMCP_CATALOG       the catalogue (https, a loopback http address, or a file); the family catalogue by default

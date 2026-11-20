@@ -8,6 +8,7 @@ mod host_json;
 pub mod http;
 pub mod log;
 pub mod mcp;
+pub mod programs;
 pub mod reach;
 pub mod redact;
 pub mod secrets;
