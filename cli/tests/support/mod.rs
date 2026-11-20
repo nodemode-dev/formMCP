@@ -14,6 +14,15 @@ use ed25519_dalek::{Signer, SigningKey};
 use serde_json::{json, Value};
 
 pub const BIN: &str = env!("CARGO_BIN_EXE_formmcp-cli");
+pub const AGENT_STARTS: &str = "agent-starts.log";
+
+#[cfg(unix)]
+pub fn stand_in(path: &Path, body: &str) {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(path, body).unwrap();
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).unwrap();
+}
 
 pub struct Sandbox {
     pub root: PathBuf,
@@ -27,7 +36,13 @@ impl Sandbox {
         for dir in ["home", "formmcp", "portal", "dev", "bin"] {
             std::fs::create_dir_all(root.join(dir)).unwrap();
         }
+        #[cfg(unix)]
+        stand_in(&root.join("bin").join("claude"), &format!("#!/bin/sh\necho \"$*\" >> '{}'\n", root.join(AGENT_STARTS).display()));
         Sandbox { root }
+    }
+
+    pub fn agent_starts(&self) -> Vec<String> {
+        std::fs::read_to_string(self.path(AGENT_STARTS)).unwrap_or_default().lines().map(str::to_string).collect()
     }
 
     pub fn path(&self, rel: &str) -> PathBuf {
@@ -46,6 +61,7 @@ impl Sandbox {
             .env("FORMPORTAL_ROOT", self.path("portal"))
             .env("FORMMCP_CATALOG", self.path("no-catalogue.json"))
             .env("PATH", self.path("bin"))
+            .env("FORMMCP_NO_SHELL_PATH", "1")
             .env("FORMMCP_IDLE_MINUTES", "1")
             .stdin(Stdio::null());
         c

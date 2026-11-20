@@ -7,6 +7,13 @@ Last updated: 2026-11-19 · v0.11.0 own answers sent once as text, a failed app 
 
 ## v0.12.0 · four agent programs {#v0-12-0}
 
+### cli/tests · the tests can reach only a stand-in for Claude Code
+- refers-to: cli/tests/support/mod.rs :: Sandbox::new, Sandbox::command, Sandbox::agent_starts, stand_in, AGENT_STARTS · cli/tests/agent_programs.rs
+- kind: decision
+- logged: v0.12.0 · 2026-11-19
+
+Checked first: before the finder, no Rust test could start an agent program. `core/tests/host_files.rs` calls `clients::state` and `connect` for Codex, Cursor and Antigravity only (files), and no CLI test ran `agents`; the sandbox clears the environment and gives the CLI a PATH of its own empty `bin`. With the finder a cleared environment is no longer enough: a known folder outside the scratch home (`/usr/local/bin`, Homebrew's) or the fallback login shell could give the real program to any later test that asks for Claude Code's state. So every `Sandbox` now holds a stand-in named `claude` in its `bin`, first on the PATH the finder reads first, which only writes its arguments to `agent-starts.log` in the sandbox, and every command the sandbox builds carries `FORMMCP_NO_SHELL_PATH`. The stand-in is written on Unix only (CI runs on Linux); the CLI tests were never run on Windows. `agent_programs.rs` holds what was seen working by hand: the order (override, PATH, known folders, shell asked last and only when needed), the known folders, a stand-in shell asked for its PATH with profile noise around it and a shell of an unknown name not started, the started program's PATH, and `agents status claude` in a sandbox starting the sandbox's stand-in and, with `FORMMCP_CLAUDE_BIN`, the chosen one. The in-process tests in `core/tests` still never ask for Claude Code.
+
 ### programs.rs, clients.rs · Claude Code is found the way the family finds it
 - refers-to: core/src/programs.rs :: find, find_with, override_var, known_dirs, shell_dirs, session_shell, child_path, command, NO_SHELL · core/src/clients.rs :: which, state, write, remove · cli/src/main.rs :: help
 - kind: fix
