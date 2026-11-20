@@ -31,13 +31,14 @@ export const RECORDING: Recorded[] = [
   { at: -30, story: "Export the open picture", spec: { client: "claude", name: "call_app", app: "formvis", tool: "export_image", args: { format: "png" }, result: { simulated: true, saved: "poster.png", bytes: 1840233 } } },
   { at: -26, story: "Codex reads FormLit's status", spec: { client: "codex", name: "call_app", app: "formlit", tool: "get_status", args: {} } },
   { at: -22, story: "Redact a name from a PDF", spec: { client: "claude", name: "call_app", app: "formpdf", tool: "redact", args: { pattern: "Alex Morgan" }, result: { simulated: true, matches: 6, pages: [2, 3, 7] } } },
+  { at: -18, story: "Antigravity asks which app fits a task", spec: { client: "antigravity", name: "suggest_app", args: { task: "lay out a magazine page for print", limit: 3 } } },
 ];
 
 export const SAMPLE_TOKENS = { bearer: BEARER, fmd: FMD_TOKEN, ant: ANT_KEY, kept: KEPT_TOKEN };
 
 export const ctx: Ctx = { installs: cloneInstalls(), running: new Set<string>() };
 
-const CLIENT_NAME: Record<string, string> = { claude: "claude-code", codex: "codex-mcp-client", cursor: "cursor-vscode" };
+const CLIENT_NAME: Record<string, string> = { claude: "claude-code", codex: "codex-mcp-client", cursor: "cursor-vscode", antigravity: "antigravity" };
 
 export const recordedLabel: string[] = [];
 
@@ -89,7 +90,7 @@ remember(KEPT_TOKEN);
 remember(KEPT_TOKEN_2);
 
 function seed(): void {
-  for (const c of ["claude", "codex", "cursor"]) void original("connect", { client: c, on: true });
+  for (const c of ["claude", "codex", "cursor", "antigravity"]) void original("connect", { client: c, on: true });
   void original("http_switch", { on: true });
   events.length = 0;
   const now = Date.now();

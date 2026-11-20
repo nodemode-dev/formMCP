@@ -1,8 +1,8 @@
 import { appOf, events, familyApps, family, isOff, profileOf, redactValue, sampleTools, settings, suggest, toolHidden, type App, type LogEvent } from "../../../demo/src/gateway";
 import { judge, runLine, shorten, type HookEvent } from "./hooks";
 
-export const CORE_VERSION = "0.9.1";
-export const CLIENT_NAMES: Record<string, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", other: "Other agents" };
+export const CORE_VERSION = __APP_VERSION__;
+export const CLIENT_NAMES: Record<string, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", antigravity: "Antigravity", other: "Other agents" };
 export const COLLECTOR = "http://127.0.0.1:4318";
 
 export type Install = { id: string; version: string; via: "formportal" | "baseline"; files: number; candidates: string[]; changed: string[]; recorded: number };

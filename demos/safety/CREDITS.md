@@ -32,4 +32,4 @@ Apps without an icon under `assets/app-icon` in a sibling repository get a plain
 
 ## Everything else
 
-The sample log, results, hook scripts and install records are text written for the demo. Every secret, token and key in it is built from pieces at run time and is not a real credential. Claude Code, Codex and Cursor are named only as the agent clients formMCP connects to.
+The sample log, results, hook scripts and install records are text written for the demo. Every secret, token and key in it is built from pieces at run time and is not a real credential. Claude Code, Codex, Cursor and Antigravity are named only as the agent clients formMCP connects to.

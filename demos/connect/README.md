@@ -1,16 +1,16 @@
 # formMCP demo 2: connecting agents
 
-An offline, browser-runnable look at how formMCP connects Claude Code, Codex and Cursor. Open `demos/connect/index.html` by double-clicking it (file://), or serve the folder with any static server. No backend, no Tauri, no network and no CDN. The three demos link to each other from the strip at the top: [demo 1](../../demo/index.html), this one, and [demo 3](../safety/index.html).
+An offline, browser-runnable look at how formMCP connects Claude Code, Codex, Cursor and Antigravity. Open `demos/connect/index.html` by double-clicking it (file://), or serve the folder with any static server. No backend, no Tauri, no network and no CDN. The three demos link to each other from the strip at the top: [demo 1](../../demo/index.html), this one, and [demo 3](../safety/index.html).
 
 ## What it shows
 
 The page is the real formMCP window (`frontend/src/main.ts`, the real tokens, layers and `app.css`) on the real family list, with one new section, the workbench, above the Activity log. It has three tabs.
 
-1. Agent setup. Pick Claude Code, Codex or Cursor. The left side is the agent's file as it is on disk in a virtual home folder (`~/.codex/config.toml`, `~/.cursor/mcp.json`; for Claude Code the two commands formMCP would run). The right side is what pressing Connect or Disconnect would change, with added and removed lines marked, the backup formMCP takes first, and the launcher and shell settings that are copied into the entry. Edit the file, open or drop your own, save the result, or start from the cases formMCP handles: no file yet, an empty file, another server already named formmcp, and invalid JSON. The window's own Connect buttons act on the same virtual home.
+1. Agent setup. Pick Claude Code, Codex, Cursor or Antigravity. The left side is the agent's file as it is on disk in a virtual home folder (`~/.codex/config.toml`, `~/.cursor/mcp.json`, `~/.gemini/config/mcp_config.json`; for Claude Code the two commands formMCP would run). The right side is what pressing Connect or Disconnect would change, with added and removed lines marked, the backup formMCP takes first, and the launcher and shell settings that are copied into the entry. Edit the file, open or drop your own, save the result, or start from the cases formMCP handles: no file yet, an empty file, another server already named formmcp, and invalid JSON. The window's own Connect buttons act on the same virtual home.
 2. HTTP and token. The address, the access token (hidden until shown) and a request builder (method, Host, Origin, token, protocol version, session id, agent name, body). Presets for each refusal: wrong or previous token (401), a web page's Origin or a wrong Host (403), GET (405), an old protocol version (400), no session (404). Refusals and calls land in the window's Activity log, and New token in the window invalidates the old one at once.
 3. What each agent sees. A matrix of apps by agent (on, off for this agent, off by profile name, some tools off) and an "ask as this agent" form that runs `family_apps`, `suggest_app`, `app_tools` and `call_app`, so a profile's refusals read as the real server words them.
 
-It opens on a finished state: Claude Code and Codex connected, Cursor not, HTTP serving with a token, two profiles in use ("Video crew" and "Read only review"), and an Activity log of earlier sessions from the three agents over stdio and HTTP, including two refused HTTP requests.
+It opens on a finished state: Claude Code and Codex connected, Cursor and Antigravity not (Antigravity has no file yet), HTTP serving with a token, two profiles in use ("Video crew" and "Read only review"), and an Activity log of earlier sessions from the three agents over stdio and HTTP, including two refused HTTP requests.
 
 ## What is real and what is simulated
 

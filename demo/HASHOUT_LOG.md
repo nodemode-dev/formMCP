@@ -2,8 +2,8 @@
 
 Living log for the offline demo. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.13.0
-Last updated: 2026-11-20 · v0.13.0 Antigravity in demo 1, rebuilt with FormVis's surfaces; 2026-11-07 · v0.9.1 rebuilt for the version it shows (Greg's README note on FormPortal updates, no demo changes); v0.9.0 the shim marks and restores settings, and gives tool_list's loaded in seconds; the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
+Current build version: v0.14.0
+Last updated: 2026-11-20 · v0.14.0 rebuilt for the version it shows (no demo changes); v0.13.0 Antigravity in demo 1, rebuilt with FormVis's surfaces; 2026-11-07 · v0.9.1 rebuilt for the version it shows (Greg's README note on FormPortal updates, no demo changes); v0.9.0 the shim marks and restores settings, and gives tool_list's loaded in seconds; the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
 
 ## v0.13.0 · four agent programs, FormVis's surfaces {#v0-13-0}
 
