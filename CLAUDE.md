@@ -24,7 +24,7 @@ Rules for agents working in this repository. Read the in-tree HASHOUT logs (`cor
 
 ## Trademarks, copyright and licences
 
-- Product names of other vendors appear only to say which agent clients formMCP connects to (Claude Code, Codex, Cursor).
+- Product names of other vendors appear only to say which agent clients formMCP connects to (Claude Code, Codex, Cursor, Antigravity).
 - Every new dependency, binary, font or data file gets a row in `NOTICE.md` before it is used. GPL stays outside the distributed bundle, AGPL nowhere, LGPL dynamically linked and replaceable, MPL files unedited; CC BY credited, CC BY-SA only unmodified, CC NC and ND never.
 
 ## Commits

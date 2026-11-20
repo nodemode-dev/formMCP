@@ -1,6 +1,6 @@
 # formMCP
 
-formMCP is the one MCP connection from Claude Code, Codex and Cursor to the Form family of desktop apps: a Rust engine (`formmcp-core`), a command line with the MCP server (`formmcp-cli`), a Tauri 2 shell and a vanilla TypeScript and Vite window.
+formMCP is the one MCP connection from Claude Code, Codex, Cursor and Antigravity to the Form family of desktop apps: a Rust engine (`formmcp-core`), a command line with the MCP server (`formmcp-cli`), a Tauri 2 shell and a vanilla TypeScript and Vite window.
 
 ## Finding the right Form app (natural language)
 

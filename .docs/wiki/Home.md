@@ -1,6 +1,6 @@
 # formMCP
 
-formMCP is one MCP server for the whole Form family. Add it to Claude Code, Codex or Cursor once, and the agent can see every Form app, with one line on what each is for, and whether it has an MCP server, whether or not any app is installed.
+formMCP is one MCP server for the whole Form family. Add it to Claude Code, Codex, Cursor or Antigravity once, and the agent can see every Form app, with one line on what each is for, and whether it has an MCP server, whether or not any app is installed.
 
 **Current version:** v0.11.0 · **Stack:** Rust (`formmcp-core`, `formmcp-cli`) · Tauri 2 shell · vanilla TypeScript and Vite window · **Team:** one owner (nodemode-ai)
 
@@ -8,7 +8,7 @@ formMCP is one MCP server for the whole Form family. Add it to Claude Code, Code
 | --- | --- |
 | [Getting Started](Getting-Started) | install from source, run the window, the command line and the MCP server |
 | [Architecture](Architecture) | the engine, the family list and where it comes from, the shell, the window |
-| [Agents](Agents) | connecting Claude Code, Codex and Cursor, and the `family_apps` tool |
+| [Agents](Agents) | connecting Claude Code, Codex, Cursor and Antigravity, and the `family_apps` tool |
 
 ## What it does
 

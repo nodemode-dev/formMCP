@@ -7,6 +7,13 @@ Last updated: 2026-11-19 · v0.11.0 the footer names the list's repository only;
 
 ## v0.12.0 · four agent programs {#v0-12-0}
 
+### index.html · the line under the title names four programs
+- refers-to: frontend/index.html :: .sub
+- kind: change
+- logged: v0.12.0 · 2026-11-19
+
+"One connection from Claude Code, Codex, Cursor and Antigravity to the Form family". Same node, a longer string in a slot that already takes the rest of the row. The demo pages keep their own copies of the header with three names: they are recorded states with three clients and were not rebuilt. The Demos panel's line about demo 2 still says three, which is what that demo shows. The agent picker and the extension commands that take an agent still say claude, codex, cursor or other, because those are the per-agent switches, which did not change.
+
 ### index.html, app.css · a fourth client card, Antigravity
 - refers-to: frontend/index.html :: .client[data-client="antigravity"] · frontend/src/styles/app.css :: .clients
 - kind: feature

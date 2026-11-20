@@ -22,7 +22,7 @@
     "active": true,
     "targets": "all",
     "category": "DeveloperTool",
-    "shortDescription": "One connection from Claude Code, Codex and Cursor to the Form family",
+    "shortDescription": "One connection from Claude Code, Codex, Cursor and Antigravity to the Form family",
     "publisher": "NodeAgentc, Inc.",
     "copyright": "Copyright 2026 NodeAgentc, Inc. GPL-3.0-only",
     "license": "GPL-3.0-only",

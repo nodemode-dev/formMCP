@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "formMCP: one connection from Claude Code, Codex and Cursor to the Form family"
+description = "formMCP: one connection from Claude Code, Codex, Cursor and Antigravity to the Form family"
 
 [lib]
 name = "formmcp_shell"

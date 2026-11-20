@@ -10,16 +10,16 @@ formMCP's MCP server is `formmcp mcp` (stdio), and from v0.5.0 also Streamable H
 
 All three run `./formmcp mcp`, which builds the command line on first use. An installed formMCP answers the same way: `<the formMCP program> mcp`.
 
-For every project, add it to your user account instead: in the formMCP window, press Connect beside Claude Code, Codex or Cursor (the installed app registers itself), or from a checkout:
+For every project, add it to your user account instead: in the formMCP window, press Connect beside Claude Code, Codex, Cursor or Antigravity (the installed app registers itself), or from a checkout:
 
 ```bash
-./formmcp cli agents install                 # Claude Code, Codex and Cursor
-./formmcp cli agents install codex,cursor    # some of them
+./formmcp cli agents install                 # Claude Code, Codex, Cursor and Antigravity
+./formmcp cli agents install codex,cursor    # some of them: claude, codex, cursor, antigravity
 ./formmcp cli agents status                  # connected, not connected, taken by another server, or no client
 ./formmcp cli agents remove
 ```
 
-Claude Code is set up with `claude mcp add --scope user formmcp` (only a user-scope entry counts as connected; a project's `.mcp.json`, like this repository's, is left alone); Codex gets `[mcp_servers.formmcp]` in `~/.codex/config.toml` (or `$CODEX_HOME`); Cursor gets `mcpServers.formmcp` in `~/.cursor/mcp.json`. Each file is copied to `<name>.bak-<time>` before it changes, other servers are left as they are (in mcp.json only the `formmcp` entry's text changes, every other byte stays), and a server named `formmcp` that formMCP did not write is reported `taken` and left alone. A config.toml that is not valid TOML, and an mcp.json that is not plain JSON (comments or trailing commas), are never changed; the status says why. The entry starts the `./formmcp` launcher of this checkout and carries the formMCP settings that are set in your shell (`FORMMCP_DEV_ROOTS`, `FORMPORTAL_ROOT`, `FORMPORTAL_BIN`, `FORMMCP_CATALOG`, `FORMAI_CATALOG_PUBKEY`).
+Claude Code is set up with `claude mcp add --scope user formmcp` (only a user-scope entry counts as connected; a project's `.mcp.json`, like this repository's, is left alone); Codex gets `[mcp_servers.formmcp]` in `~/.codex/config.toml` (or `$CODEX_HOME`); Cursor gets `mcpServers.formmcp` in `~/.cursor/mcp.json`; Antigravity (Google's `agy` program) gets `mcpServers.formmcp` in `~/.gemini/config/mcp_config.json`, edited the way Cursor's file is (an older `~/.gemini/antigravity-cli/mcp_config.json` is never read or changed; the status says when only that one exists). formMCP finds the `claude` program on the PATH it was started with, in the known install folders, or on your shell's PATH, so the window finds it however it was opened; `FORMMCP_CLAUDE_BIN` names it when it is somewhere else. Each file is copied to `<name>.bak-<time>` before it changes, other servers are left as they are (in mcp.json only the `formmcp` entry's text changes, every other byte stays), and a server named `formmcp` that formMCP did not write is reported `taken` and left alone. A config.toml that is not valid TOML, and an mcp.json that is not plain JSON (comments or trailing commas), are never changed; the status says why. The entry starts the `./formmcp` launcher of this checkout and carries the formMCP settings that are set in your shell (`FORMMCP_DEV_ROOTS`, `FORMPORTAL_ROOT`, `FORMPORTAL_BIN`, `FORMMCP_CATALOG`, `FORMAI_CATALOG_PUBKEY`).
 
 ## Tools
 
