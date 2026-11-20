@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-pub const CLIENT_KEYS: [&str; 4] = ["claude", "codex", "cursor", "other"];
+pub const CLIENT_KEYS: [&str; 5] = ["claude", "codex", "cursor", "antigravity", "other"];
 pub const HTTP_PORT: u16 = 5625;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -161,6 +161,9 @@ pub fn write_profile(name: &str, profile: &Profile) -> String {
 
 pub fn client_key(name: &str) -> &'static str {
     let lower = name.to_lowercase();
+    if lower.contains("antigravity") {
+        return "antigravity";
+    }
     CLIENT_KEYS.iter().copied().find(|k| *k != "other" && lower.contains(k)).unwrap_or("other")
 }
 
@@ -169,6 +172,7 @@ pub fn client_label(key: &str) -> &'static str {
         "claude" => "Claude Code",
         "codex" => "Codex",
         "cursor" => "Cursor",
+        "antigravity" => "Antigravity",
         _ => "other agents",
     }
 }

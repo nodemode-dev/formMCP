@@ -10,22 +10,22 @@ const PRODUCT = "formmcp";
 const APP = "FormMCP";
 const PORTAL = `formai://extensions?product=${PRODUCT}`;
 const SOURCES: Record<string, string> = { catalogue: "Catalogue", sideload: "File", development: "Development" };
-const AGENT_LABELS: Record<string, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", other: "other agents" };
+const AGENT_LABELS: Record<string, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", antigravity: "Antigravity", other: "other agents" };
 const MUTATING = new Set(["set_for", "set_expose", "set_start", "set_tool", "tool_load", "profile_save", "profile_use", "profile_delete", "profile_import", "http_switch", "http_rotate", "connect", "safety_switch", "secret_set", "secret_remove", "hook_set", "telemetry_set", "verify_trust", "settings_restore"]);
 const FILES_MAX = 200 * 1024 * 1024;
 
 type Entry = { id: string; title: string; args?: Record<string, string>; reads?: boolean; window?: boolean };
 const CATALOGUE: Entry[] = [
-  { id: "set_for", title: "Offer an app to an agent", args: { client: "claude, codex, cursor or other", id: "app id", on: "boolean" } },
+  { id: "set_for", title: "Offer an app to an agent", args: { client: "claude, codex, cursor, antigravity or other", id: "app id", on: "boolean" } },
   { id: "set_expose", title: "Always show an app's tools", args: { id: "app id", on: "boolean" } },
   { id: "set_start", title: "Set when an app's server starts", args: { id: "app id", policy: "demand, session or keep" } },
   { id: "set_tool", title: "Offer one of an app's tools", args: { id: "app id", tool: "tool name", on: "boolean" } },
   { id: "tool_list", title: "List an app's known tools", args: { id: "app id" }, reads: true },
   { id: "tool_load", title: "Start an app to list its tools", args: { id: "app id" }, reads: true },
-  { id: "profile_save", title: "Save an agent's settings as a profile", args: { name: "profile name", from: "claude, codex, cursor or other" } },
-  { id: "profile_use", title: "Use a profile for an agent", args: { client: "claude, codex, cursor or other", name: "profile name or null" } },
+  { id: "profile_save", title: "Save an agent's settings as a profile", args: { name: "profile name", from: "claude, codex, cursor, antigravity or other" } },
+  { id: "profile_use", title: "Use a profile for an agent", args: { client: "claude, codex, cursor, antigravity or other", name: "profile name or null" } },
   { id: "profile_delete", title: "Delete a profile", args: { name: "profile name" } },
-  { id: "select_agent", title: "Show the apps for an agent", args: { agent: "claude, codex, cursor or other" }, window: true },
+  { id: "select_agent", title: "Show the apps for an agent", args: { agent: "claude, codex, cursor, antigravity or other" }, window: true },
   { id: "select_filter", title: "Filter the app list", args: { filter: "all or mcp" }, window: true },
   { id: "refresh", title: "Read this computer's state again", reads: true },
 ];
@@ -238,7 +238,7 @@ export function mountExtensions(o: Options): void {
 
   const select = (agent?: string, filter?: string): { agent: string; filter: string } => {
     if (agent !== undefined) {
-      if (!(agent in AGENT_LABELS)) throw new HostError(ERR.INVALID, `agent is claude, codex, cursor or other, not ${JSON.stringify(agent)}`);
+      if (!(agent in AGENT_LABELS)) throw new HostError(ERR.INVALID, `agent is claude, codex, cursor, antigravity or other, not ${JSON.stringify(agent)}`);
       if (agentPick.value !== agent && !agentPick.disabled) {
         agentPick.value = agent;
         agentPick.dispatchEvent(new Event("change"));

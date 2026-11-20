@@ -5,6 +5,15 @@ Living log for formMCP's window. Source files stay comment-free; what they would
 Current build version: v0.12.0
 Last updated: 2026-11-19 · v0.12.0 a fourth client card, Antigravity, and four names under the title; 2026-11-19 · v0.11.0 the footer names the list's repository only; 2026-11-11 · v0.10.4 no window changes; 2026-11-10 · v0.10.3 no window changes; 2026-11-10 · v0.10.2 no window changes; 2026-11-09 · v0.10.1 app card overflow; v0.10.0 the demos inside the app; 2026-11-07 · v0.9.1 no window changes (Greg's README note on FormPortal updates); v0.9.0 the extension host; v0.8.4 no window changes (demos 2 and 3 in demos/); the splash page and the ready call; 2026-10-25 · the log names FormPortal's file check; the Safety panel; profiles and start selects; the HTTP bar, apps per agent and the Tools panel; no Skills filter or badge; clients, local state, switches and activity; the family list window
 
+## v0.13.0 · Antigravity is its own choice {#v0-13-0}
+
+### index.html, main.ts, ext/extensions.ts · Antigravity in the agent picker
+- refers-to: frontend/index.html :: #agent · frontend/src/main.ts :: AGENTS · frontend/src/ext/extensions.ts :: AGENT_LABELS, CATALOGUE, select
+- kind: change
+- logged: v0.13.0 · 2026-11-20
+
+The Apps for picker has a fifth option, Antigravity, between Cursor and Other agents, in the order of the engine's `CLIENT_KEYS`; the save-profile label reads "Save Antigravity's settings" for it. The extension commands that take an agent (`set_for`, `profile_save`, `profile_use`, `select_agent`) name five values and accept `antigravity`. The engine counts a session as Antigravity when its name holds "antigravity"; that name has not been seen from the real program (see core/HASHOUT_LOG.md).
+
 ## v0.12.0 · four agent programs {#v0-12-0}
 
 ### index.html · the line under the title names four programs
