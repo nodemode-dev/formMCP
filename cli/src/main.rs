@@ -13,8 +13,8 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   suggest <task...>     the apps that fit a task, best first, with the next step (JSON)
   catalog               where the family list comes from now: the signed catalogue, or the bundled list and why
   expose <id> on|off    always list that app's own tools in formMCP's tool list (saved in settings.json)
-  agents [status|install|remove] [claude,codex,cursor]
-                        add formMCP to Claude Code, Codex and Cursor for this user account, or take it out
+  agents [status|install|remove] [claude,codex,cursor,antigravity]
+                        add formMCP to Claude Code, Codex, Cursor and Antigravity for this user account, or take it out
   for <agent> <id> on|off   offer an app to one agent or not: claude, codex, cursor or other (saved in settings.json)
   tool <id> <tool> on|off   offer one of an app's tools or not, to every agent
   tools <id>            the app's tools formMCP last saw, and which are off (JSON)
@@ -49,6 +49,8 @@ const HELP: &str = "formmcp-cli: formMCP without the window
   FORMMCP_DEV_ROOTS     folders holding Form app checkouts (path list); a checkout's own launcher is used first
   FORMPORTAL_ROOT       FormPortal's folder, when it is not in the usual place
   FORMPORTAL_BIN        the FormPortal program that runs `app-mcp`, when it is not on PATH
+  FORMMCP_CLAUDE_BIN    the Claude Code program, when formMCP does not find it on PATH, in the known install
+                        folders or on your shell's PATH
   FORMMCP_START_TIMEOUT seconds an app's server has to start (120)
   FORMMCP_CALL_TIMEOUT  seconds one tool call may take (900)
   FORMMCP_CATALOG       the catalogue (https, a loopback http address, or a file); the family catalogue by default
@@ -447,7 +449,7 @@ fn main() -> ExitCode {
                 Some(list) => match list.split(',').map(|c| Client::parse(c).ok_or_else(|| c.to_string())).collect::<Result<Vec<_>, _>>() {
                     Ok(c) => c,
                     Err(bad) => {
-                        eprintln!("formmcp: there is no client {bad:?}; use claude, codex or cursor");
+                        eprintln!("formmcp: there is no client {bad:?}; use claude, codex, cursor or antigravity");
                         return ExitCode::FAILURE;
                     }
                 },

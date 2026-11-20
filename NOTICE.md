@@ -46,4 +46,4 @@ The Linux AppImage also carries the build machine's WebKitGTK, GTK and GLib (LGP
 
 ## Trademarks
 
-Claude Code is a product of Anthropic, Codex of OpenAI and Cursor of Anysphere; they are named only as the agent clients formMCP connects to. The names of the Form apps belong to their owner. formMCP is not affiliated with or endorsed by Anthropic, OpenAI or Anysphere.
+Claude Code is a product of Anthropic, Codex of OpenAI, Cursor of Anysphere and Antigravity of Google; they are named only as the agent clients formMCP connects to. The names of the Form apps belong to their owner. formMCP is not affiliated with or endorsed by Anthropic, OpenAI, Anysphere or Google.

@@ -3,13 +3,13 @@
 <h1 align="center">FormMCP</h1>
 
 <p align="center">
-  <b>Agent gateway; one MCP connection from Claude Code, Codex and Cursor to the Form family.</b><br>
+  <b>Agent gateway; one MCP connection from Claude Code, Codex, Cursor and Antigravity to the Form family.</b><br>
   Every Form app in one short list, an app's own tools loaded only when a task needs them,<br>
   and it never installs anything. Local, and yours.
 </p>
 
 <p align="center">
-  <img alt="version 0.11.0" src="https://img.shields.io/badge/version-0.11.0-eef0f4?style=flat-square">
+  <img alt="version 0.12.0" src="https://img.shields.io/badge/version-0.12.0-eef0f4?style=flat-square">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-B7410E?style=flat-square&logo=rust&logoColor=white">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square">
   <img alt="macOS, Windows, Linux" src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-native-2f7bf5?style=flat-square">
@@ -71,7 +71,7 @@
   <tr>
     <td width="33%" valign="top"><h4>11 MCP tools</h4>family_apps · suggest_app · app_tools · call_app · app_resources · read_app_resource · app_prompts · get_app_prompt · extensions_list · extension_command · demo_open</td>
     <td width="33%" valign="top"><h4>Controls</h4>Apps per agent · single tools · profiles · start policies · hooks · secrets · tracing · activity log</td>
-    <td width="33%" valign="top"><h4>Transports</h4>stdio · local HTTP at <code>127.0.0.1:5625/mcp</code> with an access token · Claude Code, Codex and Cursor</td>
+    <td width="33%" valign="top"><h4>Transports</h4>stdio · local HTTP at <code>127.0.0.1:5625/mcp</code> with an access token · Claude Code, Codex, Cursor and Antigravity</td>
   </tr>
 </table>
 
@@ -82,8 +82,8 @@ FormMCP suggests; FormPortal installs. The agent sees one short list and loads o
 ```sh
 ./formmcp cli apps                        # the family list as JSON
 ./formmcp cli reach                       # how each app's server would be started on this computer
-./formmcp cli agents install              # add FormMCP to Claude Code, Codex and Cursor
-./formmcp mcp                             # MCP server on stdio for Claude Code, Codex and Cursor
+./formmcp cli agents install              # add FormMCP to Claude Code, Codex, Cursor and Antigravity
+./formmcp mcp                             # MCP server on stdio for Claude Code, Codex, Cursor and Antigravity
 ```
 
 `.mcp.json`, `.codex/config.toml` and `.cursor/mcp.json` are already wired in this repo. See [`AGENTS.md`](AGENTS.md).
@@ -99,7 +99,7 @@ FormMCP loads extensions made to the Form Extension Contract (API 1): FormPortal
 - **Pass-through:** `call_app` returns an app's own result unchanged, so the tools are always the running app's.
 - **Window:** vanilla TypeScript and Vite with zero runtime dependencies, painted complete in its first frame.
 - **Local only:** HTTP binds 127.0.0.1, checks Host and Origin, and needs a token on every request.
-- **Tested:** 47 Rust tests (family list and its generator, catalogue keys, reach, the MCP server over stdio and HTTP).
+- **Tested:** 56 Rust tests (family list and its generator, catalogue keys, reach, the MCP server over stdio and HTTP, the agents' files, finding Claude Code).
 
 ## Download
 
@@ -181,4 +181,4 @@ Code owners are set in [`.github/CODEOWNERS`](.github/CODEOWNERS).
 
 FormMCP is licensed under the GNU General Public License v3.0 ([`LICENSE`](LICENSE), SPDX `GPL-3.0-only`). Copyright 2026 NodeAgentc, Inc. Third-party notices: [`NOTICE.md`](NOTICE.md).
 
-<sub>Claude Code is a product of Anthropic, Codex of OpenAI and Cursor of Anysphere; they are named only as the agent clients FormMCP connects to. FormMCP is not affiliated with or endorsed by them.</sub>
+<sub>Claude Code is a product of Anthropic, Codex of OpenAI, Cursor of Anysphere and Antigravity of Google; they are named only as the agent clients FormMCP connects to. FormMCP is not affiliated with or endorsed by them.</sub>
