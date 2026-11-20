@@ -32,4 +32,4 @@ Apps without a file here (Format, FormCel, FormDAM, FormDesign, FormPath, FormPr
 
 ## Everything else
 
-The sample config files, tokens, hook text and tool results are text written for the demo; the tokens are built from pieces at run time and are not real credentials. Claude Code, Codex and Cursor are named only as the agent clients formMCP connects to.
+The sample config files, tokens, hook text and tool results are text written for the demo; the tokens are built from pieces at run time and are not real credentials. Claude Code, Codex, Cursor and Antigravity are named only as the agent clients formMCP connects to.

@@ -2,8 +2,17 @@
 
 Living log for demo 2. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.9.1
-Last updated: 2026-11-07 · v0.9.1 rebuilt for the version it shows (no demo changes); v0.9.0 rebuilt with the window's Extensions button (empty list: no extension route in a file:// demo); first release of the connecting-agents demo
+Current build version: v0.14.0
+Last updated: 2026-11-20 · v0.14.0 four agent programs and FormVis's surfaces; v0.9.1 rebuilt for the version it shows (no demo changes); v0.9.0 rebuilt with the window's Extensions button (empty list: no extension route in a file:// demo); first release of the connecting-agents demo
+
+## v0.14.0 · four agent programs, FormVis's surfaces {#v0-14-0}
+
+### world.ts, workbench.ts, shim.ts, agent.ts, src/index.html · Antigravity in demo 2
+- refers-to: demos/connect/src/world.ts :: ClientKey, antigravityPath, fileOf, setFile · demos/connect/src/workbench.ts :: CLIENTS, AGENTS · demos/connect/src/shim.ts :: patched · demos/connect/src/agent.ts :: clientKey, initialize · demos/connect/src/index.html :: .sub, .clients, #agent
+- kind: change
+- logged: v0.14.0 · 2026-11-20
+
+Antigravity is the fourth client, written as `clients.rs` writes it: the same JSON entry as Cursor, in `~/.gemini/config/mcp_config.json`. The virtual home starts without that file, so the Agent setup tab shows the "no file yet" case for it; the older `antigravity-cli` file note of `clients.rs` is not modelled. The JSON paths read and write through `fileOf` and `setFile` so Cursor and Antigravity share one code path, as `json_config` does in the engine. `clientKey` matches "antigravity" first, as `settings.rs` does; the ask-as form initializes Antigravity with the name "antigravity", a stand-in, because the name the real program gives has not been seen. The server's `serverInfo.version` is the build's version instead of a fixed 0.9.1. Rebuilt with the real tokens.css, so the page takes FormVis's surfaces from 0.13.0.
 
 ## v0.11.0 · gateway wave 1 {#v0-11-0}
 

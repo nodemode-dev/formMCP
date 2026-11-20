@@ -22,7 +22,7 @@
         <img class="mark" src="./formmcp.png" width="32" height="32" alt="" />
         <div class="title">
           <h1 translate="no">formMCP</h1>
-          <p class="sub">One connection from Claude Code, Codex and Cursor to the Form family</p>
+          <p class="sub">One connection from Claude Code, Codex, Cursor and Antigravity to the Form family</p>
         </div>
         <span class="version" id="version" translate="no"></span>
       </header>
@@ -39,6 +39,11 @@
         </div>
         <div class="client" data-client="cursor">
           <span class="client-name" translate="no">Cursor</span>
+          <span class="client-state" data-state></span>
+          <button class="btn" type="button" data-connect disabled>Connect</button>
+        </div>
+        <div class="client" data-client="antigravity">
+          <span class="client-name" translate="no">Antigravity</span>
           <span class="client-state" data-state></span>
           <button class="btn" type="button" data-connect disabled>Connect</button>
         </div>
@@ -70,6 +75,7 @@
             <option value="claude">Claude Code</option>
             <option value="codex">Codex</option>
             <option value="cursor">Cursor</option>
+            <option value="antigravity">Antigravity</option>
             <option value="other">Other agents</option>
           </select>
         </label>

@@ -2,8 +2,17 @@
 
 Living log for demo 3. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.9.1
-Last updated: 2026-11-07 · v0.9.1 rebuilt for the version it shows (no demo changes); v0.9.0 rebuilt with the window's Extensions button (empty list: no extension route in a file:// demo); first release of the safety and activity demo
+Current build version: v0.14.0
+Last updated: 2026-11-20 · v0.14.0 four agent programs and FormVis's surfaces; v0.9.1 rebuilt for the version it shows (no demo changes); v0.9.0 rebuilt with the window's Extensions button (empty list: no extension route in a file:// demo); first release of the safety and activity demo
+
+## v0.14.0 · four agent programs, FormVis's surfaces {#v0-14-0}
+
+### engine.ts, bench.ts, scenario.ts, src/index.html · Antigravity in demo 3
+- refers-to: demos/safety/src/engine.ts :: CORE_VERSION, CLIENT_NAMES · demos/safety/src/bench.ts :: AGENTS, buildHooks · demos/safety/src/scenario.ts :: RECORDING, CLIENT_NAME, seed · demos/safety/src/index.html :: .clients, #agent
+- kind: change
+- logged: v0.14.0 · 2026-11-20
+
+The window copy has a fourth client card and Antigravity in the Apps for picker; the bench's agent lists have it before other agents. The recording gains a thirteenth call, Antigravity asking `suggest_app`, appended last so the two refused HTTP requests stay after calls 6 and 9; its session uses the stand-in name "antigravity" because the name the real program gives has not been seen. All four clients start connected. `CORE_VERSION`, which the hook events and the OTLP bodies carry, is the build's version instead of a fixed 0.9.1. Rebuilt with the real tokens.css, so the page takes FormVis's surfaces from 0.13.0.
 
 ## v0.8.4 · safety and activity {#v0-8-4}
 

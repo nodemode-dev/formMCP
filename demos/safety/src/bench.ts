@@ -1,11 +1,11 @@
 import { events, family, redactValue, settings, type LogEvent } from "../../../demo/src/gateway";
-import { CLIENT_NAMES, collector, commit, endpointProblem, evaluate, fileProblem, installOf, toolsOf, STEP_TITLES, type Ctx, type Spec, type Trace } from "./engine";
+import { CLIENT_NAMES, CORE_VERSION, collector, commit, endpointProblem, evaluate, fileProblem, installOf, toolsOf, STEP_TITLES, type Ctx, type Spec, type Trace } from "./engine";
 import { DENY_EXIT, SCRIPTS, TIMEOUT_S, judge, runLine, split, type HookEvent } from "./hooks";
 import { RECORDING, SAMPLE_TOKENS, ctx, recordedLabel } from "./scenario";
 
 const ICONS = import.meta.glob("../../../demo/assets/media/icons/*.png", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
 const MINUTE = 60000;
-const AGENTS = ["claude", "codex", "cursor", "other"];
+const AGENTS = ["claude", "codex", "cursor", "antigravity", "other"];
 const CALLS = ["call_app", "app_tools", "family_apps", "suggest_app"];
 const pending: Promise<unknown>[] = [];
 
@@ -570,7 +570,7 @@ function buildHooks(): { pane: HTMLElement; paint: () => void } {
       out.className = "wb-code is-fail";
       return;
     }
-    const base: HookEvent = { event: which.value, app: app.value.trim(), tool: tool.value.trim(), arguments: parsed, client: "claude", transport: "stdio", formmcp: "0.9.1" };
+    const base: HookEvent = { event: which.value, app: app.value.trim(), tool: tool.value.trim(), arguments: parsed, client: "claude", transport: "stdio", formmcp: CORE_VERSION };
     const event: HookEvent = which.value === "after" ? { ...base, ok: true, ms: 41, result: { simulated: true } } : base;
     setText(stdin, pretty(event));
     const lines: string[] = [];

@@ -3,7 +3,7 @@ import { appOf, family, isOff, live, loaded, profileOf, record, redactValue, sam
 export const REACHABLE = ["formcut", "formwav", "formencoder", "formvis"];
 export const PROTOCOL = "2025-06-18";
 export const SUPPORTED = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
-export const AGENT_LABEL: Record<string, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", other: "other agents" };
+export const AGENT_LABEL: Record<string, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", antigravity: "Antigravity", other: "other agents" };
 
 export const INSTRUCTIONS =
   "formMCP is the one connection to the Form family of desktop apps (image, video, audio, layout, vector, notes and more, by nodemode.ai). Call suggest_app with the person's task to get the app that fits and the next step, or family_apps for the whole list (whether each app has an MCP server and whether this computer can reach it). For a reachable app, app_tools starts it and lists its own tools, and call_app runs one of them; load one app at a time, only when the task needs it. An app's own resources and prompts, when it offers them, come through app_resources and read_app_resource, app_prompts and get_app_prompt. The person may have turned some apps or tools off for this agent in formMCP's window: they are left out of the lists and refused with the reason. formMCP never installs anything: when an app is missing, tell the person which one fits and that FormPortal installs and updates the Form apps. formMCP does not handle skills: the Form apps' released skills are viewed and downloaded in formskills.";
@@ -25,7 +25,7 @@ export const TOOLS: unknown[] = [
 
 export function clientKey(name: string): string {
   const lower = name.toLowerCase();
-  return ["claude", "codex", "cursor"].find((k) => lower.includes(k)) ?? "other";
+  return ["antigravity", "claude", "codex", "cursor"].find((k) => lower.includes(k)) ?? "other";
 }
 
 export function reachOf(id: string): string | null {
@@ -157,7 +157,7 @@ export function toolsCall(client: string, transport: string, name: string, args:
 
 export function initialize(client: string, transport: string, clientName: string, version: string): unknown {
   record("session", { client: clientName, client_version: version, as: client, transport, expose: settings.expose, profile: settings.use_profile[client] ?? null });
-  return { protocolVersion: PROTOCOL, capabilities: { tools: { listChanged: settings.expose.length > 0 && transport === "stdio" } }, serverInfo: { name: "formmcp", title: "formMCP", version: "0.9.1" }, instructions: INSTRUCTIONS };
+  return { protocolVersion: PROTOCOL, capabilities: { tools: { listChanged: settings.expose.length > 0 && transport === "stdio" } }, serverInfo: { name: "formmcp", title: "formMCP", version: __APP_VERSION__ }, instructions: INSTRUCTIONS };
 }
 
 export function answer(client: string, transport: string, msg: Record<string, unknown>): Record<string, unknown> | null {

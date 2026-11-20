@@ -84,7 +84,7 @@ const patched = async (cmd: string, args: Args = {}): Promise<unknown> => {
     if (cmd === "snapshot") {
       const snap = out as { apps: Record<string, unknown>[]; clients: unknown[]; http: unknown; formportal: boolean; source: string };
       snap.apps = snap.apps.map((a) => (REACHABLE.includes(String(a.id)) ? { ...a, installed: true, reach: "formportal", version: "simulated" } : a));
-      snap.clients = (["claude", "codex", "cursor"] as ClientKey[]).map(clientRow);
+      snap.clients = (["claude", "codex", "cursor", "antigravity"] as ClientKey[]).map(clientRow);
       snap.http = { running: server.running, port: PORT, address: address() };
       snap.formportal = true;
     }

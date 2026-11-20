@@ -7,9 +7,11 @@ import {
   PLATFORMS,
   changed,
   diffLines,
+  fileOf,
   nextPlan,
   pathOf,
   reset,
+  setFile,
   stateOf,
   world,
   type ClientKey,
@@ -18,8 +20,8 @@ import {
 } from "./world";
 
 const LINK: Record<Link, string> = { connected: "Connected", "not-connected": "Not connected", taken: "Another server uses the name", "no-client": "Not installed" };
-const CLIENTS: ClientKey[] = ["claude", "codex", "cursor"];
-const AGENTS = ["claude", "codex", "cursor", "other"];
+const CLIENTS: ClientKey[] = ["claude", "codex", "cursor", "antigravity"];
+const AGENTS = ["claude", "codex", "cursor", "antigravity", "other"];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = "", text = ""): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -195,7 +197,7 @@ function buildSetup(): { pane: HTMLElement; paint: () => void } {
       const c = world.claude;
       setText(claudeNow, !world.claudeInstalled ? "The claude command is not installed on this computer." : c ? `formmcp\n  Scope: User\n  Command: ${c.command}\n  Args: ${c.args.join(" ")}${c.env.length ? `\n  Environment: ${c.env.map(([k, v]) => `${k}=${v}`).join(", ")}` : ""}\n\nOnly a user-scope entry counts as connected. A project's .mcp.json (like this repository's) is left alone.` : "No server named formmcp in the user scope.\n\nOnly a user-scope entry counts as connected. A project's .mcp.json (like this repository's) is left alone.");
     } else {
-      const text = cur === "codex" ? world.codex : world.cursor;
+      const text = fileOf(cur);
       current = text ?? "";
       setText(leftTitle, text === null ? `${path} does not exist yet` : `On disk now: ${path}`);
       if (document.activeElement !== disk && disk.value !== current) disk.value = current;
@@ -227,7 +229,7 @@ function buildSetup(): { pane: HTMLElement; paint: () => void } {
       ? [["Pretend claude is missing", () => (world.claudeInstalled = !world.claudeInstalled)]]
       : cur === "codex"
         ? [["No file yet", () => (world.codex = null)], ["Empty file", () => (world.codex = "")]]
-        : [["Taken by another server", () => (world.cursor = '{\n  "mcpServers": {\n    "formmcp": {\n      "command": "node",\n      "args": ["server.js"]\n    }\n  }\n}\n')], ["Not valid JSON", () => (world.cursor = '{ "mcpServers": { "team-docs": ')], ["No file yet", () => (world.cursor = null)]];
+        : [["Taken by another server", () => setFile(cur, '{\n  "mcpServers": {\n    "formmcp": {\n      "command": "node",\n      "args": ["server.js"]\n    }\n  }\n}\n')], ["Not valid JSON", () => setFile(cur, '{ "mcpServers": { "team-docs": ')], ["No file yet", () => setFile(cur, null)]];
     [sampleA, sampleB, sampleC].forEach((b, i) => {
       const s = samples[i] as [string, () => unknown] | undefined;
       b.hidden = !s;
@@ -244,8 +246,7 @@ function buildSetup(): { pane: HTMLElement; paint: () => void } {
   }
 
   disk.addEventListener("input", () => {
-    if (cur === "codex") world.codex = disk.value;
-    else if (cur === "cursor") world.cursor = disk.value;
+    setFile(cur, disk.value);
     paint();
     paintClients();
     changed();
@@ -274,8 +275,7 @@ function buildSetup(): { pane: HTMLElement; paint: () => void } {
       return;
     }
     const text = await file.text();
-    if (cur === "codex") world.codex = text;
-    else world.cursor = text;
+    setFile(cur, text);
     paint();
     paintClients();
     changed();
@@ -294,8 +294,8 @@ function buildSetup(): { pane: HTMLElement; paint: () => void } {
   }
   saveBtn.addEventListener("click", () => {
     const next = nextPlan(cur);
-    const text = next.plan.text ?? (cur === "codex" ? world.codex : world.cursor) ?? "";
-    download(cur === "codex" ? "config.toml" : "mcp.json", text, cur === "codex" ? "text/plain" : "application/json");
+    const text = next.plan.text ?? fileOf(cur) ?? "";
+    download(cur === "codex" ? "config.toml" : cur === "antigravity" ? "mcp_config.json" : "mcp.json", text, cur === "codex" ? "text/plain" : "application/json");
   });
   return { pane, paint };
 }
@@ -548,7 +548,7 @@ function buildView(): { pane: HTMLElement; paint: () => void } {
     }
     if (!started.has(agentKey)) {
       started.add(agentKey);
-      initialize(agentKey, "stdio", agentKey === "other" ? "some-agent" : { claude: "claude-code", codex: "codex-mcp-client", cursor: "cursor-vscode" }[agentKey] ?? agentKey, "1.0.0");
+      initialize(agentKey, "stdio", agentKey === "other" ? "some-agent" : { claude: "claude-code", codex: "codex-mcp-client", cursor: "cursor-vscode", antigravity: "antigravity" }[agentKey] ?? agentKey, "1.0.0");
     }
     const answer = toolsCall(agentKey, "stdio", toolPick.value, parsed);
     const first = (answer.content as { text: string }[])[0]?.text ?? "";

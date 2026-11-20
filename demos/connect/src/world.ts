@@ -1,4 +1,4 @@
-export type ClientKey = "claude" | "codex" | "cursor";
+export type ClientKey = "claude" | "codex" | "cursor" | "antigravity";
 export type Link = "connected" | "not-connected" | "taken" | "no-client";
 export type Platform = "macos" | "windows" | "linux";
 export type ShellVar = { name: string; value: string; on: boolean };
@@ -6,7 +6,7 @@ export type Backup = { path: string; at: number; text: string };
 
 export const SERVER_NAME = "formmcp";
 export const PASSED_ENV = ["FORMMCP_DEV_ROOTS", "FORMPORTAL_ROOT", "FORMPORTAL_BIN", "FORMMCP_CATALOG", "FORMAI_CATALOG_PUBKEY"];
-export const LABELS: Record<ClientKey, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor" };
+export const LABELS: Record<ClientKey, string> = { claude: "Claude Code", codex: "Codex", cursor: "Cursor", antigravity: "Antigravity" };
 
 type ClaudeEntry = { command: string; args: string[]; env: [string, string][] };
 
@@ -24,6 +24,7 @@ export const world = {
   claude: null as ClaudeEntry | null,
   codex: null as string | null,
   cursor: null as string | null,
+  antigravity: null as string | null,
   backups: [] as Backup[],
   commands: [] as string[],
 };
@@ -52,8 +53,22 @@ export function cursorPath(): string {
   return join(home(), ".cursor", "mcp.json");
 }
 
+export function antigravityPath(): string {
+  return join(home(), ".gemini", "config", "mcp_config.json");
+}
+
 export function pathOf(client: ClientKey): string | null {
-  return client === "codex" ? codexPath() : client === "cursor" ? cursorPath() : null;
+  return client === "codex" ? codexPath() : client === "cursor" ? cursorPath() : client === "antigravity" ? antigravityPath() : null;
+}
+
+export function fileOf(client: ClientKey): string | null {
+  return client === "codex" ? world.codex : client === "cursor" ? world.cursor : client === "antigravity" ? world.antigravity : null;
+}
+
+export function setFile(client: ClientKey, text: string | null): void {
+  if (client === "codex") world.codex = text;
+  else if (client === "cursor") world.cursor = text;
+  else if (client === "antigravity") world.antigravity = text;
 }
 
 export function quote(text: string): string {
@@ -118,8 +133,8 @@ export function stateOf(client: ClientKey): { state: Link; note: string | null }
     if (!sec) return { state: "not-connected", note: null };
     return ours(text.slice(sec[0], sec[1])) ? { state: "connected", note: null } : { state: "taken", note: taken };
   }
-  const parsed = parseJson(world.cursor);
-  const data = parsed.ok ? (parsed.value as Record<string, unknown> | null) : null;
+  const parsed = parseJson(fileOf(client));
+  const data = parsed.ok ?(parsed.value as Record<string, unknown> | null) : null;
   const servers = data && typeof data === "object" ? (data.mcpServers as Record<string, unknown> | undefined) : undefined;
   const entry = servers && typeof servers === "object" ? servers[SERVER_NAME] : undefined;
   if (entry === undefined) return { state: "not-connected", note: null };
@@ -151,8 +166,8 @@ export function planConnect(client: ClientKey): Plan {
     const next = sec ? `${text.slice(0, sec[0])}${block}\n${text.slice(sec[1])}` : !text.trim() ? block : `${text.replace(/\s+$/, "")}\n\n${block}`;
     return { text: next, commands: [], error: null, backup: world.codex !== null };
   }
-  const path = cursorPath();
-  const parsed = parseJson(world.cursor);
+  const path = pathOf(client) as string;
+  const parsed = parseJson(fileOf(client));
   if (!parsed.ok) return { text: null, commands: [], error: `${path} is not valid JSON (${parsed.error}); not changed`, backup: false };
   const data = parsed.value;
   if (!data || typeof data !== "object" || Array.isArray(data)) return { text: null, commands: [], error: `${path} is not a JSON object; not changed`, backup: false };
@@ -163,7 +178,7 @@ export function planConnect(client: ClientKey): Plan {
   const entry: Record<string, unknown> = { command: exe, args: ["mcp"] };
   if (env.length) entry.env = Object.fromEntries(env);
   (servers as Record<string, unknown>)[SERVER_NAME] = entry;
-  return { text: pretty(obj), commands: [], error: null, backup: world.cursor !== null };
+  return { text: pretty(obj), commands: [], error: null, backup: fileOf(client) !== null };
 }
 
 export function planRemove(client: ClientKey): Plan {
@@ -173,8 +188,8 @@ export function planRemove(client: ClientKey): Plan {
     const sec = tomlSection(text, SERVER_NAME);
     return sec ? { text: `${text.slice(0, sec[0])}${text.slice(sec[1])}`, commands: [], error: null, backup: true } : { text: null, commands: [], error: null, backup: false };
   }
-  const parsed = parseJson(world.cursor);
-  if (!parsed.ok || !parsed.value || typeof parsed.value !== "object") return { text: null, commands: [], error: null, backup: false };
+  const parsed = parseJson(fileOf(client));
+  if (!parsed.ok ||!parsed.value || typeof parsed.value !== "object") return { text: null, commands: [], error: null, backup: false };
   const obj = parsed.value as Record<string, unknown>;
   const servers = obj.mcpServers;
   if (servers && typeof servers === "object" && !Array.isArray(servers) && SERVER_NAME in (servers as object)) {
@@ -204,9 +219,8 @@ function apply(client: ClientKey, plan: Plan): void {
   }
   if (plan.text === null) return;
   const path = pathOf(client) as string;
-  if (plan.backup) backup(path, client === "codex" ? world.codex : world.cursor);
-  if (client === "codex") world.codex = plan.text;
-  else world.cursor = plan.text;
+  if (plan.backup) backup(path, fileOf(client));
+  setFile(client, plan.text);
 }
 
 export function connect(client: ClientKey, on: boolean): { state: Link; note: string | null } {
@@ -268,6 +282,7 @@ export function reset(platform: Platform): void {
   world.claude = null;
   world.codex = baseCodex();
   world.cursor = baseCursor();
+  world.antigravity = null;
   world.backups = [];
   world.commands = [];
   connect("claude", true);
