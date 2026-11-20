@@ -10,7 +10,7 @@ It opens on the family's real pictures: every card carries its app's own icon, a
 
 In the window itself:
 
-- Cards for every Form app, the MCP filter, and the On for switch per agent (Claude Code, Codex, Cursor, other agents).
+- Cards for every Form app, the MCP filter, and the On for switch per agent (Claude Code, Codex, Cursor, Antigravity, other agents), and the four agent cards.
 - Always show tools, start policies, and the Tools panel with single tool switches (sample tools, labelled as simulated).
 - Profiles: save the chosen agent's settings under a name, use, export (a download) and delete one, or import a profile file by choosing one or dropping it on the Lab.
 - The Safety panel: hide secrets in results, file check, hooks, tracing address and keychain secret names.

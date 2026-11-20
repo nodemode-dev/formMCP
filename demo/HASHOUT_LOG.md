@@ -5,6 +5,15 @@ Living log for the offline demo. Source files stay comment-free; what they would
 Current build version: v0.9.1
 Last updated: 2026-11-07 · v0.9.1 rebuilt for the version it shows (Greg's README note on FormPortal updates, no demo changes); v0.9.0 the shim marks and restores settings, and gives tool_list's loaded in seconds; the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
 
+## v0.13.0 · four agent programs, FormVis's surfaces {#v0-13-0}
+
+### src/index.html, shim.ts, gateway.ts, flows.ts, lab.ts · Antigravity in demo 1
+- refers-to: demo/src/index.html :: .sub, .clients, #agent · demo/src/shim.ts :: snapshot · demo/src/gateway.ts :: CLIENT_KEYS · demo/src/flows.ts :: AGENTS · demo/src/lab.ts :: AGENTS
+- kind: change
+- logged: v0.13.0 · 2026-11-20
+
+Demo 1's copy of the window header names four programs and has a fourth client card, Antigravity, whose Connect changes only the state shown, as the other three do; the Apps for picker, the shim's settings and the Lab's agent lists have Antigravity as a fifth choice before other agents, as the window has. The built page (demo/index.html and demo/assets) is rebuilt by `npm run build:demo` from the release tip, so it shows v0.13.0 and the window's new surfaces from tokens.css. Demos 2 and 3 (demos/connect, demos/safety) are built by their own projects and were not rebuilt: they still show three clients and the old palette.
+
 ## v0.11.0 · gateway wave 1 {#v0-11-0}
 
 ### shim.ts, gateway.ts · the source line has no commit

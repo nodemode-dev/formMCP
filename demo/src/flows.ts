@@ -5,7 +5,7 @@ type Kind = "suggest_app" | "app_tools" | "call_app";
 type Step = { kind: Kind; app?: string; tool?: string; args: Record<string, unknown>; result?: unknown; shot: string; why: string };
 type Flow = { title: string; task: string; steps: Step[] };
 
-const AGENTS: [string, string][] = [["claude", "Claude Code"], ["codex", "Codex"], ["cursor", "Cursor"], ["other", "Other agents"]];
+const AGENTS: [string, string][] = [["claude", "Claude Code"], ["codex", "Codex"], ["cursor", "Cursor"], ["antigravity", "Antigravity"], ["other", "Other agents"]];
 
 function bearer(): string {
   return ["Author", "ization: Bea", "rer ", "demoDemoDemo1234567890abcdef"].join("");
