@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.14.0 · 2026-11-20
+
+- Demos 2 and 3 show Antigravity as a fourth agent card, in the agent picker and in their agent lists, with the Form family's look and this version. In demo 2, Antigravity's file is set up as FormMCP sets it up (`~/.gemini/config/mcp_config.json`, starting with no file); demo 3's recording has one Antigravity call. All three demos now show four agent programs.
+- The README's status says released: FormMCP is built and bundled for macOS, Windows and Linux and has been tested on all three.
+- Nobody has yet seen the name the real Antigravity gives when it connects; the demos use the stand-in name "antigravity".
+
 ## v0.13.0 · 2026-11-20
 
 - Antigravity is its own choice in the per-agent switches and profiles, beside Claude Code, Codex and Cursor: the window's Apps for picker, `formmcp-cli for antigravity <id> on|off` and `profile save --from antigravity` take it. A session counts as Antigravity when the name it gives when it connects holds "antigravity" in any letter case; every other unknown name still counts as other agents. Nobody has yet seen the name the real Antigravity gives, so until it is seen an Antigravity session may still land under other agents; `--client antigravity` or `?client=antigravity` on the HTTP address sets it by hand.

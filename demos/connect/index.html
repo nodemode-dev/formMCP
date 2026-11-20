@@ -6,8 +6,8 @@
     <meta name="color-scheme" content="dark light" />
     <title>FormMCP demo: connecting agents</title>
     <link rel="icon" href="./assets/formmcp-wnnLTqps.png" />
-    <script defer src="./assets/index-Bet7dzY6.js"></script>
-    <link rel="stylesheet" href="./assets/style-BA1KUTX_.css">
+    <script defer src="./assets/index-tVdL6Ww2.js"></script>
+    <link rel="stylesheet" href="./assets/style-D_b9x3B3.css">
   </head>
   <body>
     <div class="shell">
@@ -23,7 +23,7 @@
         <img class="mark" src="./assets/formmcp-wnnLTqps.png" width="32" height="32" alt="" />
         <div class="title">
           <h1 translate="no">formMCP</h1>
-          <p class="sub">One connection from Claude Code, Codex and Cursor to the Form family</p>
+          <p class="sub">One connection from Claude Code, Codex, Cursor and Antigravity to the Form family</p>
         </div>
         <span class="version" id="version" translate="no"></span>
       </header>
@@ -40,6 +40,11 @@
         </div>
         <div class="client" data-client="cursor">
           <span class="client-name" translate="no">Cursor</span>
+          <span class="client-state" data-state></span>
+          <button class="btn" type="button" data-connect disabled>Connect</button>
+        </div>
+        <div class="client" data-client="antigravity">
+          <span class="client-name" translate="no">Antigravity</span>
           <span class="client-state" data-state></span>
           <button class="btn" type="button" data-connect disabled>Connect</button>
         </div>
@@ -71,6 +76,7 @@
             <option value="claude">Claude Code</option>
             <option value="codex">Codex</option>
             <option value="cursor">Cursor</option>
+            <option value="antigravity">Antigravity</option>
             <option value="other">Other agents</option>
           </select>
         </label>
