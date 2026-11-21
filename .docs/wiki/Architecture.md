@@ -7,6 +7,7 @@ formMCP/
 ├── src-tauri/       the shell: the window, and `formmcp mcp` with no window
 ├── frontend/        the window: tokens, layers, one list
 ├── setup/family.py  core/data/family.json from the family spec
+├── setup/hero.py    docs/images/formmcp-hero.png from the built demo 1
 └── assets/          the owner's icon
 ```
 
