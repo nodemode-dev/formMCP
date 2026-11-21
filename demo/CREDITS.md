@@ -28,7 +28,7 @@ Apps without a file here (Format, FormCel, FormDAM, FormDesign, FormPath, FormPr
 
 | File | Title | Author | Source file in the repository | Licence |
 | --- | --- | --- | --- | --- |
-| mcp-hero.webp | FormMCP window | nodemode-ai | formMCP `docs/images/formmcp-hero.png` | GPL-3.0-only (LICENSE), the owner's own art |
+| mcp-hero.webp | FormMCP window as demo 1 shows it (0.14.1, made by `setup/hero.py`); its reel holds the sibling screenshots credited in this table | nodemode-ai | formMCP `docs/images/formmcp-hero.png` | GPL-3.0-only (LICENSE), the owner's own art; the media inside the reel screenshots is credited below |
 | mcp-agents.webp | FormMCP agents view | nodemode-ai | formMCP `docs/images/formmcp-agents.webp` | GPL-3.0-only (LICENSE), the owner's own art |
 | mcp-safety.webp | FormMCP safety view | nodemode-ai | formMCP `docs/images/formmcp-safety.png` | GPL-3.0-only (LICENSE), the owner's own art |
 | formcut.webp | FormCut window, demo film "High Country" | nodemode-ai | sidecar demo screenshot of formcut 2.13.1 (`/home/claude/sidecars/formcut/demo-screenshot.png`) | Apache-2.0 (formcut LICENSE); media in the capture is credited in formcut `demo/CREDITS.md` and listed below |

@@ -59,19 +59,40 @@ def capture(root, out, scheme):
         from PIL import Image
     except ImportError:
         out.write_bytes(shot)
-        return
-    Image.open(io.BytesIO(shot)).convert("RGB").save(out, optimize=True)
+        return None
+    image = Image.open(io.BytesIO(shot)).convert("RGB")
+    image.save(out, optimize=True)
+    return image
+
+
+def preview(image, path):
+    from PIL import Image
+    width = 960
+    small = image.resize((width, round(image.height * width / image.width)), Image.Resampling.LANCZOS)
+    small.save(path, "WEBP", quality=80)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Remake docs/images/formmcp-hero.png from the built demo 1 (demo/index.html).")
     parser.add_argument("--out", type=Path, help="where to write the picture (default: docs/images/formmcp-hero.png)")
     parser.add_argument("--scheme", choices=["dark", "light"], default="dark")
+    parser.add_argument("--preview", type=Path, help="where to write demo 1's 960 px preview (default: demo/assets/media/shots/mcp-hero.webp)")
+    parser.add_argument("--preview-only", action="store_true", help="make the preview from the picture already at --out, without taking a new one")
     a = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
     out = a.out or root / "docs" / "images" / "formmcp-hero.png"
-    capture(root, out, a.scheme)
-    print(f"wrote {out}")
+    small = a.preview or root / "demo" / "assets" / "media" / "shots" / "mcp-hero.webp"
+    if a.preview_only:
+        from PIL import Image
+        image = Image.open(out).convert("RGB")
+    else:
+        image = capture(root, out, a.scheme)
+        print(f"wrote {out}")
+    if image is None:
+        print("Pillow is not installed: the preview was not made")
+        return 1
+    preview(image, small)
+    print(f"wrote {small}")
     return 0
 
 
