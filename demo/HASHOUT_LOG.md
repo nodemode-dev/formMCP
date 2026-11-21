@@ -2,8 +2,17 @@
 
 Living log for the offline demo. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.14.0
-Last updated: 2026-11-20 · v0.14.0 rebuilt for the version it shows (no demo changes); v0.13.0 Antigravity in demo 1, rebuilt with FormVis's surfaces; 2026-11-07 · v0.9.1 rebuilt for the version it shows (Greg's README note on FormPortal updates, no demo changes); v0.9.0 the shim marks and restores settings, and gives tool_list's loaded in seconds; the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
+Current build version: v0.14.1
+Last updated: 2026-11-20 · v0.14.1 the README's hero picture is made from this demo by setup/hero.py; v0.14.0 rebuilt for the version it shows (no demo changes); v0.13.0 Antigravity in demo 1, rebuilt with FormVis's surfaces; 2026-11-07 · v0.9.1 rebuilt for the version it shows (Greg's README note on FormPortal updates, no demo changes); v0.9.0 the shim marks and restores settings, and gives tool_list's loaded in seconds; the three-demo link row; real media: icons, screenshot reel and Lab flows; before that the offline demo: the real window on a Tauri shim, and the Lab
+
+## v0.14.1 · the README's hero picture comes from this demo {#v0-14-1}
+
+### setup/hero.py · docs/images/formmcp-hero.png remade from demo 1
+- refers-to: setup/hero.py :: capture, run_tool, main · docs/images/formmcp-hero.png · README.md :: hero
+- kind: decision
+- logged: v0.14.1 · 2026-11-20
+
+The README's hero was a still screenshot (PNG, 3200 by 2000) of the v0.7.6 desktop window with three agent cards, taken by hand in November with FormPortal found and checkouts reachable in development; no script made it, and the desktop window with a real FormPortal cannot be run on the build machine, so that picture cannot be remade as it was. It is replaced, at the same name, place, type and size, by a picture of today's window as this demo shows it, with the demo strip and screenshot reel left in so nobody mistakes it for the desktop app; the README's alt text and caption say so. `setup/hero.py` makes it again: it opens the built `demo/index.html` from file:// in Playwright's Chromium at 1600 by 1000 CSS pixels and device scale 2, dark scheme, checks that the window shows exactly the cards Claude Code, Codex, Cursor and Antigravity, then for each agent in that order presses Connect and runs `family_apps` and `suggest_app` as that agent from the Lab's Console (the same walk the old picture's log shows: sessions, then family_apps and suggest_app calls), closes the Lab, and saves the viewport; it stops on any console error. Pillow, when present, recompresses the PNG. Run it after `npm run build:demo` with `PLAYWRIGHT_BROWSERS_PATH` pointing at the browsers: `python3 setup/hero.py` (or `--out` elsewhere, `--scheme light`). The 960 by 600 preview `assets/media/shots/mcp-hero.webp`, which the window's Demos panel shows (`frontend/index.html`; demo 1 itself only lists it, and the build copies it unchanged), is made from the same picture the way CREDITS.md says every shot was: downscaled to 960 px wide, lossy WebP at quality 80, nothing cropped. `setup/hero.py` writes it after the PNG; `--preview-only` makes it from the PNG already there, without a new capture, which is how the 0.14.1 preview was made.
 
 ## v0.13.0 · four agent programs, FormVis's surfaces {#v0-13-0}
 

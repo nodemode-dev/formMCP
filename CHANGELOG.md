@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.14.1 · 2026-11-20
+
+- Demo 2 shows what FormMCP says when only an older Antigravity file is there: its virtual home starts with `~/.gemini/antigravity-cli/mcp_config.json`, the file earlier Antigravity versions used, and no file at `~/.gemini/config/mcp_config.json`. As in the app, the Antigravity card's Connect button tells you the older file was seen and left alone and where FormMCP writes; the Agent setup pane says the same under the file's name. The older file is never changed.
+- The README's main picture shows today's window, from the offline demo, with all four agents: Claude Code, Codex, Cursor and Antigravity connected and a log of their sessions and calls. It can be made again with `setup/hero.py`.
+- The small preview of the window in the app's Demos panel (demo 1's `mcp-hero.webp`) is made from that new picture, so it also shows four agents; `setup/hero.py` makes it too.
+- All three demos are rebuilt for this version.
+
 ## v0.14.0 · 2026-11-20
 
 - Demos 2 and 3 show Antigravity as a fourth agent card, in the agent picker and in their agent lists, with the Form family's look and this version. In demo 2, Antigravity's file is set up as FormMCP sets it up (`~/.gemini/config/mcp_config.json`, starting with no file); demo 3's recording has one Antigravity call. All three demos now show four agent programs.

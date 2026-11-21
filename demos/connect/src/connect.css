@@ -322,6 +322,13 @@ pre.wb-code {
   white-space: normal;
 }
 
+.wb-older {
+  flex: none;
+  margin: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .wb-shell-row {
   display: grid;
   grid-template-columns: 17em minmax(0, 1fr);

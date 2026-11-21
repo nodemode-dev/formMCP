@@ -2,8 +2,17 @@
 
 Living log for demo 2. Source files stay comment-free; what they would have said lives here.
 
-Current build version: v0.14.0
-Last updated: 2026-11-20 · v0.14.0 four agent programs and FormVis's surfaces; v0.9.1 rebuilt for the version it shows (no demo changes); v0.9.0 rebuilt with the window's Extensions button (empty list: no extension route in a file:// demo); first release of the connecting-agents demo
+Current build version: v0.14.1
+Last updated: 2026-11-20 · v0.14.1 the older Antigravity file note; v0.14.0 four agent programs and FormVis's surfaces; v0.9.1 rebuilt for the version it shows (no demo changes); v0.9.0 rebuilt with the window's Extensions button (empty list: no extension route in a file:// demo); first release of the connecting-agents demo
+
+## v0.14.1 · the older Antigravity file note {#v0-14-1}
+
+### world.ts, workbench.ts, connect.css · an older `antigravity-cli` file, seen and left alone
+- refers-to: demos/connect/src/world.ts :: antigravityOlderPath, olderSeen, stateOf, connect, reset · demos/connect/src/workbench.ts :: buildSetup · demos/connect/src/connect.css :: .wb-older
+- kind: change
+- logged: v0.14.1 · 2026-11-20
+
+Ported from `clients.rs` `antigravity_older` and `older_seen`: when `~/.gemini/antigravity-cli/mcp_config.json` exists and the documented `~/.gemini/config/mcp_config.json` does not, the Antigravity state carries the note "an older Antigravity file, [path], was seen and left alone; formMCP writes [path]", in the same words. As in the engine it is the note of a not connected state (after the "taken" note, which wins), and Connect returns it once beside the new state (`after.note.or(older)`). The real window shows a client's note as the Connect button's tip, so the card does the same here; the Agent setup pane also prints it on a wrapping line under the file's title, because the demo's purpose is to show what the agent's files hold. The virtual home now starts with that older file (the Cursor sample's content), so the note is there on opening; "No file yet" brings it back, and "Start over" restores it. The older file itself is never changed.
 
 ## v0.14.0 · four agent programs, FormVis's surfaces {#v0-14-0}
 

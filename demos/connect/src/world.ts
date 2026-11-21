@@ -25,6 +25,7 @@ export const world = {
   codex: null as string | null,
   cursor: null as string | null,
   antigravity: null as string | null,
+  antigravityOlder: null as string | null,
   backups: [] as Backup[],
   commands: [] as string[],
 };
@@ -55,6 +56,14 @@ export function cursorPath(): string {
 
 export function antigravityPath(): string {
   return join(home(), ".gemini", "config", "mcp_config.json");
+}
+
+export function antigravityOlderPath(): string {
+  return join(home(), ".gemini", "antigravity-cli", "mcp_config.json");
+}
+
+export function olderSeen(client: ClientKey): string | null {
+  return client === "antigravity" && world.antigravityOlder !== null && world.antigravity === null ? `an older Antigravity file, ${antigravityOlderPath()}, was seen and left alone; formMCP writes ${antigravityPath()}` : null;
 }
 
 export function pathOf(client: ClientKey): string | null {
@@ -137,8 +146,8 @@ export function stateOf(client: ClientKey): { state: Link; note: string | null }
   const data = parsed.ok ?(parsed.value as Record<string, unknown> | null) : null;
   const servers = data && typeof data === "object" ? (data.mcpServers as Record<string, unknown> | undefined) : undefined;
   const entry = servers && typeof servers === "object" ? servers[SERVER_NAME] : undefined;
-  if (entry === undefined) return { state: "not-connected", note: null };
-  return ours(JSON.stringify(entry)) ? { state: "connected", note: null } : { state: "taken", note: taken };
+  if (entry === undefined) return { state: "not-connected", note: olderSeen(client) };
+  return ours(JSON.stringify(entry)) ? { state: "connected", note: olderSeen(client) } : { state: "taken", note: taken };
 }
 
 export type Plan = { text: string | null; commands: string[]; error: string | null; backup: boolean };
@@ -225,9 +234,11 @@ function apply(client: ClientKey, plan: Plan): void {
 
 export function connect(client: ClientKey, on: boolean): { state: Link; note: string | null } {
   const before = stateOf(client).state;
+  const older = olderSeen(client);
   if (on && (before === "not-connected" || before === "connected")) apply(client, planConnect(client));
   else if (!on && before === "connected") apply(client, planRemove(client));
-  return stateOf(client);
+  const after = stateOf(client);
+  return { state: after.state, note: after.note ?? older };
 }
 
 export type Row = { kind: "eq" | "add" | "del"; text: string };
@@ -283,6 +294,7 @@ export function reset(platform: Platform): void {
   world.codex = baseCodex();
   world.cursor = baseCursor();
   world.antigravity = null;
+  world.antigravityOlder = baseCursor();
   world.backups = [];
   world.commands = [];
   connect("claude", true);

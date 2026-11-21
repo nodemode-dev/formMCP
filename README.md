@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.14.0" src="https://img.shields.io/badge/version-0.14.0-eef0f4?style=flat-square">
+  <img alt="version 0.14.1" src="https://img.shields.io/badge/version-0.14.1-eef0f4?style=flat-square">
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-B7410E?style=flat-square&logo=rust&logoColor=white">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square">
   <img alt="macOS, Windows, Linux" src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-native-2f7bf5?style=flat-square">
@@ -25,8 +25,8 @@
 <br>
 
 <p align="center">
-  <img src="docs/images/formmcp-hero.png" alt="The FormMCP window: Claude Code, Codex and Cursor connect buttons, an HTTP bar, cards for the Form apps with per-agent switches, and an Activity log of family_apps and suggest_app calls" width="100%">
-  <br><sub>The window: the Form family as agents see it, with a live log of the sessions and calls from three agents.</sub>
+  <img src="docs/images/formmcp-hero.png" alt="The FormMCP window in the browser demo: Claude Code, Codex, Cursor and Antigravity connected, an HTTP bar, cards for the Form apps with per-agent switches, and an Activity log of sessions and family_apps and suggest_app calls" width="100%">
+  <br><sub>The window, as the offline browser demo shows it: the Form family as agents see it, with a live log of the sessions and calls from four agents.</sub>
 </p>
 
 <p align="center">
@@ -38,7 +38,7 @@
 <table>
   <tr>
     <td width="25%" valign="top"><h3>Cheap on context</h3>One line per app and no app's tools, so the family list stays small instead of loading every app's tools up front.</td>
-    <td width="25%" valign="top"><h3>You choose what each agent gets</h3>Turn an app or a single tool off for Claude Code, Codex or Cursor, and share the setup as a named profile.</td>
+    <td width="25%" valign="top"><h3>You choose what each agent gets</h3>Turn an app or a single tool off for Claude Code, Codex, Cursor or Antigravity, and share the setup as a named profile.</td>
     <td width="25%" valign="top"><h3>Safe by default</h3>Secrets live in the system keychain, results are scrubbed, and an installed app whose files changed is refused.</td>
     <td width="25%" valign="top"><h3>Agent-ready</h3>The same engine runs the window, a command line and an MCP server over stdio or local HTTP.</td>
   </tr>
