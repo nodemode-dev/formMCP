@@ -10,7 +10,7 @@ The page is the real formMCP window (`frontend/src/main.ts`, the real tokens, la
 2. HTTP and token. The address, the access token (hidden until shown) and a request builder (method, Host, Origin, token, protocol version, session id, agent name, body). Presets for each refusal: wrong or previous token (401), a web page's Origin or a wrong Host (403), GET (405), an old protocol version (400), no session (404). Refusals and calls land in the window's Activity log, and New token in the window invalidates the old one at once.
 3. What each agent sees. A matrix of apps by agent (on, off for this agent, off by profile name, some tools off) and an "ask as this agent" form that runs `family_apps`, `suggest_app`, `app_tools` and `call_app`, so a profile's refusals read as the real server words them.
 
-It opens on a finished state: Claude Code and Codex connected, Cursor and Antigravity not (Antigravity has no file yet), HTTP serving with a token, two profiles in use ("Video crew" and "Read only review"), and an Activity log of earlier sessions from the three agents over stdio and HTTP, including two refused HTTP requests.
+It opens on a finished state: Claude Code and Codex connected, Cursor and Antigravity not (Antigravity has no file yet, only an older `~/.gemini/antigravity-cli/mcp_config.json`, which formMCP reports as seen and leaves alone, as the app does in the Connect button's tip), HTTP serving with a token, two profiles in use ("Video crew" and "Read only review"), and an Activity log of earlier sessions from the three agents over stdio and HTTP, including two refused HTTP requests.
 
 ## What is real and what is simulated
 

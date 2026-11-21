@@ -9,6 +9,7 @@ import {
   diffLines,
   fileOf,
   nextPlan,
+  olderSeen,
   pathOf,
   reset,
   setFile,
@@ -124,7 +125,8 @@ function buildSetup(): { pane: HTMLElement; paint: () => void } {
   disk.spellcheck = false;
   disk.setAttribute("aria-label", "The agent's file as it is on disk");
   const claudeNow = el("pre", "wb-code");
-  left.append(leftTitle, disk, claudeNow);
+  const olderNote = el("p", "wb-note wb-older");
+  left.append(leftTitle, olderNote, disk, claudeNow);
   const right = el("div", "wb-col");
   const rightTitle = el("div", "wb-title");
   const result = el("div", "wb-code wb-diff");
@@ -187,6 +189,9 @@ function buildSetup(): { pane: HTMLElement; paint: () => void } {
       if (r.input.value !== r.v.value) r.input.value = r.v.value;
     }
     const isClaude = cur === "claude";
+    const older = olderSeen(cur);
+    olderNote.hidden = !older;
+    setText(olderNote, older ? `${older.charAt(0).toUpperCase()}${older.slice(1)}.` : "");
     disk.hidden = isClaude;
     claudeNow.hidden = !isClaude;
     const path = pathOf(cur);
