@@ -30,6 +30,18 @@
       "mcp": true
     },
     {
+      "id": "formcad",
+      "app": "formCAD",
+      "name": "FormCAD",
+      "kind": "cad",
+      "summary": "CAD studio: 2D drafting, parametric parts, NURBS surfaces and automation on OpenCascade.",
+      "repository": "https://github.com/nodemode-dev/formCAD",
+      "launcher": "formCAD",
+      "state": "prelaunch",
+      "released": true,
+      "mcp": true
+    },
+    {
       "id": "formcel",
       "app": "formcel",
       "name": "FormCel",
@@ -102,6 +114,18 @@
       "mcp": true
     },
     {
+      "id": "formfabric",
+      "app": "formfabric",
+      "name": "FormFabric",
+      "kind": "garment",
+      "summary": "Garment pattern design and cloth simulation: draw patterns, sew, drape and export.",
+      "repository": "https://github.com/nodemode-dev/formfabric",
+      "launcher": "formfabric",
+      "state": "prelaunch",
+      "released": true,
+      "mcp": true
+    },
+    {
       "id": "formlit",
       "app": "formlit",
       "name": "FormLit",
@@ -122,6 +146,30 @@
       "repository": "https://github.com/nodemode-dev/form.md",
       "launcher": "form-md",
       "state": "live",
+      "released": true,
+      "mcp": true
+    },
+    {
+      "id": "formmorpheus",
+      "app": "formmorpheus",
+      "name": "FormMorpheus",
+      "kind": "animation",
+      "summary": "Animation studio: draw frame by frame, keyframe or perform live on a timeline.",
+      "repository": "https://github.com/nodemode-dev/formmorpheus",
+      "launcher": "formmorpheus",
+      "state": "prelaunch",
+      "released": true,
+      "mcp": false
+    },
+    {
+      "id": "formnet",
+      "app": "formNET",
+      "name": "FormNET",
+      "kind": "network",
+      "summary": "The network tab for the whole computer: what websites, apps and the machine actually send.",
+      "repository": "https://github.com/nodemode-dev/formNET",
+      "launcher": "formnet",
+      "state": "prelaunch",
       "released": true,
       "mcp": true
     },
@@ -150,6 +198,18 @@
       "mcp": true
     },
     {
+      "id": "formpublisher",
+      "app": "formpublisher",
+      "name": "FormPublisher",
+      "kind": "publisher",
+      "summary": "Open FormWeb sites, check every route, package them and prepare them for hosts.",
+      "repository": "https://github.com/nodemode-dev/formpublisher",
+      "launcher": "formpublisher",
+      "state": "prelaunch",
+      "released": true,
+      "mcp": true
+    },
+    {
       "id": "formref",
       "app": "formref",
       "name": "FormRef",
@@ -157,6 +217,18 @@
       "summary": "Reference boards for images, ideas and creative work.",
       "repository": "https://github.com/nodemode-dev/formref",
       "launcher": "formref",
+      "state": "prelaunch",
+      "released": true,
+      "mcp": true
+    },
+    {
+      "id": "formsculpt",
+      "app": "formsculpt",
+      "name": "FormSculpt",
+      "kind": "sculpt",
+      "summary": "3D sculpting and modeling, with a Rust engine and a command set agents can drive.",
+      "repository": "https://github.com/nodemode-dev/formsculpt",
+      "launcher": "formsculpt",
       "state": "prelaunch",
       "released": true,
       "mcp": true
@@ -182,6 +254,42 @@
       "repository": "https://github.com/nodemode-dev/formdeck",
       "launcher": "formdeck",
       "state": "live",
+      "released": true,
+      "mcp": true
+    },
+    {
+      "id": "formslot",
+      "app": "formslot",
+      "name": "FormSlot",
+      "kind": "memory",
+      "summary": "Codebase memory for coding agents: what is built, where it lives and the rules it follows.",
+      "repository": "https://github.com/nodemode-dev/formslot",
+      "launcher": "formslot",
+      "state": "prelaunch",
+      "released": true,
+      "mcp": true
+    },
+    {
+      "id": "formsubstrate",
+      "app": "formsubstrate",
+      "name": "FormSubstrate",
+      "kind": "workbench",
+      "summary": "A code and text editor that runs Claude Code agents, each in its own git worktree.",
+      "repository": "https://github.com/nodemode-dev/formsubstrate",
+      "launcher": "formsubstrate",
+      "state": "prelaunch",
+      "released": true,
+      "mcp": true
+    },
+    {
+      "id": "formsurface",
+      "app": "formsurface",
+      "name": "FormSurface",
+      "kind": "texture",
+      "summary": "Paint textures and materials straight onto 3D models.",
+      "repository": "https://github.com/nodemode-dev/formsurface",
+      "launcher": "formsurface",
+      "state": "prelaunch",
       "released": true,
       "mcp": true
     },
